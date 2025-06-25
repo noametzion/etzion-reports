@@ -1,0 +1,9 @@
+.container {
+  height: 100%;
+  padding: 1rem;
+}
+
+.container h2 {
+  margin-top: 0;
+  color: #333;
+}
