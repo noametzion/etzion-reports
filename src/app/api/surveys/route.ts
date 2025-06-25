@@ -34,9 +34,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       fileName,
-      path: filePath
+      filePath
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'File already exists') {
+      return NextResponse.json(
+        { error: 'File with this name already exists' },
+        { status: 409 } // Conflict
+      );
+    }
     console.error('Error uploading file:', error);
     return NextResponse.json(
       { error: 'Failed to upload file' },

@@ -1,6 +1,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 
+interface FileData {
+  fileName: string;
+  filePath: string;
+}
+
 const getFilesDirFullPath = (dirName: string) => {
   return path.join(process.cwd(), 'public', dirName);
 };
@@ -15,19 +20,22 @@ const ensureUploadDir = async (dirName: string) => {
   }
 };
 
-export const getFiles  = async (dirName: string): Promise<string[]> => {
+export const getFiles  = async (dirName: string): Promise<FileData[]> => {
   try {
     const filesDirFullPath = getFilesDirFullPath(dirName);
     await ensureUploadDir(filesDirFullPath);
     const files = await fs.readdir(filesDirFullPath);
-    return files;
+    return files.map(fileName => ({
+      fileName,
+      filePath: `/${dirName}/${fileName}`
+    }));
   } catch (error) {
     console.error('Error reading files:', error);
     throw error;
   }
 };
 
-export const saveFile = async (dirName: string, file: File): Promise<{ fileName: string; filePath: string }> => {
+export const saveFile = async (dirName: string, file: File): Promise<FileData> => {
   try {
     const filesDirFullPath = getFilesDirFullPath(dirName);
     await ensureUploadDir(filesDirFullPath);
@@ -35,12 +43,17 @@ export const saveFile = async (dirName: string, file: File): Promise<{ fileName:
     const buffer = Buffer.from(bytes);
     const filePath = path.join(filesDirFullPath, file.name);
 
-    await fs.writeFile(filePath, buffer);
+    // Use 'wx' flag to fail if the file already exists
+    await fs.writeFile(filePath, buffer, { flag: 'wx' });
+
     return {
       fileName: file.name,
       filePath: `/${dirName}/${file.name}`
     };
-  } catch (error) {
+  } catch (error: any) {
+    if (error.code === 'EEXIST') {
+      throw new Error('File already exists');
+    }
     console.error('Error saving file:', error);
     throw error;
   }
