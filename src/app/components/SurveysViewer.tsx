@@ -10,6 +10,7 @@ const SurveysViewer = () => {
 
   const handleOpenFile = (fileName: string) => {
     // TODO: Implement file opening logic
+      console.log(`Open file ${fileName}`);
   };
 
   const handleDelete = async (fileName: string) => {

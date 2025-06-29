@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
       fileName,
       filePath
     });
-  } catch (error: any) {
-    if (error.message === 'File already exists') {
+  } catch (error) {
+    if ((error as Error).message === 'File already exists') {
       return NextResponse.json(
         { error: 'File with this name already exists' },
         { status: 409 } // Conflict

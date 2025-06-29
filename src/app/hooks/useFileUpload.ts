@@ -35,8 +35,8 @@ export const useSurveyFiles = () => {
         }));
         setFiles(fileList);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +65,8 @@ export const useSurveyFiles = () => {
           ...prev,
         ]);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setIsUploading(false);
     }
@@ -87,10 +87,10 @@ export const useSurveyFiles = () => {
         const responseData = await response.json();
         setError(responseData.error || 'Failed to delete file on server');
       }
-    } catch (err: any) {
+    } catch (err) {
       // Revert on error
       setFiles(originalFiles);
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 

@@ -50,8 +50,8 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       fileName: file.name,
       filePath: `/${dirName}/${file.name}`
     };
-  } catch (error: any) {
-    if (error.code === 'EEXIST') {
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
       throw new Error('File already exists');
     }
     console.error('Error saving file:', error);
