@@ -1,86 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FaTrash, FaFolderOpen } from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
-import {formatDate, getNow} from '@/app/utils/dateTimeUtils';
-
-interface ResponseSurveyFileData {
-  fileName: string;
-  filePath: string
-}
-
-interface SurveyFile {
-  name: string;
-  path: string;
-  uploadedAt: string;
-}
-
-const SURVEYS_API = '/api/surveys';
+import { formatDate } from '@/app/utils/dateTimeUtils';
+import { useSurveyFiles } from '@/app/hooks/useFileUpload';
 
 const SurveysViewer = () => {
-  const [files, setFiles] = useState<SurveyFile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const fetchFiles = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch(SURVEYS_API);
-      if (!response.ok)
-        setError('Failed to fetch files');
-
-      const data = await response.json();
-      const fileList = (data.files as ResponseSurveyFileData[]).map((file) => ({
-        name: file.fileName,
-        path: file.filePath,
-        uploadedAt: new Date().toISOString() // In a real app, you'd get this from the file stats
-      }));
-
-      setFiles(fileList);
-    } catch (err) {
-      console.error('Error fetching files:', err);
-      setError('Failed to load surveys. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchFiles();
-  }, []);
-
-  const handleUploadSuccess = (fileName: string, filePath: string) => {
-    setFiles(prev => [
-      {
-        name: fileName,
-        path: filePath,
-        uploadedAt: getNow()
-      },
-      ...prev
-    ]);
-  };
+  const { files, isLoading, isUploading, error, uploadFile, deleteFile } = useSurveyFiles();
 
   const handleOpenFile = (fileName: string) => {
+    // TODO: Implement file opening logic
   };
 
-  const handleDeleteFile = async (fileName: string) => {
-    if (!confirm(`Are you sure you want to delete ${fileName}?`)) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`${SURVEYS_API}?fileName=${encodeURIComponent(fileName)}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        alert('Failed to delete file');
-      } else {
-        setFiles(prev => prev.filter(file => file.name !== fileName));
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      alert('Failed to delete file');
+  const handleDelete = async (fileName: string) => {
+    if (window.confirm(`Are you sure you want to delete ${fileName}?`)) {
+      await deleteFile(fileName);
     }
   };
 
@@ -88,14 +22,21 @@ const SurveysViewer = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Surveys</h2>
-        <SurveyUploader onUploadSuccess={handleUploadSuccess} />
+        <SurveyUploader
+          isUploading={isUploading}
+          error={error}
+          uploadFile={uploadFile}
+        />
       </div>
 
+      <div className={styles.errorContainer}>
+        {error &&
+          <div className={styles.error}>{error}</div>
+        }
+      </div>
       <div className={styles.filesList}>
         {isLoading ? (
           <div className={styles.loading}>Loading surveys...</div>
-        ) : error ? (
-          <div className={styles.error}>{error}</div>
         ) : files.length === 0 ? (
           <div className={styles.emptyState}>No surveys uploaded yet</div>
         ) : (
@@ -108,8 +49,8 @@ const SurveysViewer = () => {
               </tr>
             </thead>
             <tbody>
-              {files.map((file, index) => (
-                <tr key={index}>
+              {files.map((file) => (
+                <tr key={file.name}>
                   <td>{file.name}</td>
                   <td>{formatDate(file.uploadedAt)}</td>
                   <td className={styles.actionsCell}>
@@ -123,7 +64,7 @@ const SurveysViewer = () => {
                         <span>Open</span>
                       </button>
                       <button
-                        onClick={() => handleDeleteFile(file.name)}
+                        onClick={() => handleDelete(file.name)}
                         className={styles.deleteButton}
                         title={`Delete ${file.name}`}
                       >
