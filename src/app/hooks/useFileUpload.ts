@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import {NextResponse} from "next/server";
 
 // It's good practice to define shared types in a separate file (e.g., types.ts)
 // For now, we'll define them here.
