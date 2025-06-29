@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import {NextResponse} from "next/server";
 
 // It's good practice to define shared types in a separate file (e.g., types.ts)
 // For now, we'll define them here.
@@ -25,10 +26,10 @@ export const useSurveyFiles = () => {
     setIsLoading(true);
     try {
       const response = await fetch(SURVEYS_API);
-      if (!response.ok) setError('Failed to fetch files');
+      const responseData = await response.json();
+      if (!response.ok) setError(responseData.error || 'Failed to fetch files');
       else {
-        const data = await response.json();
-        const fileList = (data.files as ResponseSurveyFileData[]).map((file) => ({
+        const fileList = (responseData.files as ResponseSurveyFileData[]).map((file) => ({
           name: file.fileName,
           path: file.filePath,
           uploadedAt: new Date().toISOString(), // Placeholder, ideally from server
@@ -58,7 +59,7 @@ export const useSurveyFiles = () => {
         body: requestData,
       });
       const responseData = await response.json();
-      if (!response.ok) setError('Upload failed');
+      if (!response.ok) setError(responseData.error ||'Upload failed');
       else {
         setFiles(prev => [
           {name: responseData.fileName, path: responseData.filePath, uploadedAt: new Date().toISOString()},
@@ -84,7 +85,8 @@ export const useSurveyFiles = () => {
       if (!response.ok) {
         // Revert on error
         setFiles(originalFiles);
-        setError('Failed to delete file on server');
+        const responseData = await response.json();
+        setError(responseData.error || 'Failed to delete file on server');
       }
     } catch (err: any) {
       // Revert on error
