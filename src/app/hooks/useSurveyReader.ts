@@ -2,29 +2,9 @@ import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Survey, SurveyFile, SurveyInfo, SurveyDataRow, DCPDataRow } from '@/app/types/survey';
 
-// Helper to convert sheet to JSON with proper header mapping
-const sheetToJSON = <T,>(sheet: XLSX.WorkSheet, headerMap: Record<string, keyof T>): T[] => {
-  const data = XLSX.utils.sheet_to_json<Record<string, any>>(sheet, { header: 1 });
-  if (data.length < 2) return [];
-
-  const headers = data[0] as string[];
-  const jsonData = data.slice(1);
-
-  return jsonData.map(row => {
-    const rowData: any = {};
-    headers.forEach((header, index) => {
-      const mappedKey = headerMap[header];
-      if (mappedKey) {
-        rowData[mappedKey] = row[index];
-      }
-    });
-    return rowData as T;
-  });
-};
-
-// Helper to parse the 'Survey Info' sheet
 const parseSurveyInfo = (sheet: XLSX.WorkSheet): SurveyInfo => {
-    const info: any = {};
+  // eslint-disable-next-line
+  const info: any = {};
     const sheetData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
     sheetData.forEach(row => {
         if (row && row.length >= 2) {
@@ -69,7 +49,6 @@ export const useSurveyReader = (file: SurveyFile | null) => {
 
         const surveyData = XLSX.utils.sheet_to_json<SurveyDataRow>(surveyDataSheet);
         const dcpData = XLSX.utils.sheet_to_json<DCPDataRow>(dcpDataSheet);
-        // ?
         const surveyInfo = parseSurveyInfo(surveyInfoSheet);
 
         setSurvey({
@@ -78,8 +57,8 @@ export const useSurveyReader = (file: SurveyFile | null) => {
           surveyInfo,
         });
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError((err as Error).message);
       } finally {
         setIsLoading(false);
       }
