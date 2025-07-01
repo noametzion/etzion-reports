@@ -1,5 +1,5 @@
-import React, {useEffect} from 'react';
-import {InfoSurveyNameKey, Survey, SurveyFile} from '@/app/types/survey';
+import React from 'react';
+import {InfoSurveyNameKey, SurveyFile} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
