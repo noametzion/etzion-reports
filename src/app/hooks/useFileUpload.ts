@@ -1,12 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-// It's good practice to define shared types in a separate file (e.g., types.ts)
-// For now, we'll define them here.
-export interface SurveyFile {
-  name: string;
-  path: string;
-  uploadedAt: string;
-}
+import {SurveyFile} from "@/app/types/survey";
 
 interface ResponseSurveyFileData {
   fileName: string;
@@ -45,6 +38,10 @@ export const useSurveyFiles = () => {
   useEffect(() => {
     fetchFiles();
   }, [fetchFiles]);
+
+  const getFile = (fileName: string) => {
+    return files.find(f => f.name === fileName);
+  }
 
   const uploadFile = async (file: File) => {
     setIsUploading(true);
@@ -94,5 +91,5 @@ export const useSurveyFiles = () => {
     }
   };
 
-  return { files, isLoading, isUploading, error, uploadFile, deleteFile, fetchFiles };
+  return { files, isLoading, isUploading, error, getFile, uploadFile, deleteFile, fetchFiles };
 };

@@ -1,0 +1,52 @@
+.container {
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header h2 {
+    margin-right: 10px;
+}
+
+.infoButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #007bff;
+}
+
+.infoButton:hover {
+    color: #0056b3;
+}
+
+.sheetContainer {
+  overflow-x: auto;
+  max-height: 600px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.sheetTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sheetTable th,
+.sheetTable td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sheetTable th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
