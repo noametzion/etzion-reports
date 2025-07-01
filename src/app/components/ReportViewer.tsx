@@ -1,10 +1,30 @@
-import React from 'react';
+import React, {useEffect} from 'react';
+import {InfoSurveyNameKey, Survey, SurveyFile} from '@/app/types/survey';
+import { useGraphs } from '@/app/hooks/useGraphs';
+import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
+import {useSurveyReader} from "@/app/hooks/useSurveyReader";
 
-const ReportViewer = () => {
+interface ReportViewerProps {
+  surveyFile: SurveyFile | null;
+}
+
+const SPLIT_DISTANCE = 500;
+
+const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
+  const {survey, isLoading, error} = useSurveyReader(surveyFile);
+  const graphs = useGraphs(survey?.surveyData || null, SPLIT_DISTANCE);
+
+  const surveyName = survey?.surveyInfo[InfoSurveyNameKey] || surveyFile?.name;
+
   return (
     <div className={styles.container}>
-      <h2>Report</h2>
+      <h2>Report Viewer - {surveyName}</h2>
+      <div className={styles.graphsContainer}>
+        {graphs.map((graph, index) => (
+          <GraphDisplay key={index} graphInfo={graph} />
+        ))}
+      </div>
     </div>
   );
 };

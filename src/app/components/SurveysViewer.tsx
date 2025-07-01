@@ -8,7 +8,13 @@ import { useSurveyReader } from '@/app/hooks/useSurveyReader';
 import SurveySheet from './SurveySheet';
 import { SurveyFile } from '@/app/types/survey';
 
-const SurveysViewer = () => {
+interface SurveysViewerProps {
+    onSurveySelected: (surveyFile: SurveyFile | null) => void;
+}
+
+const SurveysViewer: React.FC<SurveysViewerProps> = ({
+  onSurveySelected,
+ }) => {
   const { files, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedFile, setSelectedFile] = React.useState<SurveyFile | null>(null);
   const { survey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedFile);
@@ -17,11 +23,13 @@ const SurveysViewer = () => {
     const fileToOpen = getFile(fileName);
     if (fileToOpen) {
       setSelectedFile(fileToOpen);
+      onSurveySelected(fileToOpen);
     }
   };
 
   const handleCloseFile = () => {
     setSelectedFile(null);
+    onSurveySelected(null)
   };
 
   const handleDelete = async (fileName: string) => {
