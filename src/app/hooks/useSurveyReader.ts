@@ -43,6 +43,8 @@ export const useSurveyReader = (file: SurveyFile | null) => {
   useEffect(() => {
     if (!file) {
       setSurvey(null);
+      setIsLoading(false);
+      setError(null)
       return;
     }
 

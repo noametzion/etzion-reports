@@ -4,13 +4,24 @@ import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
 import { useSurveyFiles } from '@/app/hooks/useFileUpload';
+import { useSurveyReader } from '@/app/hooks/useSurveyReader';
+import SurveySheet from './SurveySheet';
+import { SurveyFile } from '@/app/types/survey';
 
 const SurveysViewer = () => {
-  const { files, isLoading, isUploading, error, uploadFile, deleteFile } = useSurveyFiles();
+  const { files, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
+  const [selectedFile, setSelectedFile] = React.useState<SurveyFile | null>(null);
+  const { survey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedFile);
 
   const handleOpenFile = (fileName: string) => {
-    // TODO: Implement file opening logic
-      console.log(`Open file ${fileName}`);
+    const fileToOpen = getFile(fileName);
+    if (fileToOpen) {
+      setSelectedFile(fileToOpen);
+    }
+  };
+
+  const handleCloseFile = () => {
+    setSelectedFile(null);
   };
 
   const handleDelete = async (fileName: string) => {
@@ -19,20 +30,42 @@ const SurveysViewer = () => {
     }
   };
 
+  if (isReading) {
+    return <div className={styles.loading}>Reading survey...</div>;
+  }
+
+  if (surveyReaderError) {
+    return (
+      <div className={styles.errorContainer}>
+          <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
+          <div className={styles.error}>{surveyReaderError}</div>
+      </div>
+    );
+  }
+
+  if (survey) {
+    return (
+      <div>
+        <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
+        <SurveySheet survey={survey} surveyFileName={selectedFile?.name || ''}/>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Surveys</h2>
         <SurveyUploader
           isUploading={isUploading}
-          error={error}
+          error={surveyFilesError}
           uploadFile={uploadFile}
         />
       </div>
 
       <div className={styles.errorContainer}>
-        {error &&
-          <div className={styles.error}>{error}</div>
+        {surveyFilesError &&
+          <div className={styles.error}>{surveyFilesError}</div>
         }
       </div>
       <div className={styles.filesList}>
