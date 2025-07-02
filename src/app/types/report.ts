@@ -1,3 +1,11 @@
+export interface GraphDataPoint {
+  distance: number; // X-axis: 'Dist From Start'
+  onVoltage?: number; // Y-axis: 'On Voltage' (mV)
+  offVoltage?: number; // Y-axis: 'Off Voltage' (mV)
+  constantVoltage: number; // Y-axis: Constant -850mV
+}
+
 export interface GraphInfo {
-    // Placeholder for graph data
+  title: string;
+  data: GraphDataPoint[];
 }

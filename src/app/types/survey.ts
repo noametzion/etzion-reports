@@ -2,8 +2,8 @@ export interface SurveyDataRow {
   'Data No': number;
   'Dist From Start': number;
   'Station No': number;
-  'On Voltage'?: number; //?
-  'Off Voltage'?: number; //?
+  'On Voltage'?: number; //? (V)
+  'Off Voltage'?: number; //? (V)
   'DCVG Voltage': number;
   'DCVG Voltage On': number;
   'DCVG Voltage Off': number;
