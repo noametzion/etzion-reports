@@ -12,7 +12,7 @@ interface ReportViewerProps {
 const SPLIT_DISTANCE = 500;
 
 const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
-  const {survey, isLoading, error} = useSurveyReader(surveyFile);
+  const {survey} = useSurveyReader(surveyFile);
   const graphs = useGraphs(survey?.surveyData || null, SPLIT_DISTANCE);
 
   const surveyName = survey?.surveyInfo[InfoSurveyNameKey] || surveyFile?.name;
