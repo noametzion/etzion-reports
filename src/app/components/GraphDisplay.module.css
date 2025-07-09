@@ -1,0 +1,21 @@
+.container {
+  border: 1px solid #ccc;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.placeholder {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  color: #888;
+}

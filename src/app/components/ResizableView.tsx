@@ -55,19 +55,19 @@ const ResizableView = ({
 
   return (
     <div className={styles.container} ref={containerRef}>
-      <div 
+      <div
         className={styles.panel} 
-        style={{ width: `${splitPosition}%` }}
+        style={{ width: `${splitPosition}dvw` }}
       >
         {left}
       </div>
       <div 
         className={`${styles.resizer} ${isResizing ? styles.resizing : ''}`}
-        onMouseDown={startResizing}
+        onMouseDown={startResizing} onMouseUp={stopResizing}
       />
       <div 
         className={styles.panel} 
-        style={{ width: `${100 - splitPosition}%` }}
+        style={{ width: `${100 - splitPosition}dvw`}}
       >
         {right}
       </div>

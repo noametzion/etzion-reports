@@ -1,5 +1,7 @@
 .container {
     padding: 20px;
+    width: 100%;
+    overflow: auto;
 }
 
 .header {
@@ -10,6 +12,7 @@
 
 .header h2 {
     margin-right: 10px;
+    color: #42362b;
 }
 
 .infoButton {
@@ -26,6 +29,8 @@
 
 .sheetContainer {
   overflow-x: auto;
+  width: 100%;
+  max-width: 100%;
   max-height: 600px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -33,6 +38,8 @@
 
 .sheetTable {
   width: 100%;
+  max-width: 100%;
+  overflow: auto;
   border-collapse: collapse;
 }
 

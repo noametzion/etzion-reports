@@ -1,4 +1,6 @@
 .container {
+  width: 100%;
+  max-width: 100%;
   padding: 1.5rem;
   height: 100%;
   display: flex;
@@ -6,6 +8,13 @@
   background-color: #fff9f4;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: auto;
+}
+
+.sheetContainer {
+  width: 100%;
+  max-width: 100%;
+  overflow: auto;
 }
 
 .header {
@@ -15,6 +24,11 @@
   margin-bottom: 1.5rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid #f0e6e0;
+}
+
+.header h2 {
+  margin-right: 10px;
+  color: #42362b;
 }
 
 .filesList {

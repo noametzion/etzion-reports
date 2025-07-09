@@ -1,9 +1,10 @@
 .container {
   display: flex;
-  width: 100%;
+  width: 100dvw;
+  max-width: 100dvw;
   height: 100%;
   position: relative;
-  overflow: hidden;
+  overflow: auto;
   background: #e8d6cb;
 }
 
@@ -14,9 +15,9 @@
 }
 
 .resizer {
-  width: 4px;
+  width: 6px;
   cursor: col-resize;
-  background: #333;
+  background: #776c5c;
   transition: background-color 0.2s;
   height: 100%;
   z-index: 1;
