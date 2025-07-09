@@ -53,7 +53,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
 
   if (survey) {
     return (
-      <div>
+      <div className={styles.sheetContainer}>
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
         <SurveySheet survey={survey} surveyFileName={selectedFile?.name || ''}/>
       </div>
