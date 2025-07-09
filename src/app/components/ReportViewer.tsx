@@ -19,7 +19,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
 
   return (
     <div className={styles.container}>
-      <h2>Report Viewer - {surveyName}</h2>
+      <div className={styles.header}>
+        <h2>Report Viewer - {surveyName}</h2>
+      </div>
       <div className={styles.graphsContainer}>
         {graphs.map((graph, index) => (
           <GraphDisplay key={index} graphInfo={graph} />

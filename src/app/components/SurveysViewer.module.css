@@ -26,6 +26,11 @@
   border-bottom: 1px solid #f0e6e0;
 }
 
+.header h2 {
+  margin-right: 10px;
+  color: #42362b;
+}
+
 .filesList {
   flex: 1;
   overflow-y: auto;
