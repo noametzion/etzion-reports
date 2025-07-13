@@ -1,12 +1,34 @@
-import React, { useState } from 'react';
-import {InfoSurveyNameKey, Survey, SurveyDataRow} from '@/app/types/survey';
+import React, { useState, useEffect } from 'react';
+import {
+  SurveyDSVGVoltageKeys,
+  InfoSurveyNameKey,
+  SurveyOnOffVoltageKeys,
+  SurveyStationKeys,
+  Survey,
+  SurveyDataRow, SurveyCommentKey,
+} from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import { FaInfoCircle } from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
+import ErrorPanel from './ErrorPanel';
+import ErrorPopover from './ErrorPopover';
 
 interface SurveySheetProps {
   survey: Survey;
   surveyFileName: string;
+}
+
+interface ErrorCell {
+  rowIndex: number;
+  columnName: keyof SurveyDataRow;
+}
+
+interface PopoverState {
+  rowIndex: number;
+  columnName: keyof SurveyDataRow;
+  value: number | undefined;
+  top: number;
+  left: number;
 }
 
 const SurveySheet: React.FC<SurveySheetProps> = ({
@@ -14,13 +36,118 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   surveyFileName
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
+  const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
+  const [popover, setPopover] = useState<PopoverState | null>(null);
+  const [surveyData, setSurveyData] = useState<SurveyDataRow[]>(survey.surveyData);
   const surveyName = survey.surveyInfo[InfoSurveyNameKey] || surveyFileName;
 
-  if (!survey || survey.surveyData.length === 0) {
+  useEffect(() => {
+    setSurveyData(survey.surveyData);
+  }, [survey.surveyData]);
+
+  if (!survey || surveyData.length === 0) {
     return <div>No survey data to display.</div>;
   }
 
-  const headers = Object.keys(survey.surveyData[0]);
+  const handleScanOnOffMeasurementErrors = (threshold: number) => {
+    const errors: ErrorCell[] = [];
+    const data = surveyData;
+
+    for (let i = 1; i < data.length; i++) {
+      const prevRow = data[i - 1];
+      const currentRow = data[i];
+
+      for (let key of SurveyOnOffVoltageKeys) {
+        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+
+        if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
+          errors.push({ rowIndex: i-1, columnName: key });
+          errors.push({ rowIndex: i, columnName: key });
+        }
+      }
+    }
+    setErrorCells(errors);
+  };
+
+  const handleScanDSVGMeasurementErrors = (threshold: number) => {
+    const errors: ErrorCell[] = [];
+    const data = surveyData;
+
+    for (let i = 1; i < data.length; i++) {
+      const prevRow = data[i - 1];
+      const currentRow = data[i];
+
+      for (let key of SurveyDSVGVoltageKeys) {
+        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+
+        if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
+          errors.push({ rowIndex: i-1, columnName: key });
+          errors.push({ rowIndex: i-1, columnName: SurveyCommentKey });
+          errors.push({ rowIndex: i, columnName: key });
+          errors.push({ rowIndex: i, columnName: SurveyCommentKey });
+        }
+      }
+    }
+    setErrorCells(errors);
+  };
+
+  const handleScanStationGapErrors = () => {
+    const errors: ErrorCell[] = [];
+    const data = surveyData;
+
+    for (let i = 1; i < data.length; i++) {
+      const prevRow = data[i - 1];
+      const currentRow = data[i];
+
+      for (let key of SurveyStationKeys) {
+        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+
+        if (voltageDiff > 1) { // Convert mV to V for comparison
+          errors.push({ rowIndex: i-1, columnName: key });
+          errors.push({ rowIndex: i, columnName: key });
+        }
+      }
+    }
+    setErrorCells(errors);
+  };
+
+  const handleCellClick = (
+    e: React.MouseEvent<HTMLTableCellElement>,
+    rowIndex: number,
+    columnName: keyof SurveyDataRow
+  ) => {
+    const isError = errorCells.some(
+      err => err.rowIndex === rowIndex && err.columnName === columnName
+    );
+    if (!isError) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    setPopover({
+      rowIndex,
+      columnName,
+      value: surveyData[rowIndex][columnName] as number | undefined,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  };
+
+  const handleSave = (newValue: number) => {
+    if (!popover) return;
+
+    const updatedData = [...surveyData];
+    updatedData[popover.rowIndex] = {
+      ...updatedData[popover.rowIndex],
+      [popover.columnName]: newValue,
+    };
+    setSurveyData(updatedData);
+
+    // Optional: Re-scan to see if the error is resolved
+    // handleScan(currentThreshold); 
+
+    setPopover(null);
+  };
+
+  const headers = Object.keys(surveyData[0]) as (keyof SurveyDataRow)[];
 
   return (
     <div className={styles.container}>
@@ -30,6 +157,11 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           <FaInfoCircle />
         </button>
       </div>
+      <ErrorPanel
+          onScanMeasurementErrors={handleScanOnOffMeasurementErrors}
+          onScanDCVGErrors={handleScanDSVGMeasurementErrors}
+          onScanStationGapErrors={handleScanStationGapErrors}
+      />
       <div className={styles.sheetContainer}>
         <table className={styles.sheetTable}>
           <thead>
@@ -40,18 +172,38 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
             </tr>
           </thead>
           <tbody>
-            {survey.surveyData.map((row, rowIndex) => (
+            {surveyData.map((row, rowIndex) => (
               <tr key={rowIndex}>
                 {headers.map(header => {
+                  const isError = errorCells.some(
+                    err => err.rowIndex === rowIndex && err.columnName === header
+                  );
                   const value = row[header as keyof SurveyDataRow];
                   const valueString = value !== undefined ? String(value) : '';
-                  return (<td key={`${rowIndex}-${header}`}>{valueString}</td>);
+                  return (
+                    <td 
+                      key={`${rowIndex}-${header}`}
+                      className={isError ? styles.errorCell : ''}
+                      onClick={(e) => handleCellClick(e, rowIndex, header)}
+                    >
+                      {valueString}
+                    </td>
+                  );
                 })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {popover && (
+        <ErrorPopover
+          top={popover.top}
+          left={popover.left}
+          initialValue={popover.value}
+          onSave={handleSave}
+          onClose={() => setPopover(null)}
+        />
+      )}
       <SurveyInfoModal
         isOpen={isInfoModalOpen}
         onClose={() => setInfoModalOpen(false)}
