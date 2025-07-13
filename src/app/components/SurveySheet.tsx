@@ -73,16 +73,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const errors: ErrorCell[] = [];
     const data = surveyData;
 
-    for (let i = 1; i < data.length; i++) {
-      const prevRow = data[i - 1];
+    for (let i = 0; i < data.length; i++) {
       const currentRow = data[i];
 
       for (let key of SurveyDSVGVoltageKeys) {
-        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
-        if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
-          errors.push({ rowIndex: i-1, columnName: key });
-          errors.push({ rowIndex: i-1, columnName: SurveyCommentKey });
+        if (Math.abs(currentRow[key] || 0) > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({ rowIndex: i, columnName: key });
           errors.push({ rowIndex: i, columnName: SurveyCommentKey });
         }

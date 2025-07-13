@@ -31,6 +31,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         onVoltage: voltToMillyVolt(row['On Voltage']),
         offVoltage: voltToMillyVolt(row['Off Voltage']),
         constantVoltage: CONSTANT_VOLTAGE,
+        dcvg: voltToMillyVolt(row['DCVG Voltage']),
       });
     });
 

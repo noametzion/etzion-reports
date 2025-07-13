@@ -9,7 +9,7 @@ interface ErrorPanelProps {
 
 const ErrorPanel: React.FC<ErrorPanelProps> = ({ onScanMeasurementErrors, onScanStationGapErrors, onScanDCVGErrors}) => {
   const [onOffVoltageThreshold, setOnOffVoltageThreshold] = useState(300);
-  const [DCVGThreshold, setDCVGThreshold] = useState(300);
+  const [DCVGThreshold, setDCVGThreshold] = useState(5);
 
   const handleScanMeasurementErrorsClick = () => {
     onScanMeasurementErrors(onOffVoltageThreshold);
