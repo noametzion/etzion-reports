@@ -43,7 +43,7 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       });
     });
 
-    // add titles TODO: ??
+    // add titles
     const newMaps: MapInfo[] = Object.keys(mapSegments).map(key => {
       const segmentIndex = parseInt(key, 10);
       const startDist = segmentIndex * splitDistance;

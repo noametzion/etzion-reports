@@ -57,7 +57,6 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       const newData: GraphDataPoint[] = Array.from({length: endDist-startDist+1}, (_, i) => {
         const distance = startDist + i;
         const graphInfo = graphSegments[segmentIndex][i] || { distance: distance };
-        if(distance === 40) console.log(graphInfo);
         return graphInfo;
       })
 

@@ -53,7 +53,6 @@ const MapView = ({ mapInfo, allMapsInfos }: MapViewProps) => {
   const positions: [number, number][][] = useMemo(() => {
     return dataPointsToPositions(mapInfo.data);
   }, [mapInfo]);
-  console.log("positions", positions);
 
   const extendedPositions: [number, number][][] = useMemo(() => {
     const allData = allMapsInfos?.map((map) => map.data).flat() || [];
