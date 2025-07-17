@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { GraphInfo } from '@/app/types/report';
 import styles from './GraphDisplay.module.css';

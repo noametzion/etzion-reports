@@ -1,0 +1,21 @@
+.mapContainer {
+  height: 300px;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+/* leaflet custom marker */
+.markerCircle {
+  border-radius: 50%;
+}
+
+.startMarker {
+  background: green;
+}
+
+.endMarker{
+  background: orangered;
+}

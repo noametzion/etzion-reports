@@ -48,7 +48,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       });
     });
 
-    // add empty distances at the end of the last segment
+    // add titles and empty distances at the end of the last segment
     const newGraphs: GraphInfo[] = Object.keys(graphSegments).map(key => {
       const segmentIndex = parseInt(key, 10);
       const startDist = segmentIndex * splitDistance;
