@@ -12,7 +12,7 @@ export interface MapDataPoint {
     latitude: number;
     longitude: number;
     altitude: number;
-  };
+  } | "break";
 }
 
 export interface GraphInfo {

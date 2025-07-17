@@ -11,8 +11,8 @@ import {MapDataPoint, MapInfo} from "@/app/types/report";
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 interface MapUpdaterProps {
-  positions: [number, number][];
-  extendedPositions: [number, number][];
+  positions: [number, number][][];
+  extendedPositions: [number, number][][];
 }
 
 interface MapViewProps {
@@ -24,7 +24,8 @@ const MapUpdater = ({ positions , extendedPositions}: MapUpdaterProps) => {
   const map = useMap();
   useEffect(() => {
     if (positions.length > 0) {
-      const bounds = new L.LatLngBounds(positions);
+      const flatPositions = positions.flat();
+      const bounds = new L.LatLngBounds(flatPositions);
       map.fitBounds(bounds, { padding: [20, 20] });
     }
   }, [positions, map]);
@@ -32,19 +33,29 @@ const MapUpdater = ({ positions , extendedPositions}: MapUpdaterProps) => {
   return null;
 };
 
-const dataPointsToPositions = (data: MapDataPoint[]) => {
-  return data
-      .map((point) => point.location ? [point.location.latitude, point.location.longitude] : undefined)
-      .filter((pos) => pos !== undefined) as [number, number][];
+const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
+  const positions: [number, number][][] = [];
+  let currentLineSegment: [number, number][] = [];
+  data.forEach((point) => {
+    if (point.location === "break") {
+      currentLineSegment.length > 0 && positions.push(currentLineSegment);
+      currentLineSegment = [];
+    } else if (point.location !== undefined) {
+      currentLineSegment.push([point.location.latitude, point.location.longitude]);
+    } // else: ignore in case of undefined location
+  });
+  currentLineSegment.length > 0 && positions.push(currentLineSegment);
+  return positions;
 }
 
 const MapView = ({ mapInfo, allMapsInfos }: MapViewProps) => {
 
-  const positions: [number, number][] = useMemo(() => {
+  const positions: [number, number][][] = useMemo(() => {
     return dataPointsToPositions(mapInfo.data);
   }, [mapInfo]);
+  console.log("positions", positions);
 
-  const extendedPositions: [number, number][] = useMemo(() => {
+  const extendedPositions: [number, number][][] = useMemo(() => {
     const allData = allMapsInfos?.map((map) => map.data).flat() || [];
     return dataPointsToPositions(allData);
   }, [allMapsInfos]);
@@ -58,9 +69,13 @@ const MapView = ({ mapInfo, allMapsInfos }: MapViewProps) => {
     className: `${styles.markerCircle} ${type === "start" ? styles.startMarker : styles.endMarker}`,
   });
 
+  const firstPosition = positions[0][0];
+  const lastLineSegmentPositionIndex = positions[positions.length - 1].length-1;
+  const lastPosition = positions[positions.length - 1][lastLineSegmentPositionIndex];
+
   return (
     <MapContainer
-      center={[positions[0][0], positions[0][1]]}
+      center={[positions[0][0][0], positions[0][0][1]]}
       zoom={13}
       className={styles.mapContainer}
       zoomControl
@@ -73,8 +88,8 @@ const MapView = ({ mapInfo, allMapsInfos }: MapViewProps) => {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      <Marker key={"start"} position={positions[0]} icon={getMarker("start")} />
-      <Marker key={"end"} position={positions[positions.length - 1]} icon={getMarker("end")} />
+      <Marker key={"start"} position={firstPosition} icon={getMarker("start")} />
+      <Marker key={"end"} position={lastPosition} icon={getMarker("end")} />
       <Polyline positions={extendedPositions} color="lightblue" />
       <Polyline positions={positions} color="blue" />
       <MapUpdater positions={positions} extendedPositions={extendedPositions} />

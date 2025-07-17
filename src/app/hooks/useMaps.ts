@@ -23,13 +23,13 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
         mapSegments[segmentIndex] = [];
       }
 
-      // add empty distances TODO: ?? i need to fix the gap!!!
+      // add "break" for empty distances
       let prevDistance = index > 0 ? surveyData[index - 1]['Dist From Start'] : undefined;
       while (prevDistance !== undefined &&  prevDistance + 1 !== distance) {
         prevDistance++;
         mapSegments[segmentIndex].push({
           distance: prevDistance,
-          location: undefined
+          location: "break",
         });
       }
 
