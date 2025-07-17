@@ -57,3 +57,8 @@
   top: 0;
   z-index: 1;
 }
+
+.errorCell {
+  background-color: #ffcccc; /* Light red background */
+  cursor: pointer;
+}

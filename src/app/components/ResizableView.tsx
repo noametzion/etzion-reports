@@ -45,12 +45,14 @@ const ResizableView = ({
   };
 
   useEffect(() => {
-    window.addEventListener('mousemove', resize);
-    window.addEventListener('mouseup', stopResizing);
-    return () => {
-      window.removeEventListener('mousemove', resize);
-      window.removeEventListener('mouseup', stopResizing);
-    };
+    if (isResizing) {
+      window.addEventListener('mousemove', resize);
+      window.addEventListener('mouseup', stopResizing);
+      return () => {
+        window.removeEventListener('mousemove', resize);
+        window.removeEventListener('mouseup', stopResizing);
+      };
+    }
   }, [isResizing]);
 
   return (
