@@ -34,9 +34,9 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo }) => {
           <YAxis label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="onVoltage" stroke="#82ca9d" name="On Voltage" />
-          <Line type="monotone" dataKey="offVoltage" stroke="#8884d8" name="Off Voltage" />
-          <Line type="monotone" dataKey="constantVoltage" stroke="#ff0000" name="-850mV Ref" />
+          <Line type="linear" dataKey="onVoltage" stroke="#82ca9d" name="On Voltage" />
+          <Line type="linear" dataKey="offVoltage" stroke="#8884d8" name="Off Voltage" />
+          <Line type="linear" dataKey="constantVoltage" stroke="#ff0000" name="-850mV Ref" />
         </LineChart>
       </ResponsiveContainer>
       <ResponsiveContainer width="100%" height={250}>
@@ -54,7 +54,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo }) => {
           <YAxis label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }} />
           <Tooltip />
           <Legend />
-          <Line type="monotone" dataKey="dcvg" stroke="#878788" name="DCVG Diff" />
+          <Line type="linear" dataKey="dcvg" stroke="#878788" name="DCVG Diff" />
         </LineChart>
       </ResponsiveContainer>
     </div>

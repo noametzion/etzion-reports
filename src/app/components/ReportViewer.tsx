@@ -9,11 +9,12 @@ interface ReportViewerProps {
   surveyFile: SurveyFile | null;
 }
 
-const SPLIT_DISTANCE = 500;
+const DEFAULT_SPLIT_DISTANCE = 500;
 
 const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
   const {survey} = useSurveyReader(surveyFile);
-  const graphs = useGraphs(survey?.surveyData || null, SPLIT_DISTANCE);
+  const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
+  const graphs = useGraphs(survey?.surveyData || null, splitDistance);
 
   const surveyName = survey?.surveyInfo[InfoSurveyNameKey] || surveyFile?.name;
 
@@ -21,6 +22,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Report Viewer - {surveyName}</h2>
+        <span>Split Distance:</span>
+        <input
+            type="number"
+            value={splitDistance}
+            onChange={(e) => setSplitDistance(Number(e.target.value))}
+        />
       </div>
       <div className={styles.graphsContainer}>
         {graphs.map((graph, index) => (
