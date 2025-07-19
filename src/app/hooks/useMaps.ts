@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { SurveyDataRow } from '@/app/types/survey';
+import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {MapDataPoint, MapInfo} from "@/app/types/report";
+import {createSegments} from "@/app/utils/reportUtils";
 
 export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: number): MapInfo[] => {
   const [maps, setMaps] = useState<MapInfo[]>([]);
@@ -11,51 +12,48 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       return;
     }
 
-    const mapSegments: { [key: number]: MapDataPoint[] } = {};
+    // init segments with default values
+    const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
+    let mapSegments: { [key: number]: MapDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: MapDataPoint[] };
 
     surveyData.forEach((row, index) => {
-      const distance = row['Dist From Start'];
+      const distance = row[SurveyDistanceKey];
       if (distance === undefined) return;
 
-      // check and add the current segment
-      const segmentIndex = Math.floor(distance / splitDistance);
-      if (!mapSegments[segmentIndex]) {
-        mapSegments[segmentIndex] = [];
-      }
+      const segmentIndex = Math.floor(Number(distance) / splitDistance);
 
-      // add "break" for empty distances
-      let prevDistance = index > 0 ? surveyData[index - 1]['Dist From Start'] : undefined;
-      while (prevDistance !== undefined &&  prevDistance + 1 !== distance) {
+      // modify to "break" for empty distances
+      let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
+      while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
         prevDistance++;
-        mapSegments[segmentIndex].push({
-          distance: prevDistance,
-          location: "break",
-        });
+        let prevDistanceIndexInSegment = prevDistance % splitDistance;
+        mapSegments[segmentIndex][prevDistanceIndexInSegment] = {
+          ...mapSegments[segmentIndex][prevDistanceIndexInSegment],
+          location: "break"
+        };
       }
 
-      mapSegments[segmentIndex].push({
-        distance: distance,
+      let distanceIndexInSegment = Number(distance) % splitDistance;
+
+      mapSegments[segmentIndex][distanceIndexInSegment] = {
+        ...mapSegments[segmentIndex][distanceIndexInSegment],
         location: {
           latitude: row['Latitude'],
           longitude: row['Longitude'],
           altitude: row['Altitude'],
         }
-      });
-    });
-
-    // add titles
-    const newMaps: MapInfo[] = Object.keys(mapSegments).map(key => {
-      const segmentIndex = parseInt(key, 10);
-      const startDist = segmentIndex * splitDistance;
-      const endDist = startDist + splitDistance;
-
-      return {
-        title: `Map: ${startDist}m - ${endDist}m`,
-        data: mapSegments[segmentIndex],
       };
     });
 
-    setMaps(newMaps);
+    setMaps(Object.entries(mapSegments).map(([_, segment]) => {
+      const startDist = segment[0].distance
+      const endDist = segment[segment.length - 1].distance
+
+      return {
+        title: `Graph: ${startDist}m - ${endDist}m`,
+        data: segment
+      };
+    }));
 
   }, [surveyData, splitDistance]);
 

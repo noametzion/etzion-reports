@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { SurveyDataRow } from '@/app/types/survey';
+import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {GraphInfo, GraphDataPoint} from "@/app/types/report";
+import {createSegments} from "@/app/utils/reportUtils";
 
 const CONSTANT_VOLTAGE = -850;
 const voltToMillyVolt= (V: number| undefined) => V!==undefined ? V * 1000 : V;
@@ -14,59 +15,50 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       return;
     }
 
-    const graphSegments: { [key: number]: GraphDataPoint[] } = {};
+    // init segments with default values
+    const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
+    let graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: GraphDataPoint[] };
 
     surveyData.forEach((row, index) => {
-      const distance = row['Dist From Start'];
+      const distance = row[SurveyDistanceKey];
       if (distance === undefined) return;
 
-      // check and add the current segment
-      const segmentIndex = Math.floor(distance / splitDistance);
-      if (!graphSegments[segmentIndex]) {
-        graphSegments[segmentIndex] = [];
-      }
+      const segmentIndex = Math.floor(Number(distance) / splitDistance);
 
-      // add empty distances
-      let prevDistance = index > 0 ? surveyData[index - 1]['Dist From Start'] : undefined;
-      while (prevDistance !== undefined &&  prevDistance + 1 !== distance) {
+      // modify empty distances
+      let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
+      while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
         prevDistance++;
-        graphSegments[segmentIndex].push({
-          distance: prevDistance,
+        let prevDistanceIndexInSegment = prevDistance % splitDistance;
+        graphSegments[segmentIndex][prevDistanceIndexInSegment] = {
+          ...graphSegments[segmentIndex][prevDistanceIndexInSegment],
           onVoltage: undefined,
           offVoltage: undefined,
           constantVoltage: CONSTANT_VOLTAGE,
           dcvg: undefined
-        });
+        };
       }
 
-      graphSegments[segmentIndex].push({
-        distance: distance,
+      let distanceIndexInSegment = Number(distance) % splitDistance;
+
+      graphSegments[segmentIndex][distanceIndexInSegment] = {
+        ...graphSegments[segmentIndex][distanceIndexInSegment],
         onVoltage: voltToMillyVolt(row['On Voltage']),
         offVoltage: voltToMillyVolt(row['Off Voltage']),
         constantVoltage: CONSTANT_VOLTAGE,
         dcvg: voltToMillyVolt(row['DCVG Voltage']),
-      });
-    });
-
-    // add titles and empty distances at the end of the last segment
-    const newGraphs: GraphInfo[] = Object.keys(graphSegments).map(key => {
-      const segmentIndex = parseInt(key, 10);
-      const startDist = segmentIndex * splitDistance;
-      const endDist = startDist + splitDistance;
-
-      const newData: GraphDataPoint[] = Array.from({length: endDist-startDist+1}, (_, i) => {
-        const distance = startDist + i;
-        const graphInfo = graphSegments[segmentIndex][i] || { distance: distance };
-        return graphInfo;
-      })
-
-      return {
-        title: `Graph: ${startDist}m - ${endDist}m`,
-        data: newData,
       };
     });
 
-    setGraphs(newGraphs);
+    setGraphs(Object.entries(graphSegments).map(([_, segment]) => {
+      const startDist = segment[0].distance
+      const endDist = segment[segment.length - 1].distance
+
+      return {
+        title: `Graph: ${startDist}m - ${endDist}m`,
+        data: segment
+      };
+    }));
 
   }, [surveyData, splitDistance]);
 

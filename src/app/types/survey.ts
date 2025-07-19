@@ -117,6 +117,7 @@ export interface SurveyFile {
 
 export const InfoSurveyNameKey = 'SurveyName';
 export const SurveyCommentKey = 'Comments / Desc' as keyof SurveyDataRow;
+export const SurveyDistanceKey = 'Dist From Start' as keyof SurveyDataRow;
 export const SurveyStationKeys = ['Dist From Start', 'Station No'] as const;
 export const SurveyOnOffVoltageKeys= ['On Voltage', 'Off Voltage'] as const;
 export const SurveyDSVGVoltageKeys = ['DCVG Voltage'] as const; //['DCVG Voltage On', 'DCVG Voltage Off']
