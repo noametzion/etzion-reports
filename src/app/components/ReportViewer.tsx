@@ -6,8 +6,12 @@ import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
 import {useSurveyReader} from "@/app/hooks/useSurveyReader";
-import MapView from "@/app/components/MapView";
 import {useMaps} from "@/app/hooks/useMaps";
+import dynamic from "next/dynamic";
+// Dynamically import MapView only on the client (because using leaflet)
+const MapView =
+    dynamic(() =>
+        import("@/app/components/MapView"), { ssr: false });
 
 interface ReportViewerProps {
   surveyFile: SurveyFile | null;
