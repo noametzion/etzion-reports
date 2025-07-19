@@ -8,11 +8,10 @@ import {useEffect, useMemo} from 'react';
 import {MapDataPoint, MapInfo} from "@/app/types/report";
 
 // Fix for default icon issue with webpack
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 interface MapUpdaterProps {
   positions: [number, number][][];
-  extendedPositions: [number, number][][];
 }
 
 interface MapViewProps {
@@ -20,7 +19,7 @@ interface MapViewProps {
   allMapsInfos?: MapInfo[];
 }
 
-const MapUpdater = ({ positions , extendedPositions}: MapUpdaterProps) => {
+const MapUpdater = ({ positions }: MapUpdaterProps) => {
   const map = useMap();
   useEffect(() => {
     if (positions.length > 0) {
@@ -38,13 +37,17 @@ const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
   let currentLineSegment: [number, number][] = [];
   data.forEach((point) => {
     if (point.location === "break") {
-      currentLineSegment.length > 0 && positions.push(currentLineSegment);
-      currentLineSegment = [];
+      if (currentLineSegment.length > 0) {
+        positions.push(currentLineSegment);
+        currentLineSegment = [];
+      }
     } else if (point.location !== undefined) {
       currentLineSegment.push([point.location.latitude, point.location.longitude]);
     } // else: ignore in case of undefined location
   });
-  currentLineSegment.length > 0 && positions.push(currentLineSegment);
+  if (currentLineSegment.length > 0) {
+    positions.push(currentLineSegment);
+  }
   return positions;
 }
 
@@ -91,7 +94,7 @@ const MapView = ({ mapInfo, allMapsInfos }: MapViewProps) => {
       <Marker key={"end"} position={lastPosition} icon={getMarker("end")} />
       <Polyline positions={extendedPositions} color="lightblue" />
       <Polyline positions={positions} color="blue" />
-      <MapUpdater positions={positions} extendedPositions={extendedPositions} />
+      <MapUpdater positions={positions} />
     </MapContainer>
   );
 };

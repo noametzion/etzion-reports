@@ -14,7 +14,7 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
 
     // init segments with default values
     const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
-    let mapSegments: { [key: number]: MapDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: MapDataPoint[] };
+    const mapSegments: { [key: number]: MapDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: MapDataPoint[] };
 
     surveyData.forEach((row, index) => {
       const distance = row[SurveyDistanceKey];
@@ -26,14 +26,14 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
       while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
         prevDistance++;
-        let prevDistanceIndexInSegment = prevDistance % splitDistance;
+        const prevDistanceIndexInSegment = prevDistance % splitDistance;
         mapSegments[segmentIndex][prevDistanceIndexInSegment] = {
           ...mapSegments[segmentIndex][prevDistanceIndexInSegment],
           location: "break"
         };
       }
 
-      let distanceIndexInSegment = Number(distance) % splitDistance;
+      const distanceIndexInSegment = Number(distance) % splitDistance;
 
       mapSegments[segmentIndex][distanceIndexInSegment] = {
         ...mapSegments[segmentIndex][distanceIndexInSegment],

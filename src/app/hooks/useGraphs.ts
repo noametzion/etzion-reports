@@ -17,7 +17,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
 
     // init segments with default values
     const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
-    let graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: GraphDataPoint[] };
+    const graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: GraphDataPoint[] };
 
     surveyData.forEach((row, index) => {
       const distance = row[SurveyDistanceKey];
@@ -29,7 +29,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
       while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
         prevDistance++;
-        let prevDistanceIndexInSegment = prevDistance % splitDistance;
+        const prevDistanceIndexInSegment = prevDistance % splitDistance;
         graphSegments[segmentIndex][prevDistanceIndexInSegment] = {
           ...graphSegments[segmentIndex][prevDistanceIndexInSegment],
           onVoltage: undefined,
@@ -39,7 +39,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         };
       }
 
-      let distanceIndexInSegment = Number(distance) % splitDistance;
+      const distanceIndexInSegment = Number(distance) % splitDistance;
 
       graphSegments[segmentIndex][distanceIndexInSegment] = {
         ...graphSegments[segmentIndex][distanceIndexInSegment],
