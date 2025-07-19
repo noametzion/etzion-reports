@@ -57,7 +57,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const prevRow = data[i - 1];
       const currentRow = data[i];
 
-      for (let key of SurveyOnOffVoltageKeys) {
+      for (const key of SurveyOnOffVoltageKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
         if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
@@ -76,7 +76,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     for (let i = 0; i < data.length; i++) {
       const currentRow = data[i];
 
-      for (let key of SurveyDSVGVoltageKeys) {
+      for (const key of SurveyDSVGVoltageKeys) {
 
         if (Math.abs(currentRow[key] || 0) > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({ rowIndex: i, columnName: key });
@@ -95,7 +95,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const prevRow = data[i - 1];
       const currentRow = data[i];
 
-      for (let key of SurveyStationKeys) {
+      for (const key of SurveyStationKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
         if (voltageDiff > 1) { // Convert mV to V for comparison

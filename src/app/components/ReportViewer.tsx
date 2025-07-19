@@ -1,9 +1,17 @@
+"use client";
+
 import React from 'react';
 import {InfoSurveyNameKey, SurveyFile} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
 import {useSurveyReader} from "@/app/hooks/useSurveyReader";
+import {useMaps} from "@/app/hooks/useMaps";
+import dynamic from "next/dynamic";
+// Dynamically import MapView only on the client (because using leaflet)
+const MapView =
+    dynamic(() =>
+        import("@/app/components/MapView"), { ssr: false });
 
 interface ReportViewerProps {
   surveyFile: SurveyFile | null;
@@ -15,6 +23,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
   const {survey} = useSurveyReader(surveyFile);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
   const graphs = useGraphs(survey?.surveyData || null, splitDistance);
+  const maps = useMaps(survey?.surveyData || null, splitDistance);
 
   const surveyName = survey?.surveyInfo[InfoSurveyNameKey] || surveyFile?.name;
 
@@ -31,7 +40,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
       </div>
       <div className={styles.graphsContainer}>
         {graphs.map((graph, index) => (
-          <GraphDisplay key={index} graphInfo={graph} />
+          <div key={index}>
+            <GraphDisplay key={index} graphInfo={graph} />
+            <MapView
+                mapInfo={maps[index]}
+                allMapsInfos={maps}
+            />
+          </div>
         ))}
       </div>
     </div>
