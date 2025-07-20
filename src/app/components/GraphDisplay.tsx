@@ -39,7 +39,6 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus }) =
   },[graphInfo.data, focusDistance]);
 
   const OnOffGraph = useMemo(() => {
-    console.log("render");
     return (
         <LineChart
             data={graphInfo.data}
@@ -97,7 +96,6 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus }) =
   ]);
 
   const DCVGGraph = useMemo(() => {
-    console.log("render 2")
     return (<LineChart
         data={graphInfo.data}
         margin={margin}

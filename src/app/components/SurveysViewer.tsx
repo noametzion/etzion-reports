@@ -44,7 +44,6 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   };
 
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log(e.target.checked);
       onShouldFocusDistanceChanges(e.target.checked);
   };
 
