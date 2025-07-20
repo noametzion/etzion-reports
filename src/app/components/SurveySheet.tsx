@@ -35,7 +35,6 @@ interface PopoverState {
 
 const SurveySheet: React.FC<SurveySheetProps> = ({
   survey,
-  surveyFileName,
   shouldFocus
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
