@@ -51,7 +51,9 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
 
       return {
         title: `Graph: ${startDist}m - ${endDist}m`,
-        data: segment
+        data: segment,
+        startDistance: startDist,
+        endDistance: endDist
       };
     }));
 

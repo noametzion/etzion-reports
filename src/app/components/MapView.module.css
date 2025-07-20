@@ -16,6 +16,12 @@
   background: green;
 }
 
-.endMarker{
-  background: orangered;
+.endMarker {
+  background-color: red;
+}
+
+.focusMarker {
+  background-color: #ff00ff; /* A bright magenta for high visibility */
+  border: 1px solid #fff;
+  box-shadow: 0 0 5px #ff00ff;
 }

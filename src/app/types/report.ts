@@ -16,12 +16,18 @@ export interface MapDataPoint extends DataPoint {
   } | "break";
 }
 
-export interface GraphInfo {
-  title: string;
-  data: GraphDataPoint[];
+export interface SegmentInfo {
+  startDistance: number;
+  endDistance: number;
 }
 
-export interface MapInfo {
+export interface GraphInfo extends SegmentInfo {
+  title: string;
+  data: GraphDataPoint[];
+
+}
+
+export interface MapInfo extends SegmentInfo {
   title: string;
   data: MapDataPoint[];
 }
