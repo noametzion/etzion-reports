@@ -43,7 +43,7 @@ const dataPointsToPositions = (data: MapDataPoint[], ) : [number, number][][] =>
         positions.push(currentLineSegment);
         currentLineSegment = [];
       }
-    } else if (point.location !== undefined) {
+    } else if (point.location !== undefined && point.location.latitude !== undefined && point.location.longitude !== undefined) {
       currentLineSegment.push([point.location.latitude, point.location.longitude]);
     } // else: ignore in case of undefined location
   });
@@ -61,7 +61,7 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus}: MapViewProps) => {
     if (focusDistance === null || mapInfo.data.length === 0)
       return undefined;
     const focusLocation =  mapInfo.data.find((point) => point.distance === focusDistance)?.location;
-    return (focusLocation && focusLocation !== "break")
+    return (focusLocation && focusLocation !== "break" && focusLocation.latitude !== undefined && focusLocation.longitude !== undefined)
         ? [focusLocation.latitude, focusLocation.longitude]
         : undefined;
   }, [focusDistance, mapInfo]);
@@ -75,8 +75,9 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus}: MapViewProps) => {
     return dataPointsToPositions(allData);
   }, [allMapsInfos]);
 
+  console.log("positions", positions);
 
-  if (positions.length === 0) {
+  if (positions.length === 0 || positions[0].length === 0) {
     return <div>No location data available to display on the map.</div>;
   }
 

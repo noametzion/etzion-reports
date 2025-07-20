@@ -50,7 +50,7 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       const endDist = segment[segment.length - 1].distance
 
       return {
-        title: `Graph: ${startDist}m - ${endDist}m`,
+        title: `Map: ${startDist}m - ${endDist}m`,
         data: segment,
         startDistance: startDist,
         endDistance: endDist
