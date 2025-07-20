@@ -75,8 +75,6 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus}: MapViewProps) => {
     return dataPointsToPositions(allData);
   }, [allMapsInfos]);
 
-  console.log("positions", positions);
-
   if (positions.length === 0 || positions[0].length === 0) {
     return <div>No location data available to display on the map.</div>;
   }

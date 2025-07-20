@@ -11,8 +11,8 @@ export interface SurveyDataRow {
   'DCP/Feature/DCVG Anomaly': string;
   'On Time': string;
   'Off Time': string;
-  'Latitude': number;
-  'Longitude': number;
+  'Latitude'?: number;
+  'Longitude'?: number;
   'Altitude': number;
   'Fix Quality': string;
   'GPS Type'?: string; //?
@@ -107,6 +107,7 @@ export interface Survey {
   surveyData: SurveyDataRow[];
   DCPData: DCPDataRow[];
   surveyInfo: SurveyInfo;
+  surveyDataHeaders: (keyof SurveyDataRow)[];
 }
 
 export interface SurveyFile {

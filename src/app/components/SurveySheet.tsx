@@ -147,8 +147,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   };
 
-  const headers = Object.keys(surveyData[0]) as (keyof SurveyDataRow)[];
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -166,7 +164,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         <table className={styles.sheetTable}>
           <thead>
             <tr>
-              {headers.map(header => (
+              {survey.surveyDataHeaders.map(header => (
                 <th key={header}>{header}</th>
               ))}
             </tr>
@@ -183,7 +181,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
                   onMouseLeave={() => setFocusDistance(null)}
                   className={isFocused ? styles.focusedRow : ''}
                 >
-                  {headers.map(header => {
+                  {survey.surveyDataHeaders.map(header => {
                     const isError = errorCells.some(
                       err => err.rowIndex === rowIndex && err.columnName === header
                     );
