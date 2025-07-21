@@ -15,11 +15,12 @@ const MapView =
 
 interface ReportViewerProps {
   surveyFile: SurveyFile | null;
+  shouldFocus: boolean;
 }
 
 const DEFAULT_SPLIT_DISTANCE = 500;
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
+const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) => {
   const {survey} = useSurveyReader(surveyFile);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
   const graphs = useGraphs(survey?.surveyData || null, splitDistance);
@@ -41,10 +42,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile }) => {
       <div className={styles.graphsContainer}>
         {graphs.map((graph, index) => (
           <div key={index}>
-            <GraphDisplay key={index} graphInfo={graph} />
+            <GraphDisplay
+                key={index}
+                graphInfo={graph}
+                shouldFocus={shouldFocus}
+            />
             <MapView
                 mapInfo={maps[index]}
                 allMapsInfos={maps}
+                shouldFocus={shouldFocus}
             />
           </div>
         ))}

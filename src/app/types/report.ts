@@ -10,18 +10,24 @@ export interface GraphDataPoint extends DataPoint {
 
 export interface MapDataPoint extends DataPoint {
   location?: {
-    latitude: number;
-    longitude: number;
-    altitude: number;
+    latitude?: number;
+    longitude?: number;
+    altitude?: number;
   } | "break";
 }
 
-export interface GraphInfo {
-  title: string;
-  data: GraphDataPoint[];
+export interface SegmentInfo {
+  startDistance: number;
+  endDistance: number;
 }
 
-export interface MapInfo {
+export interface GraphInfo extends SegmentInfo {
+  title: string;
+  data: GraphDataPoint[];
+
+}
+
+export interface MapInfo extends SegmentInfo {
   title: string;
   data: MapDataPoint[];
 }

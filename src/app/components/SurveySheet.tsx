@@ -5,17 +5,19 @@ import {
   SurveyOnOffVoltageKeys,
   SurveyStationKeys,
   Survey,
-  SurveyDataRow, SurveyCommentKey,
+  SurveyDataRow, SurveyCommentKey, SurveyDistanceKey,
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import { FaInfoCircle } from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
 import ErrorPopover from './ErrorPopover';
+import {useFocusDistance} from "@/app/hooks/useFocusDistance";
 
 interface SurveySheetProps {
   survey: Survey;
   surveyFileName: string;
+  shouldFocus: boolean;
 }
 
 interface ErrorCell {
@@ -33,17 +35,19 @@ interface PopoverState {
 
 const SurveySheet: React.FC<SurveySheetProps> = ({
   survey,
-  surveyFileName
+  shouldFocus
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const [surveyData, setSurveyData] = useState<SurveyDataRow[]>(survey.surveyData);
-  const surveyName = survey.surveyInfo[InfoSurveyNameKey] || surveyFileName;
+  const surveyName = survey.surveyInfo[InfoSurveyNameKey];
+  const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
 
   useEffect(() => {
     setSurveyData(survey.surveyData);
-  }, [survey.surveyData]);
+    setFocusDistance(null);
+  }, [survey.surveyData, setFocusDistance]);
 
   if (!survey || surveyData.length === 0) {
     return <div>No survey data to display.</div>;
@@ -143,8 +147,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   };
 
-  const headers = Object.keys(surveyData[0]) as (keyof SurveyDataRow)[];
-
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -162,32 +164,42 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         <table className={styles.sheetTable}>
           <thead>
             <tr>
-              {headers.map(header => (
+              {survey.surveyDataHeaders.map(header => (
                 <th key={header}>{header}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {surveyData.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {headers.map(header => {
-                  const isError = errorCells.some(
-                    err => err.rowIndex === rowIndex && err.columnName === header
-                  );
-                  const value = row[header as keyof SurveyDataRow];
-                  const valueString = value !== undefined ? String(value) : '';
-                  return (
-                    <td 
-                      key={`${rowIndex}-${header}`}
-                      className={isError ? styles.errorCell : ''}
-                      onClick={(e) => handleCellClick(e, rowIndex, header)}
-                    >
-                      {valueString}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {surveyData.map((row, rowIndex) => {
+              const distance = row[SurveyDistanceKey];
+              const isFocused = focusDistance === distance;
+
+              return (
+                <tr 
+                  key={rowIndex} 
+                  onMouseEnter={() => setFocusDistance(Number(distance))}
+                  onMouseLeave={() => setFocusDistance(null)}
+                  className={isFocused ? styles.focusedRow : ''}
+                >
+                  {survey.surveyDataHeaders.map(header => {
+                    const isError = errorCells.some(
+                      err => err.rowIndex === rowIndex && err.columnName === header
+                    );
+                    const value = row[header as keyof SurveyDataRow];
+                    const valueString = value !== undefined ? String(value) : '';
+                    return (
+                      <td 
+                        key={`${rowIndex}-${header}`}
+                        className={isError ? styles.errorCell : ''}
+                        onClick={(e) => handleCellClick(e, rowIndex, header)}
+                      >
+                        {valueString}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

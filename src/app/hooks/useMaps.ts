@@ -45,13 +45,16 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       };
     });
 
+    // eslint-disable-next-line
     setMaps(Object.entries(mapSegments).map(([_, segment]) => {
       const startDist = segment[0].distance
       const endDist = segment[segment.length - 1].distance
 
       return {
-        title: `Graph: ${startDist}m - ${endDist}m`,
-        data: segment
+        title: `Map: ${startDist}m - ${endDist}m`,
+        data: segment,
+        startDistance: startDist,
+        endDistance: endDist
       };
     }));
 

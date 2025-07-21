@@ -10,10 +10,14 @@ import { SurveyFile } from '@/app/types/survey';
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
+    shouldFocus: boolean;
+    onShouldFocusDistanceChanges: (shouldFocus: boolean) => void;
 }
 
 const SurveysViewer: React.FC<SurveysViewerProps> = ({
   onSurveySelected,
+  onShouldFocusDistanceChanges,
+  shouldFocus
  }) => {
   const { files, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedFile, setSelectedFile] = React.useState<SurveyFile | null>(null);
@@ -29,6 +33,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
 
   const handleCloseFile = () => {
     setSelectedFile(null);
+    onShouldFocusDistanceChanges(false);
     onSurveySelected(null)
   };
 
@@ -36,6 +41,10 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     if (window.confirm(`Are you sure you want to delete ${fileName}?`)) {
       await deleteFile(fileName);
     }
+  };
+
+  const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
+      onShouldFocusDistanceChanges(e.target.checked);
   };
 
   if (isReading) {
@@ -55,7 +64,8 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     return (
       <div className={styles.sheetContainer}>
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
-        <SurveySheet survey={survey} surveyFileName={selectedFile?.name || ''}/>
+        <span> Focus on distance: </span><input type={"checkbox"} onChange={handleFocusCheckboxChanges}/>
+        <SurveySheet survey={survey} surveyFileName={selectedFile?.name || ''} shouldFocus={shouldFocus}/>
       </div>
     );
   }

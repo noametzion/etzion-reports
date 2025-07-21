@@ -15,6 +15,20 @@ const parseSurveyInfo = (sheet: XLSX.WorkSheet): SurveyInfo => {
     return info as SurveyInfo;
 };
 
+const getHeaders = (sheet: XLSX.WorkSheet): string[] => {
+  const headers: string[] = [];
+  // Get the sheet's full range, e.g. "A1:D10"
+  const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+  // Only read row 0 (Excel rows are 1-based, so r=0 is row 1)
+  const headerRowIndex = range.s.r;
+  for (let c = range.s.c; c <= range.e.c; ++c) {
+    const cellAddress = XLSX.utils.encode_cell({ r: headerRowIndex, c });
+    const cell = sheet[cellAddress];
+    headers.push(cell?.v ?? '');
+  }
+  return headers;
+};
+
 export const useSurveyReader = (file: SurveyFile | null) => {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,11 +64,13 @@ export const useSurveyReader = (file: SurveyFile | null) => {
         const surveyData = XLSX.utils.sheet_to_json<SurveyDataRow>(surveyDataSheet);
         const dcpData = XLSX.utils.sheet_to_json<DCPDataRow>(dcpDataSheet);
         const surveyInfo = parseSurveyInfo(surveyInfoSheet);
+        const surveyDataHeaders = getHeaders(surveyDataSheet) as (keyof SurveyDataRow)[];
 
         setSurvey({
           surveyData,
           DCPData: dcpData,
           surveyInfo,
+          surveyDataHeaders: surveyDataHeaders,
         });
 
       } catch (err) {
