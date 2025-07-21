@@ -8,11 +8,12 @@ import {
   SurveyDataRow, SurveyCommentKey, SurveyDistanceKey,
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
-import { FaInfoCircle } from 'react-icons/fa';
+import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
-import ErrorPopover from './ErrorPopover';
+import {EditableType, EditableTypeName} from './EditPopover';
 import {useFocusDistance} from "@/app/hooks/useFocusDistance";
+import EditPopover from "./EditPopover";
 
 interface SurveySheetProps {
   survey: Survey;
@@ -28,10 +29,25 @@ interface ErrorCell {
 interface PopoverState {
   rowIndex: number;
   columnName: keyof SurveyDataRow;
-  value: number | undefined;
+  value: EditableType | undefined;
+  type?: EditableTypeName;
   top: number;
   left: number;
 }
+
+const editableHeaders = new Map<keyof SurveyDataRow, EditableTypeName>();
+editableHeaders.set('Comment', 'string');
+editableHeaders.set('DCP/Feature/DCVG Anomaly', 'string');
+editableHeaders.set('DCVG Voltage', 'number');
+editableHeaders.set('Off Voltage', 'number');
+editableHeaders.set('On Voltage', 'number');
+editableHeaders.set('Latitude', 'number');
+editableHeaders.set('Longitude', 'number');
+
+const errorableCells = new Map<keyof SurveyDataRow, EditableTypeName>();
+errorableCells.set('Off Voltage', 'number');
+errorableCells.set('On Voltage', 'number');
+errorableCells.set('DCVG Voltage', 'number');
 
 const SurveySheet: React.FC<SurveySheetProps> = ({
   survey,
@@ -119,19 +135,21 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const isError = errorCells.some(
       err => err.rowIndex === rowIndex && err.columnName === columnName
     );
-    if (!isError) return;
+    const isEditable = editableHeaders.has(columnName);
+    if (!isError && !isEditable) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     setPopover({
       rowIndex,
       columnName,
-      value: surveyData[rowIndex][columnName] as number | undefined,
+      value: surveyData[rowIndex][columnName],
+      type: isEditable ? editableHeaders.get(columnName) : errorableCells.get(columnName),
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
   };
 
-  const handleSave = (newValue: number) => {
+  const handleSave = (newValue?: EditableType) => {
     if (!popover) return;
 
     const updatedData = [...surveyData];
@@ -185,15 +203,28 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
                     const isError = errorCells.some(
                       err => err.rowIndex === rowIndex && err.columnName === header
                     );
-                    const value = row[header as keyof SurveyDataRow];
-                    const valueString = value !== undefined ? String(value) : '';
+                    const isEditable = editableHeaders.has(header);
+
+                    const displayValue = row[header];
+
+                    const cellClassName = [
+                      styles.cell,
+                      isEditable ? styles.editableCell : styles.nonEditableCell,
+                      isError ? styles.errorCell : '',
+                    ].filter(Boolean).join(' ');
+
+                    if (isError) {
+                      console.log(cellClassName, isEditable);
+                    }
+
                     return (
-                      <td 
-                        key={`${rowIndex}-${header}`}
-                        className={isError ? styles.errorCell : ''}
-                        onClick={(e) => handleCellClick(e, rowIndex, header)}
+                      <td
+                        key={header}
+                        onClick={(e) => isEditable && handleCellClick(e, rowIndex, header)}
+                        className={cellClassName}
                       >
-                        {valueString}
+                        {displayValue}
+                        {(isEditable) && <span className={styles.editIcon}><FaPencilAlt /></span>}
                       </td>
                     );
                   })}
@@ -204,12 +235,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         </table>
       </div>
       {popover && (
-        <ErrorPopover
+        <EditPopover
           top={popover.top}
           left={popover.left}
           initialValue={popover.value}
           onSave={handleSave}
           onClose={() => setPopover(null)}
+          type={popover.type}
+          suggestions={[]}
         />
       )}
       <SurveyInfoModal

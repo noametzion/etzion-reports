@@ -59,8 +59,29 @@
 }
 
 .errorCell {
-  background-color: #ffcccc; /* Light red background */
+  background-color: #f4b6b6;
+}
+
+.editableCell {
+  position: relative;
   cursor: pointer;
+}
+
+.nonEditableCell {
+  opacity: 0.6;
+}
+
+.editIcon {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.6em;
+  display: none;
+}
+
+.editableCell:hover .editIcon,
+.errorCell:hover .editIcon {
+  display: block;
 }
 
 .focusedRow {
