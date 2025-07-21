@@ -10,9 +10,9 @@ export interface GraphDataPoint extends DataPoint {
 
 export interface MapDataPoint extends DataPoint {
   location?: {
-    latitude: number;
-    longitude: number;
-    altitude: number;
+    latitude?: number;
+    longitude?: number;
+    altitude?: number;
   } | "break";
 }
 

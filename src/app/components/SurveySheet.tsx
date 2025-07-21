@@ -47,7 +47,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   useEffect(() => {
     setSurveyData(survey.surveyData);
     setFocusDistance(null);
-  }, [survey.surveyData]);
+  }, [survey.surveyData, setFocusDistance]);
 
   if (!survey || surveyData.length === 0) {
     return <div>No survey data to display.</div>;
