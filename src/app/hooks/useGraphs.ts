@@ -47,6 +47,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         offVoltage: voltToMillyVolt(row['Off Voltage']),
         constantVoltage: CONSTANT_VOLTAGE,
         dcvg: voltToMillyVolt(row['DCVG Voltage']),
+        comment: row['Comment'] || row['DCP/Feature/DCVG Anomaly'],
       };
     });
 
