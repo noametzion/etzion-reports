@@ -21,6 +21,7 @@ import ErrorPanel from './ErrorPanel';
 import {useFocusDistance} from "@/app/hooks/useFocusDistance";
 import EditPopover from "./EditPopover";
 import {useSuggester} from "@/app/hooks/useSuggester";
+import { FixedSizeList as List } from 'react-window';
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -125,7 +126,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   }, [editedSurveyData]);
 
   const handleCellClick = useCallback((
-    e: React.MouseEvent<HTMLTableCellElement>,
+    e: React.MouseEvent<HTMLDivElement>,
     rowIndex: number,
     columnName: keyof SurveyDataRow
   ) => {
@@ -162,6 +163,64 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   },[popover, editedSurveyData, setEditedSurveyData, setPopover]);
 
+  const Row = useCallback(({ index : rowIndex} : {index : number}) => {
+    const row = editedSurveyData[rowIndex];
+    const distance = row[SurveyDistanceKey];
+    const station = Number(row[SurveyStationKey]);
+    const isFocused = focusDistance === distance;
+
+    const rowClassName = [
+      styles.tableRow,
+      isFocused ? styles.focusedRow : '',
+    ].filter(Boolean).join(' ');
+
+    return <div
+        key={rowIndex}
+        onMouseEnter={() => setFocusDistance(Number(distance))}
+        onMouseLeave={() => setFocusDistance(null)}
+        className={rowClassName}
+    >
+      {originalSurvey.surveyDataHeaders.map(header => {
+        const isError = errorCells.some(
+            err => err.rowIndex === rowIndex && err.columnName === header
+        );
+        const isEditable = EditableColumnHeaders.has(header);
+        const isSuggested = isEditable && !Number.isNaN(station) &&
+            ((header === SurveyCommentKey && suggestedCommentsStations.includes(station)) ||
+                (header === SurveyAnomalyKey && suggestedAnomaliesStations.includes(station)));
+
+        const cellValue = row[header];
+
+        const cellClassName = [
+          styles.tableCell,
+          isEditable ? styles.editableCell : styles.nonEditableCell,
+          isError ? styles.errorCell : '',
+        ].filter(Boolean).join(' ');
+
+        return (
+            <div
+                key={`${rowIndex}_${header}`}
+                onClick={(e) => isEditable && handleCellClick(e, rowIndex, header)}
+                className={cellClassName}
+            >
+              {cellValue}
+              {(isSuggested) && <div className={styles.suggestedMarker}/>}
+              {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
+            </div>
+        );
+      })}
+    </div>;
+  },[
+    editedSurveyData,
+    originalSurvey.surveyDataHeaders,
+    errorCells,
+    handleCellClick,
+    focusDistance,
+    suggestedCommentsStations,
+    suggestedAnomaliesStations
+  ]);
+
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -176,61 +235,21 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           onScanStationGapErrors={handleScanStationGapErrors}
       />
       <div className={styles.sheetContainer}>
-        <table className={styles.sheetTable}>
-          <thead>
-            <tr>
-              {originalSurvey.surveyDataHeaders.map(header => (
-                <th key={header}>{header}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {editedSurveyData.map((row, rowIndex) => {
-              const distance = row[SurveyDistanceKey];
-              const station = Number(row[SurveyStationKey]);
-              const isFocused = focusDistance === distance;
-
-              return (
-                <tr 
-                  key={rowIndex} 
-                  onMouseEnter={() => setFocusDistance(Number(distance))}
-                  onMouseLeave={() => setFocusDistance(null)}
-                  className={isFocused ? styles.focusedRow : ''}
-                >
-                  {originalSurvey.surveyDataHeaders.map(header => {
-                    const isError = errorCells.some(
-                      err => err.rowIndex === rowIndex && err.columnName === header
-                    );
-                    const isEditable = EditableColumnHeaders.has(header);
-                    const isSuggested = isEditable && !Number.isNaN(station) &&
-                        ((header === SurveyCommentKey && suggestedCommentsStations.includes(station)) ||
-                        (header === SurveyAnomalyKey && suggestedAnomaliesStations.includes(station)));
-
-                    const displayValue = row[header];
-
-                    const cellClassName = [
-                      styles.cell,
-                      isEditable ? styles.editableCell : styles.nonEditableCell,
-                      isError ? styles.errorCell : '',
-                    ].filter(Boolean).join(' ');
-
-                    return (
-                      <td
-                        key={header}
-                        onClick={(e) => isEditable && handleCellClick(e, rowIndex, header)}
-                        className={cellClassName}
-                      >
-                        {displayValue}
-                        {(isSuggested) && <div className={styles.suggestedMarker}/>}
-                        {(isEditable) && <span className={styles.editIcon}><FaPencilAlt /></span>}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className={styles.sheetTable}>
+          <div className={styles.headerRow}>
+            {originalSurvey.surveyDataHeaders.map(header => (
+              <div key={header} className={styles.tableCell}>{header}</div>
+            ))}
+            </div>
+          <List
+            height={300}
+            itemCount={editedSurveyData.length}
+            itemSize={30}
+            width="100%"
+          >
+            {Row}
+          </List>
+        </div>
       </div>
       {popover && (
         <EditPopover
