@@ -1,10 +1,9 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import styles from './EditPopover.module.css';
 import { FaSave, FaTimes, FaTrash} from 'react-icons/fa';
-
-
-export type EditableType = number | string ;
-export type EditableTypeName = "string" | "number";
+import {EditableType, EditableTypeName} from "@/app/types/survey";
 
 interface EditPopoverProps {
   initialValue?: EditableType;
@@ -52,13 +51,29 @@ const EditPopover: React.FC<EditPopoverProps> = ({
   };
 
   const StringEditor = () => {
-    return (<input
+    return (<>
+      <input
         type="text"
         value={value || ""}
         onChange={(e) => setValue(e.target.value)}
         className={styles.input}
         autoFocus
-    />);
+      />
+      {suggestions.length > 0 &&
+        <select
+          id="suggestions"
+          className={styles.input}
+          value={value}
+          onChange={(e) => setValue(e.target.value || value)}
+        >
+          <option value="">--Choose Suggestion--</option>
+          {suggestions.map((suggestion) => {
+            return (
+            <option key={suggestion} value={suggestion}>{suggestion}</option>
+          )})}
+        </select>
+      }
+    </>);
   };
 
   return (

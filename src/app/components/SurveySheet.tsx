@@ -1,22 +1,30 @@
-import React, { useState, useEffect } from 'react';
+"use client";
+
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   SurveyDSVGVoltageKeys,
-  InfoSurveyNameKey,
+  SurveyInfoNameKey,
   SurveyOnOffVoltageKeys,
   SurveyStationKeys,
   Survey,
-  SurveyDataRow, SurveyCommentKey, SurveyDistanceKey,
+  SurveyDataRow,
+  SurveyCommentKey,
+  SurveyDistanceKey,
+  EditableType,
+  EditableTypeName,
+  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
-import {EditableType, EditableTypeName} from './EditPopover';
 import {useFocusDistance} from "@/app/hooks/useFocusDistance";
 import EditPopover from "./EditPopover";
+import {useSuggester} from "@/app/hooks/useSuggester";
 
 interface SurveySheetProps {
-  survey: Survey;
+  originalSurvey: Survey;
+  editedSurvey: EditedSurvey;
   surveyFileName: string;
   shouldFocus: boolean;
 }
@@ -35,47 +43,34 @@ interface PopoverState {
   left: number;
 }
 
-const editableHeaders = new Map<keyof SurveyDataRow, EditableTypeName>();
-editableHeaders.set('Comment', 'string');
-editableHeaders.set('DCP/Feature/DCVG Anomaly', 'string');
-editableHeaders.set('DCVG Voltage', 'number');
-editableHeaders.set('Off Voltage', 'number');
-editableHeaders.set('On Voltage', 'number');
-editableHeaders.set('Latitude', 'number');
-editableHeaders.set('Longitude', 'number');
-
-const errorableCells = new Map<keyof SurveyDataRow, EditableTypeName>();
-errorableCells.set('Off Voltage', 'number');
-errorableCells.set('On Voltage', 'number');
-errorableCells.set('DCVG Voltage', 'number');
-
 const SurveySheet: React.FC<SurveySheetProps> = ({
-  survey,
+  originalSurvey,
+  editedSurvey,
   shouldFocus
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
-  const [surveyData, setSurveyData] = useState<SurveyDataRow[]>(survey.surveyData);
-  const surveyName = survey.surveyInfo[InfoSurveyNameKey];
+  const [editedSurveyData, setEditedSurveyData] = useState<SurveyDataRow[]>(editedSurvey.surveyData);
+  const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString();
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey);
 
   useEffect(() => {
-    setSurveyData(survey.surveyData);
+    setEditedSurveyData(editedSurvey.surveyData);
     setFocusDistance(null);
-  }, [survey.surveyData, setFocusDistance]);
+  }, [editedSurvey.surveyData, setFocusDistance]);
 
-  if (!survey || surveyData.length === 0) {
+  if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {
     return <div>No survey data to display.</div>;
   }
 
-  const handleScanOnOffMeasurementErrors = (threshold: number) => {
+  const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
-    const data = surveyData;
 
-    for (let i = 1; i < data.length; i++) {
-      const prevRow = data[i - 1];
-      const currentRow = data[i];
+    for (let i = 1; i < editedSurveyData.length; i++) {
+      const prevRow = editedSurveyData[i - 1];
+      const currentRow = editedSurveyData[i];
 
       for (const key of SurveyOnOffVoltageKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
@@ -87,47 +82,49 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  };
+  },[editedSurveyData]);
 
-  const handleScanDSVGMeasurementErrors = (threshold: number) => {
+  const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
-    const data = surveyData;
 
-    for (let i = 0; i < data.length; i++) {
-      const currentRow = data[i];
+    for (let i = 0; i < editedSurveyData.length; i++) {
+      const currentRow = editedSurveyData[i];
 
       for (const key of SurveyDSVGVoltageKeys) {
 
         if (Math.abs(currentRow[key] || 0) > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({ rowIndex: i, columnName: key });
-          errors.push({ rowIndex: i, columnName: SurveyCommentKey });
+          errors.push({ rowIndex: i, columnName: SurveyAnomalyKey });
         }
       }
     }
     setErrorCells(errors);
-  };
+  },[editedSurveyData]);
 
-  const handleScanStationGapErrors = () => {
+  const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
-    const data = surveyData;
 
-    for (let i = 1; i < data.length; i++) {
-      const prevRow = data[i - 1];
-      const currentRow = data[i];
+    for (let i = 1; i < editedSurveyData.length; i++) {
+      const prevRow = editedSurveyData[i - 1];
+      const currentRow = editedSurveyData[i];
 
       for (const key of SurveyStationKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
         if (voltageDiff > 1) { // Convert mV to V for comparison
           errors.push({ rowIndex: i-1, columnName: key });
+          errors.push({ rowIndex: i-1, columnName: SurveyCommentKey });
+          errors.push({ rowIndex: i-1, columnName: SurveyAnomalyKey });
           errors.push({ rowIndex: i, columnName: key });
+          errors.push({ rowIndex: i, columnName: SurveyCommentKey });
+          errors.push({ rowIndex: i, columnName: SurveyAnomalyKey });
         }
       }
     }
     setErrorCells(errors);
-  };
+  }, [editedSurveyData]);
 
-  const handleCellClick = (
+  const handleCellClick = useCallback((
     e: React.MouseEvent<HTMLTableCellElement>,
     rowIndex: number,
     columnName: keyof SurveyDataRow
@@ -135,35 +132,35 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const isError = errorCells.some(
       err => err.rowIndex === rowIndex && err.columnName === columnName
     );
-    const isEditable = editableHeaders.has(columnName);
+    const isEditable = EditableColumnHeaders.has(columnName);
     if (!isError && !isEditable) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
     setPopover({
       rowIndex,
       columnName,
-      value: surveyData[rowIndex][columnName],
-      type: isEditable ? editableHeaders.get(columnName) : errorableCells.get(columnName),
+      value: editedSurveyData[rowIndex][columnName],
+      type: EditableColumnHeaders.get(columnName),
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  };
+  },[errorCells, editedSurveyData, setPopover]);
 
-  const handleSave = (newValue?: EditableType) => {
+  const handleSave = useCallback((newValue?: EditableType) => {
     if (!popover) return;
 
-    const updatedData = [...surveyData];
+    const updatedData = [...editedSurveyData];
     updatedData[popover.rowIndex] = {
       ...updatedData[popover.rowIndex],
       [popover.columnName]: newValue,
     };
-    setSurveyData(updatedData);
+    setEditedSurveyData(updatedData);
 
     // Optional: Re-scan to see if the error is resolved
     // handleScan(currentThreshold); 
 
     setPopover(null);
-  };
+  },[popover, editedSurveyData, setEditedSurveyData, setPopover]);
 
   return (
     <div className={styles.container}>
@@ -182,14 +179,15 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         <table className={styles.sheetTable}>
           <thead>
             <tr>
-              {survey.surveyDataHeaders.map(header => (
+              {originalSurvey.surveyDataHeaders.map(header => (
                 <th key={header}>{header}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {surveyData.map((row, rowIndex) => {
+            {editedSurveyData.map((row, rowIndex) => {
               const distance = row[SurveyDistanceKey];
+              const station = Number(row[SurveyStationKey]);
               const isFocused = focusDistance === distance;
 
               return (
@@ -199,11 +197,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
                   onMouseLeave={() => setFocusDistance(null)}
                   className={isFocused ? styles.focusedRow : ''}
                 >
-                  {survey.surveyDataHeaders.map(header => {
+                  {originalSurvey.surveyDataHeaders.map(header => {
                     const isError = errorCells.some(
                       err => err.rowIndex === rowIndex && err.columnName === header
                     );
-                    const isEditable = editableHeaders.has(header);
+                    const isEditable = EditableColumnHeaders.has(header);
+                    const isSuggested = isEditable && !Number.isNaN(station) &&
+                        ((header === SurveyCommentKey && suggestedCommentsStations.includes(station)) ||
+                        (header === SurveyAnomalyKey && suggestedAnomaliesStations.includes(station)));
 
                     const displayValue = row[header];
 
@@ -213,10 +214,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
                       isError ? styles.errorCell : '',
                     ].filter(Boolean).join(' ');
 
-                    if (isError) {
-                      console.log(cellClassName, isEditable);
-                    }
-
                     return (
                       <td
                         key={header}
@@ -224,6 +221,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
                         className={cellClassName}
                       >
                         {displayValue}
+                        {(isSuggested) && <div className={styles.suggestedMarker}/>}
                         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt /></span>}
                       </td>
                     );
@@ -242,14 +240,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           onSave={handleSave}
           onClose={() => setPopover(null)}
           type={popover.type}
-          suggestions={[]}
+          suggestions={suggest(popover.columnName, popover.rowIndex)}
         />
       )}
       <SurveyInfoModal
         isOpen={isInfoModalOpen}
         onClose={() => setInfoModalOpen(false)}
-        surveyName={surveyName}
-        surveyInfo={survey.surveyInfo}
+        surveyName={surveyName || ''}
+        surveyInfo={originalSurvey.surveyInfo}
       />
     </div>
   );

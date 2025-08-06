@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {GraphInfo, GraphDataPoint} from "@/app/types/report";

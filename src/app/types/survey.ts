@@ -116,9 +116,39 @@ export interface SurveyFile {
   uploadedAt: string;
 }
 
-export const InfoSurveyNameKey = 'SurveyName';
-export const SurveyCommentKey = 'Comments / Desc' as keyof SurveyDataRow;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface EditedSurveyDataRow extends SurveyDataRow {
+  // break: boolean;
+}
+
+export interface EditedSurvey {
+  surveyData: EditedSurveyDataRow[];
+}
+
+export const SurveyInfoNameKey = 'SurveyName' as keyof SurveyInfo;
+
+export const DCPDataStationKey = "Station No" as keyof DCPDataRow;
+export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;
+export const DCPDataCommentKey = "Comments" as keyof DCPDataRow;
+
+export const SurveyCommentKey = 'Comment' as keyof SurveyDataRow;
+export const SurveyAnomalyKey = 'DCP/Feature/DCVG Anomaly' as keyof SurveyDataRow;
 export const SurveyDistanceKey = 'Dist From Start' as keyof SurveyDataRow;
+export const SurveyStationKey = 'Station No' as keyof SurveyDataRow;
 export const SurveyStationKeys = ['Dist From Start', 'Station No'] as const;
 export const SurveyOnOffVoltageKeys= ['On Voltage', 'Off Voltage'] as const;
 export const SurveyDSVGVoltageKeys = ['DCVG Voltage'] as const; //['DCVG Voltage On', 'DCVG Voltage Off']
+
+export type EditableType = number | string ;
+export type EditableTypeName = "string" | "number";
+
+const EditableColumnHeaders = new Map<keyof SurveyDataRow, EditableTypeName>();
+EditableColumnHeaders.set('Comment', 'string');
+EditableColumnHeaders.set('DCP/Feature/DCVG Anomaly', 'string');
+EditableColumnHeaders.set('DCVG Voltage', 'number');
+EditableColumnHeaders.set('Off Voltage', 'number');
+EditableColumnHeaders.set('On Voltage', 'number');
+EditableColumnHeaders.set('Latitude', 'number');
+EditableColumnHeaders.set('Longitude', 'number');
+
+export { EditableColumnHeaders };

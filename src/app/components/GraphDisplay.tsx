@@ -24,6 +24,7 @@ interface GraphDisplayProps {
 
 const margin = { top: 5, right: 30, left: 20, bottom: 5 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
     return (
         <text

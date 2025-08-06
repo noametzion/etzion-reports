@@ -1,3 +1,5 @@
+"use client";
+
 import {createContext, Dispatch, SetStateAction, useState, ReactNode} from 'react';
 
 interface FocusDistanceContextType {

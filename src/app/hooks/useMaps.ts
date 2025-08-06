@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {MapDataPoint, MapInfo} from "@/app/types/report";

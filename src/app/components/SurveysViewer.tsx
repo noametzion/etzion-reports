@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { FaTrash, FaFolderOpen } from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
@@ -7,6 +9,7 @@ import { useSurveyFiles } from '@/app/hooks/useFileUpload';
 import { useSurveyReader } from '@/app/hooks/useSurveyReader';
 import SurveySheet from './SurveySheet';
 import { SurveyFile } from '@/app/types/survey';
+import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -21,7 +24,9 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
  }) => {
   const { files, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedFile, setSelectedFile] = React.useState<SurveyFile | null>(null);
-  const { survey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedFile);
+  const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedFile);
+  const { editedSurvey } = useSurveyEditor(originalSurvey);
+
 
   const handleOpenFile = (fileName: string) => {
     const fileToOpen = getFile(fileName);
@@ -47,7 +52,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
       onShouldFocusDistanceChanges(e.target.checked);
   };
 
-  if (isReading) {
+  if (isReading || (originalSurvey && !editedSurvey)) {
     return <div className={styles.loading}>Reading survey...</div>;
   }
 
@@ -60,12 +65,12 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     );
   }
 
-  if (survey) {
+  if (originalSurvey && editedSurvey) {
     return (
       <div className={styles.sheetContainer}>
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
         <span> Focus on distance: </span><input type={"checkbox"} onChange={handleFocusCheckboxChanges}/>
-        <SurveySheet survey={survey} surveyFileName={selectedFile?.name || ''} shouldFocus={shouldFocus}/>
+        <SurveySheet originalSurvey={originalSurvey} editedSurvey={editedSurvey} surveyFileName={selectedFile?.name || ''} shouldFocus={shouldFocus}/>
       </div>
     );
   }

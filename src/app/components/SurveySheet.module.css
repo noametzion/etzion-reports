@@ -79,6 +79,17 @@
   display: none;
 }
 
+.suggestedMarker {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    /*display: none;*/
+    width: 0;
+    height: 0;
+    border-top: 10px solid #ea7b3f;     /* triangle color */
+    border-left: 10px solid transparent;
+}
+
 .editableCell:hover .editIcon,
 .errorCell:hover .editIcon {
   display: block;

@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import styles from './SurveyInfoModal.module.css';
 import {SurveyInfo} from "@/app/types/survey";
