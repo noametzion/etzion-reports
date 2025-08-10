@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef, memo, useMemo} from 'react';
 import {
   SurveyDSVGVoltageKeys,
   SurveyInfoNameKey,
@@ -12,16 +12,16 @@ import {
   SurveyDistanceKey,
   EditableType,
   EditableTypeName,
-  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey
+  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
-import {useFocusDistance} from "@/app/hooks/useFocusDistance";
-import EditPopover from "./EditPopover";
-import {useSuggester} from "@/app/hooks/useSuggester";
-import { FixedSizeList as List } from 'react-window';
+import {areEqual, FixedSizeList as List} from 'react-window';
+import {useFocusDistance} from '@/app/hooks/useFocusDistance';
+import EditPopover from './EditPopover';
+import {useSuggester} from '@/app/hooks/useSuggester';
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -44,6 +44,16 @@ interface PopoverState {
   left: number;
 }
 
+interface ItemData {
+  items: EditedSurveyDataRow[];
+  headers: (keyof SurveyDataRow)[];
+  errorCells: ErrorCell[];
+  handleCellClick: (e: React.MouseEvent<HTMLDivElement>, rowIndex: number, columnName: keyof SurveyDataRow) => void;
+  focusDistance: number | null;
+  suggestedCommentsStations: number[];
+  suggestedAnomaliesStations: number[];
+}
+
 const SurveySheet: React.FC<SurveySheetProps> = ({
   originalSurvey,
   editedSurvey,
@@ -52,7 +62,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
-  const [editedSurveyData, setEditedSurveyData] = useState<SurveyDataRow[]>(editedSurvey.surveyData);
+  const [editedSurveyData, setEditedSurveyData] = useState<EditedSurveyDataRow[]>(editedSurvey.surveyData);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString();
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey);
@@ -66,6 +76,23 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     return <div>No survey data to display.</div>;
   }
 
+  // useEffect(() => {
+  //
+  //   function syncScroll(sourceElement: any, targetElement: any) {
+  //     console.log('Syncing scroll');
+  //     console.log(sourceElement.scrollLeft);
+  //     targetElement.scrollLeft = sourceElement.scrollLeft;
+  //   }
+  //
+  //   const tableContent = document.querySelector(`.${styles.tableBody} > div`);
+  //   console.log('Content:', tableContent);
+  //
+  //   const tableHeader = document.querySelector(`.${styles.headerRow} > div`);
+  //   console.log('Header:', tableHeader);
+  //
+  //   // tableContent?.addEventListener('scroll', () => syncScroll(tableContent, tableHeader));
+  // },[]);
+
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
 
@@ -77,13 +104,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
         if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
-          errors.push({ rowIndex: i-1, columnName: key });
-          errors.push({ rowIndex: i, columnName: key });
+          errors.push({rowIndex: i - 1, columnName: key});
+          errors.push({rowIndex: i, columnName: key});
         }
       }
     }
     setErrorCells(errors);
-  },[editedSurveyData]);
+  }, [editedSurveyData]);
 
   const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
@@ -94,13 +121,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       for (const key of SurveyDSVGVoltageKeys) {
 
         if (Math.abs(currentRow[key] || 0) > (threshold / 1000)) { // Convert mV to V for comparison
-          errors.push({ rowIndex: i, columnName: key });
-          errors.push({ rowIndex: i, columnName: SurveyAnomalyKey });
+          errors.push({rowIndex: i, columnName: key});
+          errors.push({rowIndex: i, columnName: SurveyAnomalyKey});
         }
       }
     }
     setErrorCells(errors);
-  },[editedSurveyData]);
+  }, [editedSurveyData]);
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
@@ -113,12 +140,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
         if (voltageDiff > 1) { // Convert mV to V for comparison
-          errors.push({ rowIndex: i-1, columnName: key });
-          errors.push({ rowIndex: i-1, columnName: SurveyCommentKey });
-          errors.push({ rowIndex: i-1, columnName: SurveyAnomalyKey });
-          errors.push({ rowIndex: i, columnName: key });
-          errors.push({ rowIndex: i, columnName: SurveyCommentKey });
-          errors.push({ rowIndex: i, columnName: SurveyAnomalyKey });
+          errors.push({rowIndex: i - 1, columnName: key});
+          errors.push({rowIndex: i - 1, columnName: SurveyCommentKey});
+          errors.push({rowIndex: i - 1, columnName: SurveyAnomalyKey});
+          errors.push({rowIndex: i, columnName: key});
+          errors.push({rowIndex: i, columnName: SurveyCommentKey});
+          errors.push({rowIndex: i, columnName: SurveyAnomalyKey});
         }
       }
     }
@@ -145,7 +172,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  },[errorCells, editedSurveyData, setPopover]);
+  }, [errorCells, editedSurveyData, setPopover]);
 
   const handleSave = useCallback((newValue?: EditableType) => {
     if (!popover) return;
@@ -161,13 +188,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     // handleScan(currentThreshold); 
 
     setPopover(null);
-  },[popover, editedSurveyData, setEditedSurveyData, setPopover]);
+  }, [popover, editedSurveyData, setEditedSurveyData, setPopover]);
 
-  const Row = useCallback(({ index : rowIndex} : {index : number}) => {
-    const row = editedSurveyData[rowIndex];
+  const Row = memo((({index: rowIndex, style, data}: {index: number, style: React.CSSProperties, data: ItemData}) => {
+    const row = data.items[rowIndex];
     const distance = row[SurveyDistanceKey];
     const station = Number(row[SurveyStationKey]);
-    const isFocused = focusDistance === distance;
+    const isFocused = data.focusDistance === distance;
 
     const rowClassName = [
       styles.tableRow,
@@ -175,21 +202,22 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     ].filter(Boolean).join(' ');
 
     return <div
-        key={rowIndex}
+        style={style}
         onMouseEnter={() => setFocusDistance(Number(distance))}
         onMouseLeave={() => setFocusDistance(null)}
         className={rowClassName}
     >
-      {originalSurvey.surveyDataHeaders.map(header => {
-        const isError = errorCells.some(
+      {data.headers.map((header) => {
+        const isError = data.errorCells.some(
             err => err.rowIndex === rowIndex && err.columnName === header
         );
         const isEditable = EditableColumnHeaders.has(header);
         const isSuggested = isEditable && !Number.isNaN(station) &&
-            ((header === SurveyCommentKey && suggestedCommentsStations.includes(station)) ||
-                (header === SurveyAnomalyKey && suggestedAnomaliesStations.includes(station)));
+          ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
+            (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
 
         const cellValue = row[header];
+        const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(4)) : cellValue;;
 
         const cellClassName = [
           styles.tableCell,
@@ -198,19 +226,29 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         ].filter(Boolean).join(' ');
 
         return (
-            <div
-                key={`${rowIndex}_${header}`}
-                onClick={(e) => isEditable && handleCellClick(e, rowIndex, header)}
-                className={cellClassName}
-            >
-              {cellValue}
-              {(isSuggested) && <div className={styles.suggestedMarker}/>}
-              {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
-            </div>
+          <div
+            key={`${rowIndex}_${header}`}
+            onClick={(e) => isEditable && data.handleCellClick(e, rowIndex, header)}
+            className={cellClassName}
+          >
+            {displayValue}
+            {(isSuggested) && <div className={styles.suggestedMarker}/>}
+            {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
+          </div>
         );
       })}
     </div>;
-  },[
+  }), areEqual);
+
+  const itemData = useMemo(() => ({
+    items: editedSurveyData,
+    headers: originalSurvey.surveyDataHeaders,
+    errorCells: errorCells,
+    handleCellClick: handleCellClick,
+    focusDistance: focusDistance,
+    suggestedCommentsStations: suggestedCommentsStations,
+    suggestedAnomaliesStations: suggestedAnomaliesStations
+  }),[
     editedSurveyData,
     originalSurvey.surveyDataHeaders,
     errorCells,
@@ -220,32 +258,38 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     suggestedAnomaliesStations
   ]);
 
+  const itemKey = useCallback(
+      (index: number, data: ItemData) => data.items[index]["Data No"],   // <- must be stable & unique
+      []
+  );
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Survey Data - {surveyName}</h2>
         <button onClick={() => setInfoModalOpen(true)} className={styles.infoButton}>
-          <FaInfoCircle />
+          <FaInfoCircle/>
         </button>
       </div>
       <ErrorPanel
-          onScanMeasurementErrors={handleScanOnOffMeasurementErrors}
-          onScanDCVGErrors={handleScanDSVGMeasurementErrors}
-          onScanStationGapErrors={handleScanStationGapErrors}
+        onScanMeasurementErrors={handleScanOnOffMeasurementErrors}
+        onScanDCVGErrors={handleScanDSVGMeasurementErrors}
+        onScanStationGapErrors={handleScanStationGapErrors}
       />
       <div className={styles.sheetContainer}>
-        <div className={styles.sheetTable}>
-          <div className={styles.headerRow}>
-            {originalSurvey.surveyDataHeaders.map(header => (
-              <div key={header} className={styles.tableCell}>{header}</div>
-            ))}
-            </div>
+        <div className={styles.headerRow}>
+          {originalSurvey.surveyDataHeaders.map(header => (
+            <div key={header} className={styles.headerCell}>{header}</div>
+          ))}
+        </div>
+        <div className={styles.tableBody}>
           <List
             height={300}
             itemCount={editedSurveyData.length}
-            itemSize={30}
+            itemSize={35}
             width="100%"
+            itemData={itemData}
+            itemKey={itemKey}
           >
             {Row}
           </List>
