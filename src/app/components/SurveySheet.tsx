@@ -209,7 +209,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
 
     const cellValue = row[header];
-    const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;;
+    const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;
 
     const cellClassName = [
       styles.tableCell,
