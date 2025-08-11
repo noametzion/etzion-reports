@@ -8,7 +8,7 @@ import {createSegments} from "@/app/utils/reportUtils";
 const CONSTANT_VOLTAGE = -850;
 const voltToMillyVolt= (V: number| undefined) => V!==undefined ? V * 1000 : V;
 
-export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: number): GraphInfo[] => {
+export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: number, titles: {primary: string, secondary: string}): GraphInfo[] => {
   const [graphs, setGraphs] = useState<GraphInfo[]>([]);
 
   useEffect(() => {
@@ -59,14 +59,15 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       const endDist = segment[segment.length - 1].distance
 
       return {
-        title: `Graph: ${startDist}m - ${endDist}m`,
+        title: titles.primary && titles.primary !== '' ? titles.primary : `Graph`,
+        subtitle: `${titles.secondary}${titles.secondary && titles.secondary !== '' ? ', ' : ''}${startDist}m - ${endDist}m`,
         data: segment,
         startDistance: startDist,
         endDistance: endDist
       };
     }));
 
-  }, [surveyData, splitDistance]);
+  }, [surveyData, splitDistance, titles]);
 
   return graphs;
 };

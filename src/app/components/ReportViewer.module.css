@@ -24,3 +24,17 @@
   overflow-y: auto;
   padding: 10px;
 }
+
+.titleEditor {
+  border-radius: 8px;
+  background-color: #f0f0f0;
+  padding: 6px;
+}
+
+.primaryTitle {
+  font-weight: bold;
+}
+
+.secondaryTitle {
+  font-size: smaller;
+}
