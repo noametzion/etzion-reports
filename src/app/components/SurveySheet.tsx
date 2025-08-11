@@ -94,10 +94,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setFocusDistance(null);
   }, [editedSurvey.surveyData, setFocusDistance]);
 
-  if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {
-    return <div>No survey data to display.</div>;
-  }
-
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
 
@@ -195,7 +191,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   }, [popover, editedSurveyData, setEditedSurveyData, setPopover]);
 
-  const Cell = memo((({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}) => {
+  const Cell = memo(function Cell({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}){
     const row = data.items[rowIndex];
     const distance = row[SurveyDistanceKey];
     const station = Number(row[SurveyStationKey]);
@@ -223,6 +219,10 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isSelected ? styles.selectedRowCell : '',
     ].filter(Boolean).join(' ');
 
+    if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {
+      return <div>No survey data to display.</div>;
+    }
+
     return (
       <div
         onMouseEnter={() => { setFocusDistance(Number(distance)); setSelectedRow(rowIndex)}}
@@ -237,7 +237,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
       </div>
     );
-  }), areEqual);
+  }, areEqual);
 
   const itemData = useMemo(() => ({
     items: editedSurveyData,
@@ -280,7 +280,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         </div>
         <div className={styles.tableBody}>
           <AutoSizer disableHeight>
-            {({ width } : any) => (
+            {({ width }) => (
               <Grid
                 height={300}
                 width={width}
