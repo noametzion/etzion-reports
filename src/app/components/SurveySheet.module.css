@@ -68,15 +68,20 @@
 .headerCell, .tableCell {
     flex: 0 0 150px; /* Do not shrink or grow, maintain fixed width */
     display: flex;
-    justify-content: flex-start;
-    align-items: flex-start;
+    justify-content: space-between;
+    align-items: center;
     direction: ltr;
     padding: 8px 10px;
+    border-right: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+}
+
+.cellContent {
+    flex-grow: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    border-right: 1px solid #eee;
-    border-bottom: 1px solid #eee;
+    text-align: left;
 }
 
 .selectedRowCell {

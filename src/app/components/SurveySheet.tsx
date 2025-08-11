@@ -232,7 +232,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         style={style}
         dir={'rtl'}
       >
-        {displayValue}
+        <span className={styles.cellContent}>{displayValue}</span>
         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
       </div>
