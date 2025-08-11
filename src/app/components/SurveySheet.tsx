@@ -18,7 +18,8 @@ import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
-import {areEqual, FixedSizeList as List} from 'react-window';
+import {areEqual, FixedSizeGrid as Grid, GridOnScrollProps} from 'react-window';
+import AutoSizer from "react-virtualized-auto-sizer";
 import {useFocusDistance} from '@/app/hooks/useFocusDistance';
 import EditPopover from './EditPopover';
 import {useSuggester} from '@/app/hooks/useSuggester';
@@ -50,6 +51,7 @@ interface ItemData {
   errorCells: ErrorCell[];
   handleCellClick: (e: React.MouseEvent<HTMLDivElement>, rowIndex: number, columnName: keyof SurveyDataRow) => void;
   focusDistance: number | null;
+  selectedRow: number | null;
   suggestedCommentsStations: number[];
   suggestedAnomaliesStations: number[];
 }
@@ -57,15 +59,35 @@ interface ItemData {
 const SurveySheet: React.FC<SurveySheetProps> = ({
   originalSurvey,
   editedSurvey,
+  surveyFileName,
   shouldFocus
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
   const [editedSurveyData, setEditedSurveyData] = useState<EditedSurveyDataRow[]>(editedSurvey.surveyData);
-  const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString();
+  const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
+  const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
   const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey);
+  const tableHeaderRef = React.useRef<HTMLDivElement>(null);
+  const tableGridRef = React.useRef<Grid>(null);
+
+  const syncing = useRef(false);
+
+  const onBodyScroll = ({ scrollLeft }: GridOnScrollProps) => {
+    if (syncing.current) return;
+    syncing.current = true;
+    if (tableHeaderRef.current) tableHeaderRef.current.scrollLeft = scrollLeft;
+    requestAnimationFrame(() => (syncing.current = false));
+  };
+
+  const onHeaderScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
+    if (syncing.current) return;
+    syncing.current = true;
+    tableGridRef.current?.scrollTo({ scrollLeft: e.currentTarget.scrollLeft });
+    requestAnimationFrame(() => (syncing.current = false));
+  };
 
   useEffect(() => {
     setEditedSurveyData(editedSurvey.surveyData);
@@ -75,23 +97,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {
     return <div>No survey data to display.</div>;
   }
-
-  // useEffect(() => {
-  //
-  //   function syncScroll(sourceElement: any, targetElement: any) {
-  //     console.log('Syncing scroll');
-  //     console.log(sourceElement.scrollLeft);
-  //     targetElement.scrollLeft = sourceElement.scrollLeft;
-  //   }
-  //
-  //   const tableContent = document.querySelector(`.${styles.tableBody} > div`);
-  //   console.log('Content:', tableContent);
-  //
-  //   const tableHeader = document.querySelector(`.${styles.headerRow} > div`);
-  //   console.log('Header:', tableHeader);
-  //
-  //   // tableContent?.addEventListener('scroll', () => syncScroll(tableContent, tableHeader));
-  // },[]);
 
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
@@ -190,54 +195,48 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   }, [popover, editedSurveyData, setEditedSurveyData, setPopover]);
 
-  const Row = memo((({index: rowIndex, style, data}: {index: number, style: React.CSSProperties, data: ItemData}) => {
+  const Cell = memo((({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}) => {
     const row = data.items[rowIndex];
     const distance = row[SurveyDistanceKey];
     const station = Number(row[SurveyStationKey]);
     const isFocused = data.focusDistance === distance;
+    const isSelected = data.selectedRow === rowIndex;
 
-    const rowClassName = [
-      styles.tableRow,
+    const header = data.headers[columnIndex];
+    const isError = data.errorCells.some(
+        err => err.rowIndex === rowIndex && err.columnName === header
+    );
+
+    const isEditable = EditableColumnHeaders.has(header);
+    const isSuggested = isEditable && !Number.isNaN(station) &&
+      ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
+        (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
+
+    const cellValue = row[header];
+    const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;;
+
+    const cellClassName = [
+      styles.tableCell,
+      isEditable ? styles.editableCell : styles.nonEditableCell,
+      isError ? styles.errorCell : '',
       isFocused ? styles.focusedRow : '',
+      isSelected ? styles.selectedRowCell : '',
     ].filter(Boolean).join(' ');
 
-    return <div
+    return (
+      <div
+        onMouseEnter={() => { setFocusDistance(Number(distance)); setSelectedRow(rowIndex)}}
+        onMouseLeave={() => {setFocusDistance(null); setSelectedRow(null)}}
+        onClick={(e) => isEditable && data.handleCellClick(e, rowIndex, header)}
+        className={cellClassName}
         style={style}
-        onMouseEnter={() => setFocusDistance(Number(distance))}
-        onMouseLeave={() => setFocusDistance(null)}
-        className={rowClassName}
-    >
-      {data.headers.map((header) => {
-        const isError = data.errorCells.some(
-            err => err.rowIndex === rowIndex && err.columnName === header
-        );
-        const isEditable = EditableColumnHeaders.has(header);
-        const isSuggested = isEditable && !Number.isNaN(station) &&
-          ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
-            (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
-
-        const cellValue = row[header];
-        const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(4)) : cellValue;;
-
-        const cellClassName = [
-          styles.tableCell,
-          isEditable ? styles.editableCell : styles.nonEditableCell,
-          isError ? styles.errorCell : '',
-        ].filter(Boolean).join(' ');
-
-        return (
-          <div
-            key={`${rowIndex}_${header}`}
-            onClick={(e) => isEditable && data.handleCellClick(e, rowIndex, header)}
-            className={cellClassName}
-          >
-            {displayValue}
-            {(isSuggested) && <div className={styles.suggestedMarker}/>}
-            {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
-          </div>
-        );
-      })}
-    </div>;
+        dir={'rtl'}
+      >
+        {displayValue}
+        {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
+        {(isSuggested) && <div className={styles.suggestedMarker}/>}
+      </div>
+    );
   }), areEqual);
 
   const itemData = useMemo(() => ({
@@ -246,6 +245,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     errorCells: errorCells,
     handleCellClick: handleCellClick,
     focusDistance: focusDistance,
+    selectedRow: selectedRow,
     suggestedCommentsStations: suggestedCommentsStations,
     suggestedAnomaliesStations: suggestedAnomaliesStations
   }),[
@@ -254,14 +254,10 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     errorCells,
     handleCellClick,
     focusDistance,
+    selectedRow,
     suggestedCommentsStations,
     suggestedAnomaliesStations
   ]);
-
-  const itemKey = useCallback(
-      (index: number, data: ItemData) => data.items[index]["Data No"],   // <- must be stable & unique
-      []
-  );
 
   return (
     <div className={styles.container}>
@@ -277,22 +273,31 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         onScanStationGapErrors={handleScanStationGapErrors}
       />
       <div className={styles.sheetContainer}>
-        <div className={styles.headerRow}>
+        <div className={styles.headerRow} ref={tableHeaderRef} onScroll={onHeaderScroll}>
           {originalSurvey.surveyDataHeaders.map(header => (
             <div key={header} className={styles.headerCell}>{header}</div>
           ))}
         </div>
         <div className={styles.tableBody}>
-          <List
-            height={300}
-            itemCount={editedSurveyData.length}
-            itemSize={35}
-            width="100%"
-            itemData={itemData}
-            itemKey={itemKey}
-          >
-            {Row}
-          </List>
+          <AutoSizer disableHeight>
+            {({ width } : any) => (
+              <Grid
+                height={300}
+                width={width}
+                rowCount={editedSurveyData.length}
+                columnCount={originalSurvey.surveyDataHeaders.length}
+                rowHeight={35}
+                columnWidth={150}
+                itemData={itemData}
+                ref={tableGridRef}
+                overscanRowCount={10}
+                overscanColumnCount={10}
+                onScroll={onBodyScroll}
+              >
+                {Cell}
+              </Grid>
+            )}
+          </AutoSizer>
         </div>
       </div>
       {popover && (
