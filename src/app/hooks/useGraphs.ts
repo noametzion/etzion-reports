@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useEffect } from 'react';
 import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {GraphInfo, GraphDataPoint} from "@/app/types/report";
@@ -47,6 +49,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         offVoltage: voltToMillyVolt(row['Off Voltage']),
         constantVoltage: CONSTANT_VOLTAGE,
         dcvg: voltToMillyVolt(row['DCVG Voltage']),
+        comment: row['Comment'] || row['DCP/Feature/DCVG Anomaly'],
       };
     });
 

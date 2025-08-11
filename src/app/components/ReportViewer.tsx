@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import {InfoSurveyNameKey, SurveyFile} from '@/app/types/survey';
+import {SurveyInfoNameKey, SurveyFile} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
@@ -26,7 +26,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) 
   const graphs = useGraphs(survey?.surveyData || null, splitDistance);
   const maps = useMaps(survey?.surveyData || null, splitDistance);
 
-  const surveyName = survey?.surveyInfo[InfoSurveyNameKey] || surveyFile?.name;
+  const surveyName = survey?.surveyInfo[SurveyInfoNameKey] || surveyFile?.name;
 
   return (
     <div className={styles.container}>

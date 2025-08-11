@@ -36,21 +36,40 @@
 
 .content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
+.buttonsContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 .input {
   flex-grow: 1;
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  margin-bottom: 8px;
 }
 
 .saveButton {
   padding: 8px;
   border: none;
   background-color: #5cb85c; /* A shade of green */
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-right: 8px;
+}
+
+.deleteButton {
+  padding: 8px;
+  border: none;
+  background-color: #d12d2d; /* A shade of green */
   color: white;
   border-radius: 4px;
   cursor: pointer;
