@@ -48,7 +48,7 @@ const TitleEditorPanel: React.FC<TitleEditorPanelProps> = ({ initialProjectName,
         <label>Pipeline Size</label>
         <div className={styles.pipelineInput}>
           <input type="number" value={pipelineSize} onChange={(e) => setPipelineSize(e.target.value)} />
-          <span>"</span>
+          <span>{'"'}</span>
         </div>
       </div>
       <div className={styles.inputGroup}>
