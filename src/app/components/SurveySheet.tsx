@@ -214,9 +214,9 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const cellClassName = [
       styles.tableCell,
       isEditable ? styles.editableCell : styles.nonEditableCell,
-      isError ? styles.errorCell : '',
-      isFocused ? styles.focusedRow : '',
-      isSelected ? styles.selectedRowCell : '',
+      isError && styles.errorCell,
+      isFocused && styles.focusedRow,
+      isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
 
     if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {

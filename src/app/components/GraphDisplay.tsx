@@ -167,6 +167,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus }) =
   return (
       <div className={styles.container}>
         <h3 className={styles.title}>{graphInfo.title}</h3>
+        <h4 className={styles.subtitle}>{graphInfo.subtitle}</h4>
         <ResponsiveContainer width="100%" height={400}>
           {OnOffGraph}
         </ResponsiveContainer>

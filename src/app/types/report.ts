@@ -24,6 +24,7 @@ export interface SegmentInfo {
 
 export interface GraphInfo extends SegmentInfo {
   title: string;
+  subtitle: string;
   data: GraphDataPoint[];
 
 }

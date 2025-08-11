@@ -8,6 +8,8 @@ import styles from './ReportViewer.module.css';
 import {useSurveyReader} from "@/app/hooks/useSurveyReader";
 import {useMaps} from "@/app/hooks/useMaps";
 import dynamic from "next/dynamic";
+import TitleEditorPanel from './TitleEditorPanel';
+import {FaAngleDown, FaAngleUp} from "react-icons/fa"; // added import statement
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
     dynamic(() =>
@@ -23,10 +25,17 @@ const DEFAULT_SPLIT_DISTANCE = 500;
 const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) => {
   const {survey} = useSurveyReader(surveyFile);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
-  const graphs = useGraphs(survey?.surveyData || null, splitDistance);
+  const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
+  const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
+  const graphs = useGraphs(survey?.surveyData || null, splitDistance, titles);
   const maps = useMaps(survey?.surveyData || null, splitDistance);
 
-  const surveyName = survey?.surveyInfo[SurveyInfoNameKey] || surveyFile?.name;
+  const surveyName = (survey?.surveyInfo[SurveyInfoNameKey] || surveyFile?.name || '').toString();
+
+  const handleTitleSave = (title: string, subtitle: string) => {
+      setTitles({ primary: title, secondary: subtitle})
+      setShowTitleEditor(false);
+  };
 
   return (
     <div className={styles.container}>
@@ -34,11 +43,28 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) 
         <h2>Report Viewer - {surveyName}</h2>
         <span>Split Distance:</span>
         <input
-            type="number"
-            value={splitDistance}
-            onChange={(e) => setSplitDistance(Number(e.target.value))}
+          type="number"
+          value={splitDistance}
+          onChange={(e) => setSplitDistance(Number(e.target.value))}
+          className={styles.splitInput}
         />
       </div>
+      {survey &&
+        <div className={styles.titleEditor}>
+            <span onClick={() => setShowTitleEditor(!showTitleEditor)}>
+              {showTitleEditor ? <FaAngleDown/> : <FaAngleUp/>}
+              {' [Title Editor] '}&emsp;
+              <span className={styles.primaryTitle}>{titles.primary} </span>
+              <span className={styles.secondaryTitle}>{titles.secondary}</span>
+            </span>
+            <div hidden={!showTitleEditor}>
+                <TitleEditorPanel
+                    initialProjectName={surveyName}
+                    onSave={handleTitleSave}
+                />
+            </div>
+        </div>
+      }
       <div className={styles.graphsContainer}>
         {graphs.map((graph, index) => (
           <div key={index}>
