@@ -5,11 +5,12 @@ import { FaTrash, FaFolderOpen } from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
-import { useSurveyFiles } from '@/app/hooks/useFileUpload';
+import { useSurveyFiles } from '@/app/hooks/useSurveyFiles';
 import { useSurveyReader } from '@/app/hooks/useSurveyReader';
 import SurveySheet from './SurveySheet';
 import { SurveyFile } from '@/app/types/survey';
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
+import EditorStatusBar from "@/app/components/EditorStatusBar";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -22,22 +23,22 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   onShouldFocusDistanceChanges,
   shouldFocus
  }) => {
-  const { files, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
-  const [selectedFile, setSelectedFile] = React.useState<SurveyFile | null>(null);
-  const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedFile);
-  const { editedSurvey } = useSurveyEditor(originalSurvey);
+  const { files: originalFiles, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
+  const [selectedOriginalFile, setSelectedOriginalFile] = React.useState<SurveyFile | null>(null);
+  const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
+  const { editedSurvey, saveEditedSurvey , isChanged, editedFile, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
 
 
   const handleOpenFile = (fileName: string) => {
     const fileToOpen = getFile(fileName);
     if (fileToOpen) {
-      setSelectedFile(fileToOpen);
+      setSelectedOriginalFile(fileToOpen);
       onSurveySelected(fileToOpen);
     }
   };
 
   const handleCloseFile = () => {
-    setSelectedFile(null);
+    setSelectedOriginalFile(null);
     onShouldFocusDistanceChanges(false);
     onSurveySelected(null)
   };
@@ -70,7 +71,19 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
       <div className={styles.sheetContainer}>
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
         <span> Focus on distance: </span><input type={"checkbox"} onChange={handleFocusCheckboxChanges}/>
-        <SurveySheet originalSurvey={originalSurvey} editedSurvey={editedSurvey} surveyFileName={selectedFile?.name || ''} shouldFocus={shouldFocus}/>
+        <EditorStatusBar
+            isEditedFileExist={editedFile !== null}
+            unsavedChangesExists={isChanged}
+            isUpdating={isUpdating}
+            onSave={() => saveEditedSurvey()}
+        />
+        <SurveySheet
+            originalSurvey={originalSurvey}
+            editedSurvey={editedSurvey}
+            surveyFileName={selectedOriginalFile?.name || ''}
+            shouldFocus={shouldFocus}
+            onEdit={editLocally}
+        />
       </div>
     );
   }
@@ -94,7 +107,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
       <div className={styles.filesList}>
         {isLoading ? (
           <div className={styles.loading}>Loading surveys...</div>
-        ) : files.length === 0 ? (
+        ) : originalFiles.length === 0 ? (
           <div className={styles.emptyState}>No surveys uploaded yet</div>
         ) : (
           <table className={styles.filesTable}>
@@ -106,7 +119,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
               </tr>
             </thead>
             <tbody>
-              {files.map((file) => (
+              {originalFiles.map((file) => (
                 <tr key={file.name}>
                   <td>{file.name}</td>
                   <td>{formatDate(file.uploadedAt)}</td>

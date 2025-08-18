@@ -1,0 +1,39 @@
+.statusBar {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 20px;
+    margin-right: 20px;
+    width: 70px;
+}
+
+.spinner {
+    color: #c6c6c6;
+}
+.updatingSpinner {
+    color: #595959;
+    animation: spin 3s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.fileIcon {
+    color: #c6c6c6;
+}
+.fileExists {
+    color: #608c88;
+}
+
+.saveIcon {
+    color: #c6c6c6;
+}
+
+.changesExist {
+    color: #ed9d5a;
+}
+
+.saveable:hover {
+    border-radius: 4px;
+    color: rgba(237, 157, 90, 0.49);
+    cursor: pointer;
+}

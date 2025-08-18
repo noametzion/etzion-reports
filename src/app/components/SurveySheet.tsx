@@ -29,6 +29,7 @@ interface SurveySheetProps {
   editedSurvey: EditedSurvey;
   surveyFileName: string;
   shouldFocus: boolean;
+  onEdit: (editedSurveyData: EditedSurveyDataRow[]) => void
 }
 
 interface ErrorCell {
@@ -60,12 +61,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   originalSurvey,
   editedSurvey,
   surveyFileName,
-  shouldFocus
+  shouldFocus,
+  onEdit
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
-  const [editedSurveyData, setEditedSurveyData] = useState<EditedSurveyDataRow[]>(editedSurvey.surveyData);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
@@ -90,16 +91,16 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   };
 
   useEffect(() => {
-    setEditedSurveyData(editedSurvey.surveyData);
+    // setEditedSurveyData(editedSurvey.surveyData);
     setFocusDistance(null);
-  }, [editedSurvey.surveyData, setFocusDistance]);
+  }, [originalSurvey, setFocusDistance]);
 
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
 
-    for (let i = 1; i < editedSurveyData.length; i++) {
-      const prevRow = editedSurveyData[i - 1];
-      const currentRow = editedSurveyData[i];
+    for (let i = 1; i < editedSurvey.surveyData.length; i++) {
+      const prevRow = editedSurvey.surveyData[i - 1];
+      const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyOnOffVoltageKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
@@ -111,13 +112,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurveyData]);
+  }, [editedSurvey.surveyData]);
 
   const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
 
-    for (let i = 0; i < editedSurveyData.length; i++) {
-      const currentRow = editedSurveyData[i];
+    for (let i = 0; i < editedSurvey.surveyData.length; i++) {
+      const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyDSVGVoltageKeys) {
 
@@ -128,14 +129,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurveyData]);
+  }, [editedSurvey.surveyData]);
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
 
-    for (let i = 1; i < editedSurveyData.length; i++) {
-      const prevRow = editedSurveyData[i - 1];
-      const currentRow = editedSurveyData[i];
+    for (let i = 1; i < editedSurvey.surveyData.length; i++) {
+      const prevRow = editedSurvey.surveyData[i - 1];
+      const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyStationKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
@@ -151,7 +152,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurveyData]);
+  }, [editedSurvey.surveyData]);
 
   const handleCellClick = useCallback((
     e: React.MouseEvent<HTMLDivElement>,
@@ -168,28 +169,28 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover({
       rowIndex,
       columnName,
-      value: editedSurveyData[rowIndex][columnName],
+      value: editedSurvey.surveyData[rowIndex][columnName],
       type: EditableColumnHeaders.get(columnName),
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  }, [errorCells, editedSurveyData, setPopover]);
+  }, [errorCells, editedSurvey.surveyData, setPopover]);
 
   const handleSave = useCallback((newValue?: EditableType) => {
     if (!popover) return;
 
-    const updatedData = [...editedSurveyData];
+    const updatedData = [...editedSurvey.surveyData];
     updatedData[popover.rowIndex] = {
       ...updatedData[popover.rowIndex],
       [popover.columnName]: newValue,
     };
-    setEditedSurveyData(updatedData);
+    onEdit(updatedData);
 
     // Optional: Re-scan to see if the error is resolved
     // handleScan(currentThreshold); 
 
     setPopover(null);
-  }, [popover, editedSurveyData, setEditedSurveyData, setPopover]);
+  }, [popover, editedSurvey.surveyData, onEdit, setPopover]);
 
   const Cell = memo(function Cell({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}){
     const row = data.items[rowIndex];
@@ -219,7 +220,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
 
-    if (!originalSurvey || !editedSurvey || editedSurveyData.length === 0) {
+    if (!originalSurvey || !editedSurvey || editedSurvey.surveyData.length === 0) {
       return <div>No survey data to display.</div>;
     }
 
@@ -240,7 +241,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   }, areEqual);
 
   const itemData = useMemo(() => ({
-    items: editedSurveyData,
+    items: editedSurvey.surveyData,
     headers: originalSurvey.surveyDataHeaders,
     errorCells: errorCells,
     handleCellClick: handleCellClick,
@@ -249,7 +250,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     suggestedCommentsStations: suggestedCommentsStations,
     suggestedAnomaliesStations: suggestedAnomaliesStations
   }),[
-    editedSurveyData,
+    editedSurvey.surveyData,
     originalSurvey.surveyDataHeaders,
     errorCells,
     handleCellClick,
@@ -284,7 +285,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
               <Grid
                 height={300}
                 width={width}
-                rowCount={editedSurveyData.length}
+                rowCount={editedSurvey.surveyData.length}
                 columnCount={originalSurvey.surveyDataHeaders.length}
                 rowHeight={35}
                 columnWidth={150}

@@ -93,5 +93,5 @@ export const useSurveyFiles = () => {
     }
   };
 
-  return { files, isLoading, isUploading, error, getFile, uploadFile, deleteFile, fetchFiles };
+  return { files, isLoading, isUploading, error, getFile, uploadFile, deleteFile };
 };
