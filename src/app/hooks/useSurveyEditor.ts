@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, useCallback, useMemo} from 'react';
+import {useState, useEffect, useCallback} from 'react';
 import {EditedSurvey, Survey, SurveyDataRow, SurveyFile} from '@/app/types/survey';
 import {cloneDeep} from "es-toolkit";
 import {useEditedSurveyFile} from "@/app/hooks/useEditedSurveyFile";
@@ -9,7 +9,7 @@ import {useEditedSurveyReader} from "@/app/hooks/useEditedSurveyReader";
 export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalSurvey: Survey | null) => {
   const [originalSurveyIsSet, setOriginalSurveyIsSet] = useState(false);
   const [editedSurvey, setEditedSurvey] = useState<EditedSurvey | null>(null);
-  const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile, deleteFile } = useEditedSurveyFile(originalSurveyFile?.name);
+  const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile } = useEditedSurveyFile(originalSurveyFile?.name);
   const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useEditedSurveyReader(editedFile);
   const [isChanged, setIsChanged] = useState(false);
 

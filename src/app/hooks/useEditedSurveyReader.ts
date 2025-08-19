@@ -20,7 +20,7 @@ export const useEditedSurveyReader = (editedSurveyFile: EditedSurveyFile | null)
       try {
         const fileResponse = await fetch(editedSurveyFile.path);
         if (!fileResponse.ok) {
-          throw new Error(`Failed to fetch file: ${fileResponse.statusText}`);
+          setError(`Failed to fetch file: ${fileResponse.statusText}`);
         }
         const surveyData = await fileResponse.json();
         setSurvey(surveyData);
