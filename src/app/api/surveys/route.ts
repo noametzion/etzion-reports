@@ -64,6 +64,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     await deleteFile(FILES_CATEGORY, fileName);
+    // TODO: delete edited file name
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting file:', error);

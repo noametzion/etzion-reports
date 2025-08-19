@@ -116,6 +116,13 @@ export interface SurveyFile {
   uploadedAt: string;
 }
 
+export interface EditedSurveyFile {
+  name: string;
+  path: string;
+  updatedAt: string;
+  originalFileName: string;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EditedSurveyDataRow extends SurveyDataRow {
   // break: boolean;

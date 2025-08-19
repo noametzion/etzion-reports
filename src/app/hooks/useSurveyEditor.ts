@@ -1,26 +1,71 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import {EditedSurvey, Survey} from '@/app/types/survey';
+import {useState, useEffect, useCallback} from 'react';
+import {EditedSurvey, Survey, SurveyDataRow, SurveyFile} from '@/app/types/survey';
 import {cloneDeep} from "es-toolkit";
+import {useEditedSurveyFile} from "@/app/hooks/useEditedSurveyFile";
+import {useEditedSurveyReader} from "@/app/hooks/useEditedSurveyReader";
 
-export const useSurveyEditor = (survey: Survey | null) => {
+export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalSurvey: Survey | null) => {
   const [originalSurveyIsSet, setOriginalSurveyIsSet] = useState(false);
   const [editedSurvey, setEditedSurvey] = useState<EditedSurvey | null>(null);
+  const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile } = useEditedSurveyFile(originalSurveyFile?.name);
+  const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useEditedSurveyReader(editedFile);
+  const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
-    if (survey && !originalSurveyIsSet) {
-      setEditedSurvey({surveyData: cloneDeep(survey.surveyData)});
-      setOriginalSurveyIsSet(true);
+    if (originalSurvey && !originalSurveyIsSet) {
+      // get the edited survey from the server or clone survey
+      if (editedFile && lastEditedSurvey) {
+        setEditedSurvey(cloneDeep(lastEditedSurvey));
+        setOriginalSurveyIsSet(true);
+        setIsChanged(false);
+      } else if (!editedFileLoading && !editedFileError && !editedFile &&
+                 !lastEditedSurveyReading && !lastEditedSurveyError && !lastEditedSurvey) {
+        setEditedSurvey({surveyData: cloneDeep(originalSurvey.surveyData)});
+        setOriginalSurveyIsSet(true);
+        setIsChanged(false);
+      } else if (!editedFileLoading && editedFileError) {
+        console.error("Error fetching edited survey file:", editedFileError);
+      } else if (!lastEditedSurveyReading && lastEditedSurveyError) {
+        console.error("Error reading last edited survey:", lastEditedSurveyError);
+      }
     }
-  }, [survey, originalSurveyIsSet]);
+  }, [originalSurvey,
+    originalSurveyIsSet,
+    editedFile,
+    lastEditedSurvey,
+    editedFileLoading,
+    editedFileError,
+    lastEditedSurveyReading,
+    lastEditedSurveyError
+  ]);
 
   useEffect(() => {
-    if (!survey) {
+    if (!originalSurveyFile || !originalSurvey) {
       setOriginalSurveyIsSet(false);
       setEditedSurvey(null);
     }
-  }, [survey]);
+  }, [originalSurvey, originalSurveyFile]);
 
-  return { editedSurvey };
+  const editLocally = useCallback((editedSurveyData: SurveyDataRow[]) => {
+    setEditedSurvey({surveyData: editedSurveyData});
+    setIsChanged(true);
+  }, [setEditedSurvey]);
+
+  const saveEditedSurvey = useCallback(async () => {
+    if (editedSurvey && originalSurveyFile) {
+      const surveyJson = JSON.stringify(editedSurvey, null, 2);
+      const blob = new Blob([surveyJson], { type: 'application/json' });
+      const file = new File([blob], `${originalSurveyFile.name}_edited`, { type: 'application/json' });
+      await updateFile(file, originalSurveyFile.name);
+      setIsChanged(false);
+    }
+  }, [
+      editedSurvey,
+      originalSurveyFile,
+      updateFile
+  ]);
+
+  return { editedSurvey , saveEditedSurvey, isChanged, editedFile, isUpdating: editedFileUpdating, editLocally};
 };
