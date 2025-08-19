@@ -10,7 +10,7 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
   const [originalSurveyIsSet, setOriginalSurveyIsSet] = useState(false);
   const [editedSurvey, setEditedSurvey] = useState<EditedSurvey | null>(null);
   const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile } = useEditedSurveyFile(originalSurveyFile?.name);
-  const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useEditedSurveyReader(editedFile);
+  const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError, reload: reloadLastEditedSurvey} = useEditedSurveyReader(editedFile);
   const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
@@ -53,6 +53,11 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
     setIsChanged(true);
   }, [setEditedSurvey]);
 
+  const reload = useCallback(() => {
+    setOriginalSurveyIsSet(false);
+    reloadLastEditedSurvey();
+  }, [setOriginalSurveyIsSet, reloadLastEditedSurvey]);
+
   const saveEditedSurvey = useCallback(async () => {
     if (editedSurvey && originalSurveyFile) {
       const surveyJson = JSON.stringify(editedSurvey, null, 2);
@@ -67,5 +72,5 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
       updateFile
   ]);
 
-  return { editedSurvey , saveEditedSurvey, isChanged, editedFile, isUpdating: editedFileUpdating, editLocally};
+  return { editedSurvey , saveEditedSurvey, isChanged, isUpdating: editedFileUpdating, editLocally, reload};
 };

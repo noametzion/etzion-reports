@@ -47,6 +47,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
   }, [originalFileName]);
 
   useEffect(() => {
+    setEditedFile(null);
     fetchFile();
   }, [fetchFile]);
 
