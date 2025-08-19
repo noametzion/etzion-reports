@@ -35,10 +35,5 @@ export const useEditedSurveyReader = (editedSurveyFile: EditedSurveyFile | null)
     loadSurvey();
   }, [editedSurveyFile, loadSurvey]);
 
-  const reload = useCallback(() => {
-    setSurvey(null);
-    loadSurvey();
-  },[setSurvey, loadSurvey]);
-
-  return { survey, isLoading, error, reload};
+  return { survey, isLoading, error};
 };
