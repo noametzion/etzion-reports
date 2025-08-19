@@ -4,41 +4,27 @@ import {useState, useEffect, useCallback, useMemo} from 'react';
 import {EditedSurvey, Survey, SurveyDataRow, SurveyFile} from '@/app/types/survey';
 import {cloneDeep} from "es-toolkit";
 import {useEditedSurveyFile} from "@/app/hooks/useEditedSurveyFile";
-import {useSurveyReader} from "@/app/hooks/useSurveyReader";
-
-// TODO: create a reader for the edited survey
-function diff(ss: Survey | null, es: EditedSurvey | null) {
-  if (ss === null && es === null) return false;
-  if (ss === null || es === null) return true;
-    const a = ss.surveyData;
-    const b = es.surveyData as SurveyDataRow[]; // TODO: fix type
-  for (const k in a) {
-    if (!Object.is(a[k], b[k])){
-      console.log(`${k}`, a[k], b[k]);
-      return true;
-    }
-  }
-  return false;
-}
+import {useEditedSurveyReader} from "@/app/hooks/useEditedSurveyReader";
 
 export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalSurvey: Survey | null) => {
   const [originalSurveyIsSet, setOriginalSurveyIsSet] = useState(false);
   const [editedSurvey, setEditedSurvey] = useState<EditedSurvey | null>(null);
   const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile, deleteFile } = useEditedSurveyFile(originalSurveyFile?.name);
-  const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useSurveyReader(editedFile as (SurveyFile | null));
-
-  const isChanged = useMemo(() => diff(lastEditedSurvey, editedSurvey), [lastEditedSurvey, editedSurvey]);
+  const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useEditedSurveyReader(editedFile);
+  const [isChanged, setIsChanged] = useState(false);
 
   useEffect(() => {
     if (originalSurvey && !originalSurveyIsSet) {
       // get the edited survey from the server or clone survey
       if (editedFile && lastEditedSurvey) {
-        setEditedSurvey({surveyData: cloneDeep(lastEditedSurvey?.surveyData)});
+        setEditedSurvey(cloneDeep(lastEditedSurvey));
         setOriginalSurveyIsSet(true);
+        setIsChanged(false);
       } else if (!editedFileLoading && !editedFileError && !editedFile &&
                  !lastEditedSurveyReading && !lastEditedSurveyError && !lastEditedSurvey) {
         setEditedSurvey({surveyData: cloneDeep(originalSurvey.surveyData)});
         setOriginalSurveyIsSet(true);
+        setIsChanged(false);
       } else if (!editedFileLoading && editedFileError) {
         console.error("Error fetching edited survey file:", editedFileError);
       } else if (!lastEditedSurveyReading && lastEditedSurveyError) {
@@ -64,16 +50,21 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
 
   const editLocally = useCallback((editedSurveyData: SurveyDataRow[]) => {
     setEditedSurvey({surveyData: editedSurveyData});
+    setIsChanged(true);
   }, [setEditedSurvey]);
 
   const saveEditedSurvey = useCallback(async () => {
     if (editedSurvey && originalSurveyFile) {
-      // TODO: save edited survey
-      // await updateFile(editedSurvey, originalSurveyFile.name);
+      const surveyJson = JSON.stringify(editedSurvey, null, 2);
+      const blob = new Blob([surveyJson], { type: 'application/json' });
+      const file = new File([blob], `${originalSurveyFile.name}_edited`, { type: 'application/json' });
+      await updateFile(file, originalSurveyFile.name);
+      setIsChanged(false);
     }
   }, [
       editedSurvey,
-      originalSurveyFile
+      originalSurveyFile,
+      updateFile
   ]);
 
   return { editedSurvey , saveEditedSurvey, isChanged, editedFile, isUpdating: editedFileUpdating, editLocally};

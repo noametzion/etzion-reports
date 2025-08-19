@@ -12,7 +12,7 @@ interface ResponseEditedSurveyFileData {
 const EDITED_SURVEYS_API = '/api/editedSurveys';
 
 export const useEditedSurveyFile = (originalFileName?: string) => {
-  const [editedFile, setEditedFile] = useState<EditedSurveyFile | null>();
+  const [editedFile, setEditedFile] = useState<EditedSurveyFile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,6 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
       if (!response.ok) setError(responseData.error || 'Failed to fetch file');
       else {
         const resFile = (responseData.file as (ResponseEditedSurveyFileData | null));
-        console.log("RES", resFile);
 
         if(!resFile)
           setEditedFile(null);

@@ -9,7 +9,7 @@
 }
 
 .spinner {
-    color: #c6c6c6;
+    color: rgba(198, 198, 198, 0);
 }
 .updatingSpinner {
     color: #595959;
@@ -21,7 +21,7 @@
     color: #c6c6c6;
 }
 .fileExists {
-    color: #608c88;
+    color: #82b6b1;
 }
 
 .saveIcon {
