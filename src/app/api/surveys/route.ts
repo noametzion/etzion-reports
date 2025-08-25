@@ -3,6 +3,8 @@ import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
 
 const FILES_CATEGORY = process.env.SURVEYS_FOLDER as string;
+const EDITED_SURVEYS_API = '/api/editedSurveys';
+const EDITED_FILE_NAME_FORMAT = (originalFileName: string) => `${originalFileName}_edited`;
 
 export async function GET() {
   try {
@@ -65,7 +67,24 @@ export async function DELETE(request: NextRequest) {
     }
 
     await deleteFile(FILES_CATEGORY, fileName);
-    // TODO: delete edited file name
+    
+    // Also delete the corresponding edited survey file if it exists
+    try {
+      const editedFileName = EDITED_FILE_NAME_FORMAT(fileName);
+      const editedSurveyResponse = await fetch(
+        `${request.nextUrl.origin}${EDITED_SURVEYS_API}?fileName=${encodeURIComponent(editedFileName)}`,
+        {
+          method: 'DELETE'
+        }
+      );
+
+      if (!editedSurveyResponse.ok) {
+        console.warn('Failed to delete edited survey file, but original file was deleted');
+      }
+    } catch (error) {
+      console.error('Error deleting edited survey file:', error);
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting file:', error);
