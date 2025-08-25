@@ -17,7 +17,7 @@ if (!admin.apps.length) {
   });
 }
 
-export const adminStorage = admin.storage();
-export const bucket = adminStorage.bucket();
+// export const adminStorage = admin.storage();
+// export const bucket = adminStorage.bucket();
 
-export default admin;
+export {admin};

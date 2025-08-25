@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { bucket } from '../config/firebase-admin';
+import { admin } from '../config/firebase-admin';
 
 type StorageType = 'local' | 'firebase';
 
@@ -35,7 +35,7 @@ const ensureUploadDir = async (dirName: string) => {
 // Firebase storage functions
 const getFileRef = (dirName: string, fileName: string = '') => {
   const filePath = fileName ? `${dirName}/${fileName}` : dirName;
-  return bucket.file(filePath);
+  return admin.storage().bucket().file(filePath);
 };
 
 // Get files from either local or Firebase storage
@@ -44,7 +44,7 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
 
   if (storageType === 'firebase') {
     try {
-      const [files] = await bucket.getFiles({
+      const [files] = await admin.storage().bucket().getFiles({
         prefix: dirName,
         autoPaginate: false
       });
@@ -116,7 +116,7 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       await fileRef.makePublic();
       
       // Get the public URL
-      const url = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
+      const url = `https://storage.googleapis.com/${admin.storage().bucket().name}/${filePath}`;
       
       return {
         fileName: file.name,
