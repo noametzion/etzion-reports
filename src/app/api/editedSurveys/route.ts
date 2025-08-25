@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
 
-const FILES_CATEGORY = "edited_surveys";
+const FILES_CATEGORY = process.env.EDITED_SURVEYS_FOLDER as string;
 const EDITED_FILE_NAME_FORMAT = (originalFileName: string) => `${originalFileName}_edited`;
 
 export async function GET(request: NextRequest) {

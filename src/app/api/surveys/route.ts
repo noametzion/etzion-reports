@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server';
 import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
 
-const FILES_CATEGORY = "surveys";
+const FILES_CATEGORY = process.env.SURVEYS_FOLDER as string;
 
 export async function GET() {
   try {
     const files = await getFiles(FILES_CATEGORY);
+    // process.env.NODE_ENV
     return NextResponse.json({ files });
   } catch (error) {
     console.error('Error fetching files:', error);
