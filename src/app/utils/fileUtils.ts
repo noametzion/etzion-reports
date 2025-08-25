@@ -1,7 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { ref, uploadBytes, listAll, getDownloadURL, deleteObject } from 'firebase/storage';
-import { storage } from '../config/firebase';
+import { bucket } from '../config/firebase-admin';
 
 type StorageType = 'local' | 'firebase';
 
@@ -34,9 +33,9 @@ const ensureUploadDir = async (dirName: string) => {
 };
 
 // Firebase storage functions
-const getFirebaseRef = (dirName: string, fileName: string = '') => {
+const getFileRef = (dirName: string, fileName: string = '') => {
   const filePath = fileName ? `${dirName}/${fileName}` : dirName;
-  return ref(storage, filePath);
+  return bucket.file(filePath);
 };
 
 // Get files from either local or Firebase storage
@@ -45,21 +44,30 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
 
   if (storageType === 'firebase') {
     try {
-      const listRef = getFirebaseRef(dirName);
-      const res = await listAll(listRef);
-      
-      const files = await Promise.all(
-        res.items.map(async (itemRef) => {
-          const url = await getDownloadURL(itemRef);
-          return {
-            fileName: itemRef.name,
-            filePath: `${dirName}/${itemRef.name}`,
-            url
-          };
-        })
-      );
-      
-      return files;
+      const [files] = await bucket.getFiles({
+        prefix: dirName,
+        autoPaginate: false
+      });
+
+      const filePromises = files.map(async (file) => {
+        // Skip directories
+        if (file.name.endsWith('/')) return null;
+        
+        const [url] = await file.getSignedUrl({
+          action: 'read',
+          expires: '03-01-2500' // Far future expiration
+        });
+
+        const fileName = file.name.split('/').pop() || '';
+        return {
+          fileName,
+          filePath: file.name,
+          url
+        };
+      });
+
+      const resolvedFiles = await Promise.all(filePromises);
+      return resolvedFiles.filter(Boolean) as FileData[];
     } catch (error) {
       console.error('Error reading files from Firebase:', error);
       throw error;
@@ -82,18 +90,37 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
   }
 };
 
+// Save file to either local or Firebase storage
 export const saveFile = async (dirName: string, file: File): Promise<FileData> => {
   const storageType = getStorageType();
   
   if (storageType === 'firebase') {
     try {
-      const storageRef = getFirebaseRef(`${dirName}/${file.name}`);
-      const snapshot = await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(snapshot.ref);
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const filePath = `${dirName}/${file.name}`;
+      const fileRef = getFileRef(dirName, file.name);
+      
+      // Check if file exists
+      const [exists] = await fileRef.exists();
+      if (exists) {
+        throw new Error('File already exists');
+      }
+      
+      await fileRef.save(fileBuffer, {
+        metadata: {
+          contentType: file.type,
+        },
+      });
+      
+      // Make the file publicly accessible
+      await fileRef.makePublic();
+      
+      // Get the public URL
+      const url = `https://storage.googleapis.com/${bucket.name}/${filePath}`;
       
       return {
         fileName: file.name,
-        filePath: `${dirName}/${file.name}`,
+        filePath,
         url
       };
     } catch (error) {
@@ -133,10 +160,14 @@ export const deleteFile = async (dirName: string, fileName: string): Promise<boo
   
   if (storageType === 'firebase') {
     try {
-      const fileRef = getFirebaseRef(`${dirName}/${fileName}`);
-      await deleteObject(fileRef);
+      const fileRef = getFileRef(dirName, fileName);
+      await fileRef.delete();
       return true;
     } catch (error) {
+      // If file doesn't exist, we can consider it deleted
+      if ((error as any).code === 404) {
+        return true;
+      }
       console.error('Error deleting file from Firebase:', error);
       throw error;
     }
