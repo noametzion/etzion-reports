@@ -165,6 +165,7 @@ export const deleteFile = async (dirName: string, fileName: string): Promise<boo
       return true;
     } catch (error) {
       // If file doesn't exist, we can consider it deleted
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if ((error as any).code === 404) {
         return true;
       }
