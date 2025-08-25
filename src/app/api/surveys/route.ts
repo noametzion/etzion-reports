@@ -3,7 +3,7 @@ import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
 
 const FILES_CATEGORY = process.env.SURVEYS_FOLDER as string;
-const EDITED_SURVEYS_API = '/api/editedSurveys';
+// const EDITED_SURVEYS_API = '/api/editedSurveys';
 const EDITED_FILE_NAME_FORMAT = (originalFileName: string) => `${originalFileName}_edited`;
 
 export async function GET() {
@@ -72,7 +72,7 @@ export async function DELETE(request: NextRequest) {
     try {
       const editedFileName = EDITED_FILE_NAME_FORMAT(fileName);
       const editedSurveyResponse = await fetch(
-        `${request.nextUrl.origin}${EDITED_SURVEYS_API}?fileName=${encodeURIComponent(editedFileName)}`,
+        `${request.nextUrl.origin}/api/editedSurveys?fileName=${encodeURIComponent(editedFileName)}`,
         {
           method: 'DELETE'
         }
