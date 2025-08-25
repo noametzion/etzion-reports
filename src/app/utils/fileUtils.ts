@@ -12,7 +12,10 @@ interface FileData {
 }
 
 const getStorageType = (): StorageType => {
-  return (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType) || 'local';
+  const st = process.env.NODE_ENV === 'production' ? 'firebase' : 'local';
+  console.log('Storage type: ', st);
+  return st;
+  // return (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType) || 'local';
 };
 
 // Local storage functions
@@ -39,8 +42,7 @@ const getFirebaseRef = (dirName: string, fileName: string = '') => {
 // Get files from either local or Firebase storage
 export const getFiles = async (dirName: string): Promise<FileData[]> => {
   const storageType = getStorageType();
-  console.log("STORAGE TYPE: ", storageType);
-  
+
   if (storageType === 'firebase') {
     try {
       const listRef = getFirebaseRef(dirName);
