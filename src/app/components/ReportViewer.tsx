@@ -9,28 +9,31 @@ import {useSurveyReader} from "@/app/hooks/useSurveyReader";
 import {useMaps} from "@/app/hooks/useMaps";
 import dynamic from "next/dynamic";
 import TitleEditorPanel from './TitleEditorPanel';
-import {FaAngleDown, FaAngleUp} from "react-icons/fa"; // added import statement
+import {FaAngleDown, FaAngleUp} from "react-icons/fa";
+import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
+import {FaArrowsRotate} from "react-icons/fa6"; // added import statement
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
     dynamic(() =>
         import("@/app/components/MapView"), { ssr: false });
 
 interface ReportViewerProps {
-  surveyFile: SurveyFile | null;
+  originalSurveyFile: SurveyFile | null;
   shouldFocus: boolean;
 }
 
 const DEFAULT_SPLIT_DISTANCE = 500;
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) => {
-  const {survey} = useSurveyReader(surveyFile);
+const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , shouldFocus}) => {
+  const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
+  const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
-  const graphs = useGraphs(survey?.surveyData || null, splitDistance, titles);
-  const maps = useMaps(survey?.surveyData || null, splitDistance);
+  const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, titles);
+  const maps = useMaps(editedSurvey?.surveyData || null, splitDistance);
 
-  const surveyName = (survey?.surveyInfo[SurveyInfoNameKey] || surveyFile?.name || '').toString();
+  const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
 
   const handleTitleSave = (title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle})
@@ -40,6 +43,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <FaArrowsRotate className={styles.refreshButton} onClick={() => reloadEditedSurvey()}/>
         <h2>Report Viewer - {surveyName}</h2>
         <span>Split Distance:</span>
         <input
@@ -49,7 +53,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ surveyFile , shouldFocus}) 
           className={styles.splitInput}
         />
       </div>
-      {survey &&
+      {originalSurvey && editedSurvey &&
         <div className={styles.titleEditor}>
             <span onClick={() => setShowTitleEditor(!showTitleEditor)}>
               {showTitleEditor ? <FaAngleDown/> : <FaAngleUp/>}

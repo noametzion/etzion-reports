@@ -22,7 +22,7 @@ export default function Home() {
         <main className={styles.main}>
           <ResizableView
             left={<SurveysViewer onSurveySelected={handleSurveySelected} shouldFocus={shouldFocus} onShouldFocusDistanceChanges={setShouldFocus}/>}
-            right={<ReportViewer surveyFile={selectedSurvey} shouldFocus={shouldFocus}/>}
+            right={<ReportViewer originalSurveyFile={selectedSurvey} shouldFocus={shouldFocus}/>}
             defaultSplit={50}
             minWidth={25}
           />

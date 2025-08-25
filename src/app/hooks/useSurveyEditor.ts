@@ -1,6 +1,6 @@
 "use client";
 
-import {useState, useEffect, useCallback} from 'react';
+import {useState, useEffect, useCallback, useMemo} from 'react';
 import {EditedSurvey, Survey, SurveyDataRow, SurveyFile} from '@/app/types/survey';
 import {cloneDeep} from "es-toolkit";
 import {useEditedSurveyFile} from "@/app/hooks/useEditedSurveyFile";
@@ -9,9 +9,11 @@ import {useEditedSurveyReader} from "@/app/hooks/useEditedSurveyReader";
 export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalSurvey: Survey | null) => {
   const [originalSurveyIsSet, setOriginalSurveyIsSet] = useState(false);
   const [editedSurvey, setEditedSurvey] = useState<EditedSurvey | null>(null);
-  const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile } = useEditedSurveyFile(originalSurveyFile?.name);
+  const {editedFile, isLoading: editedFileLoading, isUpdating: editedFileUpdating, error: editedFileError, updateFile, reload: reloadEditedSurveyFile } = useEditedSurveyFile(originalSurveyFile?.name);
   const { survey: lastEditedSurvey , isLoading: lastEditedSurveyReading, error: lastEditedSurveyError} = useEditedSurveyReader(editedFile);
   const [isChanged, setIsChanged] = useState(false);
+
+  const editedFileExists = useMemo(() => editedFile !== null, [editedFile]);
 
   useEffect(() => {
     if (originalSurvey && !originalSurveyIsSet) {
@@ -53,6 +55,11 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
     setIsChanged(true);
   }, [setEditedSurvey]);
 
+  const reload = useCallback(() => {
+    setOriginalSurveyIsSet(false);
+    reloadEditedSurveyFile();
+  }, [setOriginalSurveyIsSet, reloadEditedSurveyFile]);
+
   const saveEditedSurvey = useCallback(async () => {
     if (editedSurvey && originalSurveyFile) {
       const surveyJson = JSON.stringify(editedSurvey, null, 2);
@@ -67,5 +74,5 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
       updateFile
   ]);
 
-  return { editedSurvey , saveEditedSurvey, isChanged, editedFile, isUpdating: editedFileUpdating, editLocally};
+  return { editedSurvey , saveEditedSurvey, isChanged, isUpdating: editedFileUpdating, editLocally, reload, editedFileExists};
 };

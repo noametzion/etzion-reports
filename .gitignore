@@ -42,3 +42,9 @@ next-env.d.ts
 /.idea/
 /public/surveys/*
 /public/edited_surveys/*
+
+# Firebase local state
+.firebase/
+ui-debug.log
+*.serviceAccount*.json
+/firebase-debug.log
