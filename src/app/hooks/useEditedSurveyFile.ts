@@ -47,6 +47,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
   }, [originalFileName]);
 
   useEffect(() => {
+    setEditedFile(null);
     fetchFile();
   }, [fetchFile]);
 
@@ -101,5 +102,10 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
     }
   };
 
-  return { editedFile, isLoading, isUpdating, error, updateFile, deleteFile };
+  const reload = useCallback(() => {
+    setEditedFile(null);
+    fetchFile();
+  }, [setEditedFile, fetchFile]);
+
+  return { editedFile, isLoading, isUpdating, error, updateFile, deleteFile, reload };
 };

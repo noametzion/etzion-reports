@@ -26,7 +26,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { files: originalFiles, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedOriginalFile, setSelectedOriginalFile] = React.useState<SurveyFile | null>(null);
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
-  const { editedSurvey, saveEditedSurvey , isChanged, editedFile, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
+  const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
 
 
   const handleOpenFile = (fileName: string) => {
@@ -72,7 +72,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
         <span> Focus on distance: </span><input type={"checkbox"} onChange={handleFocusCheckboxChanges}/>
         <EditorStatusBar
-            isEditedFileExist={editedFile !== null}
+            isEditedFileExist={editedFileExists}
             unsavedChangesExists={isChanged}
             isUpdating={isUpdating}
             onSave={() => saveEditedSurvey()}
