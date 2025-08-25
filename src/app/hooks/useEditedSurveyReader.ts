@@ -20,6 +20,7 @@ export const useEditedSurveyReader = (editedSurveyFile: EditedSurveyFile | null)
       const surveyData = await fileResponse.json();
       setSurvey(surveyData);
     } catch (err) {
+      console.log("ERRRRRR:", editedSurveyFile.path)
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
