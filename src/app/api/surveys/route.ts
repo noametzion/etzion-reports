@@ -71,6 +71,7 @@ export async function DELETE(request: NextRequest) {
     // Also delete the corresponding edited survey file if it exists
     try {
       const editedFileName = EDITED_FILE_NAME_FORMAT(fileName);
+      console.log("OR ", request.nextUrl.origin);
       const editedSurveyResponse = await fetch(
         `${request.nextUrl.origin}/api/editedSurveys?fileName=${encodeURIComponent(editedFileName)}`,
         {
