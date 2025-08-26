@@ -11,7 +11,8 @@ import dynamic from "next/dynamic";
 import TitleEditorPanel from './TitleEditorPanel';
 import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
-import {FaArrowsRotate} from "react-icons/fa6"; // added import statement
+import {FaArrowsRotate} from "react-icons/fa6";
+import { jsPDF } from 'jspdf';
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
     dynamic(() =>
@@ -41,7 +42,42 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   };
 
   const exportReportAsPdf = () => {
+    const pdf = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
 
+    graphs.forEach((graph, index) => {
+      if (index > 0) {  // Add a new page for each graph after the first one
+        pdf.addPage([pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight()], 'landscape');
+      }
+
+      // Titles
+      pdf.setFont('courier', 'bold');
+      pdf.setFontSize(24);
+      const titleWidth = pdf.getStringUnitWidth(graph.title) * pdf.getFontSize() / pdf.internal.scaleFactor;
+      const titleX = (pdf.internal.pageSize.getWidth() - titleWidth) / 2; // Center the text
+      pdf.text(graph.title, titleX, 20);
+
+      pdf.setFont('courier', 'normal');
+      pdf.setFontSize(16);
+      const subTitleWidth = pdf.getStringUnitWidth(graph.subtitle) * pdf.getFontSize() / pdf.internal.scaleFactor;
+      const subTitleX = (pdf.internal.pageSize.getWidth() - subTitleWidth) / 2;
+      pdf.text(graph.subtitle, subTitleX, 30);
+
+      // Page number
+      const pageNumberText = `Page ${index + 1} of ${graphs.length}`;
+      pdf.setFont('courier', 'normal');
+      pdf.setFontSize(8);
+      const pageNumberWidth = pdf.getStringUnitWidth(pageNumberText) * pdf.getFontSize() / pdf.internal.scaleFactor;
+      const pageNumberX = (pdf.internal.pageSize.getWidth() - pageNumberWidth) / 2;
+      pdf.text(pageNumberText, pageNumberX, pdf.internal.pageSize.getHeight() - 10);
+
+    });
+
+    // Save the PDF
+    pdf.save(`${surveyName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_report.pdf`);
   };
 
   return (
