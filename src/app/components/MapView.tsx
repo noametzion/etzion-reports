@@ -19,6 +19,7 @@ interface MapViewProps {
   mapInfo: MapInfo;
   allMapsInfos?: MapInfo[];
   shouldFocus: boolean;
+  mode?: "view" | "export";
 }
 
 const MapUpdater = ({ positions }: MapUpdaterProps) => {
@@ -34,7 +35,7 @@ const MapUpdater = ({ positions }: MapUpdaterProps) => {
   return null;
 };
 
-const dataPointsToPositions = (data: MapDataPoint[], ) : [number, number][][] => {
+const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
   const positions: [number, number][][] = [];
   let currentLineSegment: [number, number][] = [];
   data.forEach((point) => {
@@ -53,7 +54,7 @@ const dataPointsToPositions = (data: MapDataPoint[], ) : [number, number][][] =>
   return positions;
 }
 
-const MapView = ({ mapInfo, allMapsInfos , shouldFocus}: MapViewProps) => {
+const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view"}: MapViewProps) => {
 
   const { focusDistance } = useFocusDistance(shouldFocus);
 
@@ -97,7 +98,7 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus}: MapViewProps) => {
     <MapContainer
       center={[positions[0][0][0], positions[0][0][1]]}
       zoom={13}
-      className={styles.mapContainer}
+      className={mode === "view" ? styles.mapContainerView : styles.mapContainerExport}
       zoomControl
       scrollWheelZoom={false}
       doubleClickZoom={false}
