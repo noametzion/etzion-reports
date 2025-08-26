@@ -1,23 +1,16 @@
+import serviceAccount from "../../../etzionreports-firebase-adminsdk-fbsvc-ef7fcd4575.json"
+import { ServiceAccount} from "firebase-admin";
 import * as admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-  
-  if (!privateKey) {
-    throw new Error('FIREBASE_PRIVATE_KEY is not set in environment variables');
+export const getFirebaseAdmin = () => {
+
+  const firebaseAdminApps = admin.apps;
+  if (firebaseAdminApps.length > 0 && firebaseAdminApps[0]) {
+    return firebaseAdminApps[0];
+  } else {
+    return admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount as ServiceAccount),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    });
   }
-
-  admin.initializeApp({
-    credential: admin.credential.cert({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: privateKey,
-    }),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  });
 }
-
-// export const adminStorage = admin.storage();
-// export const bucket = adminStorage.bucket();
-
-export {admin};
