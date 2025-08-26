@@ -20,6 +20,7 @@ import {useFocusDistance} from "@/app/hooks/useFocusDistance";
 interface GraphDisplayProps {
   graphInfo: GraphInfo;
   shouldFocus: boolean;
+  mode?: 'export' | 'view';
 }
 
 const margin = { top: 5, right: 30, left: 20, bottom: 5 }
@@ -39,7 +40,7 @@ const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
     );
 };
 
-const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus }) => {
+const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mode = 'view' }) => {
   const { focusDistance , setFocusDistance} = useFocusDistance(shouldFocus);
 
   // eslint-disable-next-line
@@ -165,9 +166,9 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus }) =
   }
 
   return (
-      <div className={styles.container}>
-        <h3 className={styles.title}>{graphInfo.title}</h3>
-        <h4 className={styles.subtitle}>{graphInfo.subtitle}</h4>
+      <div className={mode === 'view' ? styles.containerView : styles.containerExport}>
+        {mode === 'view' && <h3 className={styles.title}>{graphInfo.title}</h3>}
+        {mode === 'view' && <h4 className={styles.subtitle}>{graphInfo.subtitle}</h4>}
         <ResponsiveContainer width="100%" height={400}>
           {OnOffGraph}
         </ResponsiveContainer>

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, {useState} from 'react';
 import {SurveyInfoNameKey, SurveyFile} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
@@ -11,7 +11,9 @@ import dynamic from "next/dynamic";
 import TitleEditorPanel from './TitleEditorPanel';
 import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
-import {FaArrowsRotate} from "react-icons/fa6"; // added import statement
+import {FaArrowsRotate} from "react-icons/fa6";
+import ExportReportModal from "@/app/components/ExportReportModal";
+
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
     dynamic(() =>
@@ -28,6 +30,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
+  const [isExportMode, setIsExportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
   const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, titles);
@@ -52,6 +55,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           onChange={(e) => setSplitDistance(Number(e.target.value))}
           className={styles.splitInput}
         />
+        <button
+            onClick={() => setIsExportMode(true)}
+            className={styles.exportButton}
+        >EXPORT</button>
       </div>
       {originalSurvey && editedSurvey &&
         <div className={styles.titleEditor}>
@@ -85,6 +92,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           </div>
         ))}
       </div>
+      <ExportReportModal
+          isOpen={isExportMode}
+          onClose={() => setIsExportMode(false)}
+          surveyName={surveyName}
+          graphs={graphs}
+          maps={maps}
+      />
     </div>
   );
 };
