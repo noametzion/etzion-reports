@@ -113,13 +113,17 @@ export interface Survey {
 export interface SurveyFile {
   name: string;
   path: string;
+  url?: string;
   uploadedAt: string;
+  isLocal: boolean;
 }
 
 export interface EditedSurveyFile {
   name: string;
   path: string;
+  url?: string;
   updatedAt: string;
+  isLocal: boolean;
   originalFileName: string;
 }
 

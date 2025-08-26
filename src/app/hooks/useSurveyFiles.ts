@@ -6,6 +6,8 @@ import {SurveyFile} from "@/app/types/survey";
 interface ResponseSurveyFileData {
   fileName: string;
   filePath: string;
+  url?: string;
+  isLocal: boolean;
 }
 
 const SURVEYS_API = '/api/surveys';
@@ -26,6 +28,8 @@ export const useSurveyFiles = () => {
         const fileList = (responseData.files as ResponseSurveyFileData[]).map((file) => ({
           name: file.fileName,
           path: file.filePath,
+          isLocal: file.isLocal,
+          url: responseData.url,
           uploadedAt: new Date().toISOString(), // Placeholder, ideally from server
         }));
         setFiles(fileList);
@@ -60,8 +64,13 @@ export const useSurveyFiles = () => {
       if (!response.ok) setError(responseData.error ||'Upload failed');
       else {
         setFiles(prev => [
-          {name: responseData.fileName, path: responseData.filePath, uploadedAt: new Date().toISOString()},
-          ...prev,
+          {
+            name: responseData.fileName,
+            path: responseData.filePath,
+            uploadedAt: new Date().toISOString(),
+            isLocal: responseData.isLocal,
+            url: responseData.url,
+          }, ...prev,
         ]);
       }
     } catch (err) {

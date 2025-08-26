@@ -62,13 +62,15 @@ export async function PUT(request: NextRequest) {
       await deleteFile(FILES_CATEGORY, editedFileName);
     }
 
-    const { fileName, filePath } = await saveFile(FILES_CATEGORY, file);
+    const { fileName, filePath, url, isLocal} = await saveFile(FILES_CATEGORY, file);
 
     return NextResponse.json({
       success: true,
       originalFileName,
       fileName,
-      filePath
+      filePath,
+      url,
+      isLocal
     });
   } catch (error) {
     console.error('Error uploading file:', error);

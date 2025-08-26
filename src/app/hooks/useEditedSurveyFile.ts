@@ -6,6 +6,8 @@ import {EditedSurveyFile} from "@/app/types/survey";
 interface ResponseEditedSurveyFileData {
   fileName: string;
   filePath: string;
+  url?: string;
+  isLocal: boolean;
   originalFileName: string;
 }
 
@@ -35,6 +37,8 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
           setEditedFile({
             name: resFile.fileName,
             path: resFile.filePath,
+            url: resFile.url,
+            isLocal: resFile.isLocal,
             originalFileName: resFile.originalFileName,
             updatedAt: new Date().toISOString(), // Placeholder, ideally from server
           });
@@ -69,6 +73,8 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
         setEditedFile({
               name: responseData.fileName,
               path: responseData.filePath,
+              url: responseData.url,
+              isLocal: responseData.isLocal,
               originalFileName: responseData.originalFileName,
               updatedAt: new Date().toISOString()}, //from server
         );
