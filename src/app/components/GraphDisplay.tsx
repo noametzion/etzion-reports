@@ -72,7 +72,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
                 dataKey="distance"
                 type="number"
                 domain={[graphInfo.startDistance, graphInfo.endDistance]}
-                label={{ value: 'Distance (m)', position: 'insideBottomRight', offset: 0 }}
+                label={{ value: 'Distance (stations)', position: 'insideBottomRight', offset: 0 }}
             />
             <YAxis label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }} reversed/>
             <Tooltip cursor={{ stroke: 'transparent' }}/>
@@ -132,7 +132,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
             dataKey="distance"
             type="number"
             domain={[graphInfo.startDistance, graphInfo.endDistance]}
-            label={{ value: 'Distance (m)', position: 'insideBottomRight', offset: 0 }}
+            label={{ value: 'Distance (stations)', position: 'insideBottomRight', offset: 0 }}
         />
         <YAxis label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }} />
         <Tooltip />
