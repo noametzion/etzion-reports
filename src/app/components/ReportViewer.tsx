@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, {useState} from 'react';
 import {SurveyInfoNameKey, SurveyFile} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
@@ -12,7 +12,8 @@ import TitleEditorPanel from './TitleEditorPanel';
 import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
-import { jsPDF } from 'jspdf';
+import ExportReportModal from "@/app/components/ExportReportModal";
+
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
     dynamic(() =>
@@ -29,6 +30,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
+  const [isExportMode, setIsExportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
   const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, titles);
@@ -39,45 +41,6 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const handleTitleSave = (title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle})
       setShowTitleEditor(false);
-  };
-
-  const exportReportAsPdf = () => {
-    const pdf = new jsPDF({
-      orientation: 'landscape',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    graphs.forEach((graph, index) => {
-      if (index > 0) {  // Add a new page for each graph after the first one
-        pdf.addPage([pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight()], 'landscape');
-      }
-
-      // Titles
-      pdf.setFont('courier', 'bold');
-      pdf.setFontSize(24);
-      const titleWidth = pdf.getStringUnitWidth(graph.title) * pdf.getFontSize() / pdf.internal.scaleFactor;
-      const titleX = (pdf.internal.pageSize.getWidth() - titleWidth) / 2; // Center the text
-      pdf.text(graph.title, titleX, 20);
-
-      pdf.setFont('courier', 'normal');
-      pdf.setFontSize(16);
-      const subTitleWidth = pdf.getStringUnitWidth(graph.subtitle) * pdf.getFontSize() / pdf.internal.scaleFactor;
-      const subTitleX = (pdf.internal.pageSize.getWidth() - subTitleWidth) / 2;
-      pdf.text(graph.subtitle, subTitleX, 30);
-
-      // Page number
-      const pageNumberText = `Page ${index + 1} of ${graphs.length}`;
-      pdf.setFont('courier', 'normal');
-      pdf.setFontSize(8);
-      const pageNumberWidth = pdf.getStringUnitWidth(pageNumberText) * pdf.getFontSize() / pdf.internal.scaleFactor;
-      const pageNumberX = (pdf.internal.pageSize.getWidth() - pageNumberWidth) / 2;
-      pdf.text(pageNumberText, pageNumberX, pdf.internal.pageSize.getHeight() - 10);
-
-    });
-
-    // Save the PDF
-    pdf.save(`${surveyName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_report.pdf`);
   };
 
   return (
@@ -93,7 +56,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           className={styles.splitInput}
         />
         <button
-            onClick={exportReportAsPdf}
+            onClick={() => setIsExportMode(true)}
             className={styles.exportButton}
         >EXPORT</button>
       </div>
@@ -129,6 +92,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           </div>
         ))}
       </div>
+      <ExportReportModal
+          isOpen={isExportMode}
+          onClose={() => setIsExportMode(false)}
+          surveyName={surveyName}
+          graphs={graphs}
+          maps={maps}
+      />
     </div>
   );
 };
