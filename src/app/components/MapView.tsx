@@ -99,7 +99,7 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view"}: MapViewP
       center={[positions[0][0][0], positions[0][0][1]]}
       zoom={13}
       className={mode === "view" ? styles.mapContainerView : styles.mapContainerExport}
-      zoomControl
+      zoomControl={mode === "view"}
       scrollWheelZoom={false}
       doubleClickZoom={false}
       touchZoom={false}
