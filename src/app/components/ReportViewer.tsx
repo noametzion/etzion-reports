@@ -40,6 +40,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
       setShowTitleEditor(false);
   };
 
+  const exportReportAsPdf = () => {
+
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -52,6 +56,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           onChange={(e) => setSplitDistance(Number(e.target.value))}
           className={styles.splitInput}
         />
+        <button
+            onClick={exportReportAsPdf}
+            className={styles.exportButton}
+        >EXPORT</button>
       </div>
       {originalSurvey && editedSurvey &&
         <div className={styles.titleEditor}>
