@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import { Survey, SurveyFile, SurveyInfo, SurveyDataRow, DCPDataRow } from '@/app/types/survey';
+import {getDownloadURL, ref} from "firebase/storage";
+import {storage} from "@/app/config/firebase";
 
 const parseSurveyInfo = (sheet: XLSX.WorkSheet): SurveyInfo => {
   // eslint-disable-next-line
@@ -48,10 +50,23 @@ export const useSurveyReader = (file: SurveyFile | null) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/surveys/${file.name}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch survey file.');
+        let response: Response | undefined = undefined;
+        if (file.isLocal) {
+          console.log("reading local file...");
+          response = await fetch(`/surveys/${file.name}`);
+          if (!response.ok) {
+            setError('Failed to fetch local survey file.');
+          }
+        } else {
+          console.log("reading firebase file...");
+          const fileRef = ref(storage, file.path); // path inside bucket
+          const url = await getDownloadURL(fileRef);
+          response = await fetch(url);
+          if (!response.ok) {
+            setError("Failed to fetch JSON from FIREBASE");
+          }
         }
+
         const arrayBuffer = await response.arrayBuffer();
         const workbook = XLSX.read(arrayBuffer, { type: 'buffer' });
 
@@ -60,7 +75,7 @@ export const useSurveyReader = (file: SurveyFile | null) => {
         const surveyInfoSheet = workbook.Sheets['Survey Info'];
 
         if (!surveyDataSheet || !dcpDataSheet || !surveyInfoSheet) {
-            throw new Error('One or more required sheets are missing from the survey file.');
+            setError('One or more required sheets are missing from the survey file.');
         }
 
         const surveyData = XLSX.utils.sheet_to_json<SurveyDataRow>(surveyDataSheet);

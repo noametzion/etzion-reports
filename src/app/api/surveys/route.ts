@@ -3,7 +3,6 @@ import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
 
 const FILES_CATEGORY = process.env.SURVEYS_FOLDER as string;
-// const EDITED_SURVEYS_API = '/api/editedSurveys';
 const EDITED_FILE_NAME_FORMAT = (originalFileName: string) => `${originalFileName}_edited`;
 
 export async function GET() {
@@ -32,12 +31,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { fileName, filePath } = await saveFile(FILES_CATEGORY, file);
+    const { fileName, filePath, url, isLocal } = await saveFile(FILES_CATEGORY, file);
 
     return NextResponse.json({
       success: true,
       fileName,
-      filePath
+      filePath,
+      url,
+      isLocal
     });
   } catch (error) {
     if ((error as Error).message === 'File already exists') {

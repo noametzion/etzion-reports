@@ -1,6 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { admin } from '../config/firebase-admin';
+import { getFirebaseAdmin } from '../config/firebase-admin';
+
+const admin = getFirebaseAdmin();
 
 type StorageType = 'local' | 'firebase';
 
@@ -8,13 +10,13 @@ interface FileData {
   fileName: string;
   filePath: string;
   url?: string;
+  isLocal: boolean;
 }
 
 const getStorageType = (): StorageType => {
   const st = process.env.NODE_ENV === 'production' ? 'firebase' : 'local';
   console.log('Storage type: ', st);
   return st;
-  // return (process.env.NEXT_PUBLIC_STORAGE_TYPE as StorageType) || 'local';
 };
 
 // Local storage functions
@@ -62,7 +64,8 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
         return {
           fileName,
           filePath: file.name,
-          url
+          url,
+          isLocal: false
         };
       });
 
@@ -81,7 +84,8 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
       return files.map(fileName => ({
         fileName,
         filePath: `/${dirName}/${fileName}`,
-        url: `/${dirName}/${fileName}`
+        url: `/${dirName}/${fileName}`,
+        isLocal: true
       }));
     } catch (error) {
       console.error('Error reading local files:', error);
@@ -121,7 +125,8 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       return {
         fileName: file.name,
         filePath,
-        url
+        url,
+        isLocal: false
       };
     } catch (error) {
       console.error('Error saving file to Firebase:', error);
@@ -142,7 +147,8 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       return {
         fileName: file.name,
         filePath: `/${dirName}/${file.name}`,
-        url: `/${dirName}/${file.name}`
+        url: `/${dirName}/${file.name}`,
+        isLocal: true
       };
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
