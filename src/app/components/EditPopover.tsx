@@ -31,7 +31,8 @@ const EditPopover: React.FC<EditPopoverProps> = ({
   }, [initialValue]);
 
   const handleSave = () => {
-    onSave(value);
+    const valueToSave = type === "number" ? Number(value) : value;
+    onSave(valueToSave);
     onClose();
   };
 
@@ -42,9 +43,9 @@ const EditPopover: React.FC<EditPopoverProps> = ({
 
   const NumberEditor = () => {
     return (<input
-        type="number"
+        type="text"
         value={value}
-        onChange={(e) => setValue(Number(e.target.value))}
+        onChange={(e) => setValue(e.target.value)}
         className={styles.input}
         autoFocus
     />);
@@ -79,6 +80,8 @@ const EditPopover: React.FC<EditPopoverProps> = ({
     </>);
   };
 
+  const disableSaveButton = type === "number" && Number.isNaN(Number(value));
+
   return (
     <div className={styles.popover} style={{ top: `${top}px`, left: `${left}px` }}>
       <div className={styles.header}>
@@ -90,7 +93,7 @@ const EditPopover: React.FC<EditPopoverProps> = ({
         {type === "string" && <StringEditor />}
         <SuggestionsList/>
         <div className={styles.buttonsContainer}>
-          <button onClick={handleSave} className={styles.saveButton}><FaSave /></button>
+          <button onClick={handleSave} className={styles.saveButton} disabled={disableSaveButton}><FaSave /></button>
           <button onClick={handleDelete} className={styles.deleteButton}><FaTrash /></button>
         </div>
       </div>
