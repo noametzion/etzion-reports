@@ -51,27 +51,30 @@ const EditPopover: React.FC<EditPopoverProps> = ({
   };
 
   const StringEditor = () => {
-    return (<>
-      <input
+    return (<input
         type="text"
         value={value || ""}
         onChange={(e) => setValue(e.target.value)}
         className={styles.input}
         autoFocus
-      />
+      />);
+  };
+
+  const SuggestionsList = () => {
+    return (<>
       {suggestions.length > 0 &&
-        <select
-          id="suggestions"
-          className={styles.input}
-          value={value}
-          onChange={(e) => setValue(e.target.value || value)}
-        >
-          <option value="">--Choose Suggestion--</option>
-          {suggestions.map((suggestion) => {
-            return (
-            <option key={suggestion} value={suggestion}>{suggestion}</option>
-          )})}
-        </select>
+          <select
+              id="suggestions"
+              className={styles.input}
+              value={value}
+              onChange={(e) => setValue(e.target.value || value)}
+          >
+            <option value="">--Choose Suggestion--</option>
+            {suggestions.map((suggestion) => {
+              return (
+                  <option key={suggestion} value={suggestion}>{suggestion}</option>
+              )})}
+          </select>
       }
     </>);
   };
@@ -79,13 +82,13 @@ const EditPopover: React.FC<EditPopoverProps> = ({
   return (
     <div className={styles.popover} style={{ top: `${top}px`, left: `${left}px` }}>
       <div className={styles.header}>
-        {/*<FaExclamationTriangle className={styles.errorIcon} />*/}
         <h4>Edit Value</h4>
         <button onClick={onClose} className={styles.closeButton}><FaTimes /></button>
       </div>
       <div className={styles.content}>
         {type === "number" && <NumberEditor />}
         {type === "string" && <StringEditor />}
+        <SuggestionsList/>
         <div className={styles.buttonsContainer}>
           <button onClick={handleSave} className={styles.saveButton}><FaSave /></button>
           <button onClick={handleDelete} className={styles.deleteButton}><FaTrash /></button>

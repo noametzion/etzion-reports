@@ -5,10 +5,10 @@ import {
     DCPDataCommentKey,
     DCPDataRow,
     DCPDataStationKey,
-    EditableType,
+    EditableType, EditedSurvey,
     Survey, SurveyAnomalyKey,
     SurveyCommentKey,
-    SurveyDataRow,
+    SurveyDataRow, SurveyDSVGVoltageKeys, SurveyOnOffVoltageKeys,
     SurveyStationKey
 } from "@/app/types/survey";
 import {useCallback, useEffect, useState} from "react";
@@ -48,7 +48,26 @@ const getAnomalyColumnSuggestions = (survey: Survey, rowIndex: number) => {
     return [...new Set(suggestions)]; // remove duplicates
 };
 
-export const useSuggester = (originalSurvey: Survey) => {
+const getAverageSuggestion = (eSurvey: EditedSurvey | Survey, rowIndex: number, columnName: keyof SurveyDataRow)=> {
+    const previousRow = rowIndex - 1 >= 0 ? eSurvey.surveyData[rowIndex - 1] : undefined;
+    const row = eSurvey.surveyData[rowIndex];
+    const nextRow = rowIndex + 1 < eSurvey.surveyData.length ? eSurvey.surveyData[rowIndex + 1] : undefined;
+    const previousStation = previousRow ? Number(previousRow[SurveyStationKey]) : undefined;
+    const station = Number(row[SurveyStationKey]);
+    const nextStation = nextRow ? Number(nextRow[SurveyStationKey]) : undefined;
+    if (previousStation !== undefined && previousStation === station-1
+        && nextStation !== undefined && nextStation === station+1) {
+        const previousValue = previousRow ? Number(previousRow[columnName]) : undefined;
+        const nextValue = nextRow ? Number(nextRow[columnName]) : undefined;
+        if (previousValue !== undefined && !Number.isNaN(previousValue)
+            && nextValue !== undefined && !Number.isNaN(nextValue)) {
+            return [((previousValue + nextValue) / 2).toFixed(6)];
+        }
+    }
+    return [];
+}
+
+export const useSuggester = (originalSurvey: Survey, editedSurvey: EditedSurvey) => {
 
     const [suggestedCommentsStations, setSuggestedCommentsStations] = useState<number[]>([]);
     const [suggestedAnomaliesStations, setSuggestedAnomaliesStations] = useState<number[]>([]);
@@ -70,10 +89,14 @@ export const useSuggester = (originalSurvey: Survey) => {
                 return getCommentColumnSuggestions(originalSurvey, rowIndex);
             case SurveyAnomalyKey:
                 return getAnomalyColumnSuggestions(originalSurvey, rowIndex);
-            default:
+            default: {
+                if (SurveyDSVGVoltageKeys.includes(columnName) || SurveyOnOffVoltageKeys.includes(columnName)) {
+                    return getAverageSuggestion(editedSurvey || originalSurvey, rowIndex, columnName);
+                }
                 return [];
+            }
         }
-    },[originalSurvey]);
+    },[originalSurvey, editedSurvey]);
 
     return { suggest: getSuggestionsForColumn, suggestedCommentsStations, suggestedAnomaliesStations } ;
 };
