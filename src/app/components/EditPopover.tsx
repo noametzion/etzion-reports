@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, {useState} from 'react';
 import styles from './EditPopover.module.css';
 import { FaSave, FaTimes, FaTrash} from 'react-icons/fa';
 import {EditableType, EditableTypeName} from "@/app/types/survey";
@@ -24,14 +24,12 @@ const EditPopover: React.FC<EditPopoverProps> = ({
   top,
   left,
 }) => {
-  const [value, setValue] = useState<EditableType | undefined>(initialValue || undefined);
-
-  useEffect(() => {
-    setValue(initialValue || undefined);
-  }, [initialValue]);
+  const [value, setValue] = useState<string>(initialValue?.toString() || '');
+  const [cursor, setCursor] = useState<number | null>(null);
 
   const handleSave = () => {
-    const valueToSave = type === "number" ? Number(value) : value;
+    const valueToSave = value === "" ? undefined
+        : (type === "number" ? Number(value): value);
     onSave(valueToSave);
     onClose();
   };
@@ -41,13 +39,24 @@ const EditPopover: React.FC<EditPopoverProps> = ({
     onClose();
   }
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(e.target.value);
+    setCursor(e.target.selectionStart);
+  }
+
   const NumberEditor = () => {
     return (<input
         type="text"
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        inputMode="numeric"
+        onChange={handleChange}
         className={styles.input}
         autoFocus
+        onFocus={(e) => {
+          if(cursor !== null) {
+            e.target.setSelectionRange(cursor, cursor);
+          }
+        }}
     />);
   };
 
@@ -55,9 +64,14 @@ const EditPopover: React.FC<EditPopoverProps> = ({
     return (<input
         type="text"
         value={value || ""}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={handleChange}
         className={styles.input}
         autoFocus
+        onFocus={(e) => {
+          if(cursor !== null) {
+            e.target.setSelectionRange(cursor, cursor);
+          }
+        }}
       />);
   };
 
