@@ -22,6 +22,7 @@
   .page {
     padding: 32px;
     padding-bottom: 80px;
+    overscroll-behavior-x: none;
   }
 
   .main {
