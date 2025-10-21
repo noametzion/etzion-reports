@@ -70,7 +70,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
-  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey);
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey, editedSurvey);
   const tableHeaderRef = React.useRef<HTMLDivElement>(null);
   const tableGridRef = React.useRef<Grid>(null);
 
@@ -103,7 +103,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyOnOffVoltageKeys) {
-        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+        const voltageDiff = Math.abs((Number(currentRow[key]) || 0) - (Number(prevRow[key]) || 0));
 
         if (voltageDiff > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({rowIndex: i - 1, columnName: key});
@@ -122,7 +122,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
       for (const key of SurveyDSVGVoltageKeys) {
 
-        if (Math.abs(currentRow[key] || 0) > (threshold / 1000)) { // Convert mV to V for comparison
+        if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({rowIndex: i, columnName: key});
           errors.push({rowIndex: i, columnName: SurveyAnomalyKey});
         }
