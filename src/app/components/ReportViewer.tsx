@@ -30,6 +30,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
+  const [includeDCVG, setIncludeDCVG] = useState<boolean>(true);
   const [isExportMode, setIsExportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
@@ -48,13 +49,24 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
       <div className={styles.header}>
         <FaArrowsRotate className={styles.refreshButton} onClick={() => reloadEditedSurvey()}/>
         <h2>Report Viewer - {surveyName}</h2>
-        <span>Split Distance:</span>
-        <input
-          type="number"
-          value={splitDistance}
-          onChange={(e) => setSplitDistance(Number(e.target.value))}
-          className={styles.splitInput}
-        />
+        <div className={styles.reportOptions}>
+          <div>
+            <span>Split Distance:</span>
+            <input
+              type="number"
+              value={splitDistance}
+              onChange={(e) => setSplitDistance(Number(e.target.value))}
+              className={styles.splitDistanceInput}
+            />
+          </div>
+            <div style={{display: 'block', alignItems: 'center'}}>
+              <input
+                type={"checkbox"}
+                onChange={(e) => setIncludeDCVG(e.target.checked)}
+                checked={includeDCVG}/>
+                {" Include DCVG Graph"}
+            </div>
+        </div>
         <button
             onClick={() => setIsExportMode(true)}
             className={styles.exportButton}
@@ -83,6 +95,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
                 key={index}
                 graphInfo={graph}
                 shouldFocus={shouldFocus}
+                includeDCVG={includeDCVG}
             />
             <MapView
                 mapInfo={maps[index]}
@@ -98,6 +111,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           surveyName={surveyName}
           graphs={graphs}
           maps={maps}
+          includeDCVG={includeDCVG}
       />
     </div>
   );

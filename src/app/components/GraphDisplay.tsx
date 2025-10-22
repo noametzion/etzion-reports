@@ -21,6 +21,7 @@ interface GraphDisplayProps {
   graphInfo: GraphInfo;
   shouldFocus: boolean;
   mode?: 'export' | 'view';
+  includeDCVG?: boolean;
 }
 
 const margin = { top: 5, right: 30, left: 20, bottom: 5 }
@@ -40,7 +41,7 @@ const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
     );
 };
 
-const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mode = 'view' }) => {
+const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mode = 'view' , includeDCVG = true}) => {
   const { focusDistance , setFocusDistance} = useFocusDistance(shouldFocus);
 
   // eslint-disable-next-line
@@ -169,12 +170,12 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
       <div className={mode === 'view' ? styles.containerView : styles.containerExport}>
         {mode === 'view' && <h3 className={styles.title}>{graphInfo.title}</h3>}
         {mode === 'view' && <h4 className={styles.subtitle}>{graphInfo.subtitle}</h4>}
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={(!includeDCVG && mode === "export")? 550 : 400}>
           {OnOffGraph}
         </ResponsiveContainer>
-        <ResponsiveContainer width="100%" height={250}>
+        {includeDCVG ? <ResponsiveContainer width="100%" height={250}>
           {DCVGGraph}
-        </ResponsiveContainer>
+        </ResponsiveContainer> : null}
       </div>
   );
 };
