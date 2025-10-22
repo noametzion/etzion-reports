@@ -14,6 +14,16 @@
 
 }
 
+.reportOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px
+}
+
+.splitDistanceInput {
+  width: 60px;
+}
+
 .header h2 {
   margin-right: 10px;
   color: #42362b;
@@ -43,7 +53,7 @@
   color: #789a4d;
   margin-left: 10px;
   margin-right: 10px;
-  with: 30px;
+  width: 30px;
 }
 .refreshButton:hover {
   color: rgba(120, 154, 77, 0.49);

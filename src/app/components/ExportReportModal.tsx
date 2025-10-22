@@ -19,6 +19,7 @@ interface ExportReportModalProps {
   surveyName: string;
   graphs: GraphInfo[];
   maps: MapInfo[];
+  includeDCVG?: boolean;
 }
 
 const ExportReportModal: React.FC<ExportReportModalProps> = ({
@@ -26,7 +27,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
   onClose,
   surveyName,
   graphs,
-  maps
+  maps,
+  includeDCVG = true
 }) => {
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -116,7 +118,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
           <h2>{`Export PDF Report`}</h2>
-          <button className={styles.exportButton} onClick={exportReportAsPdf}>Export</button>
+          <button className={styles.exportButton} onClick={exportReportAsPdf}>Save As PDF</button>
           {loading &&<div className={styles.loader}/>}
           <button className={styles.closeButton} onClick={onClose}>&times;</button>
         </div>
@@ -131,6 +133,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                       graphInfo={graph}
                       shouldFocus={false}
                       mode="export"
+                      includeDCVG={includeDCVG}
                   />
                   <div className={styles.mapViewContainer}>
                     <MapView
@@ -138,6 +141,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                         allMapsInfos={maps}
                         shouldFocus={false}
                         mode="export"
+                        extendedMap={!includeDCVG}
                     />
                   </div>
                 </div>

@@ -20,10 +20,12 @@ interface MapViewProps {
   allMapsInfos?: MapInfo[];
   shouldFocus: boolean;
   mode?: "view" | "export";
+  extendedMap?: boolean;
 }
 
 const MapUpdater = ({ positions }: MapUpdaterProps) => {
   const map = useMap();
+
   useEffect(() => {
     if (positions.length > 0) {
       const flatPositions = positions.flat();
@@ -54,7 +56,7 @@ const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
   return positions;
 }
 
-const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view"}: MapViewProps) => {
+const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedMap = false}: MapViewProps) => {
 
   const { focusDistance } = useFocusDistance(shouldFocus);
 
@@ -94,11 +96,17 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view"}: MapViewP
   const lastLineSegmentPositionIndex = positions[positions.length - 1].length-1;
   const lastPosition = positions[positions.length - 1][lastLineSegmentPositionIndex];
 
+  const mapContainerClassName = [
+    mode === "view" && styles.mapContainerView,
+    mode === "export" && styles.mapContainerExport,
+    mode === "export" && extendedMap && styles.extendedMapContainerExport,
+  ].filter(Boolean).join(' ');
+
   return (
     <MapContainer
       center={[positions[0][0][0], positions[0][0][1]]}
       zoom={13}
-      className={mode === "view" ? styles.mapContainerView : styles.mapContainerExport}
+      className={mapContainerClassName}
       zoomControl={mode === "view"}
       scrollWheelZoom={false}
       doubleClickZoom={false}
