@@ -84,6 +84,22 @@
     text-align: left;
 }
 
+.hoverBorderCellZoneTop {
+    height: 6px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.hoverBorderCellZoneBottom {
+    height: 6px;
+    width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
 .selectedRowCell {
     background-color: #e4f1f1;
 }

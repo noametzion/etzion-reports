@@ -46,6 +46,11 @@ interface PopoverState {
   left: number;
 }
 
+interface PlusRowState {
+  rowUpIndex: number;
+  rowBottomIndex: number;
+}
+
 interface ItemData {
   items: EditedSurveyDataRow[];
   headers: (keyof SurveyDataRow)[];
@@ -67,6 +72,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [popover, setPopover] = useState<PopoverState | null>(null);
+  const [plusRow, setPlusRow] = useState<PlusRowState | null>(null);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
@@ -233,9 +239,11 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         style={style}
         dir={'rtl'}
       >
+        <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => setPlusRow({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>
         <span className={styles.cellContent}>{displayValue}</span>
         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
+        <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => setPlusRow({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>
       </div>
     );
   }, areEqual);
