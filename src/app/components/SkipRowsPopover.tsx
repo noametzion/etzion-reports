@@ -2,14 +2,13 @@
 
 import React, {useState} from 'react';
 import styles from './SkipRowsPopover.module.css';
-import { FaSave, FaTimes} from 'react-icons/fa';
-import {EditableType, } from "@/app/types/survey";
+import {FaArrowRight, FaSave, FaTimes} from 'react-icons/fa';
 
 interface EditPopoverProps {
   stationOnTop: number;
   stationUnder: number;
   currentSkipValue: number;
-  onSave: (newValue: EditableType | undefined) => void;
+  onSave: (newValue: number) => void;
   onClose: () => void;
   top: number;
   left: number;
@@ -28,7 +27,7 @@ const SkipRowsPopover: React.FC<EditPopoverProps> = ({
   const [cursor, setCursor] = useState<number | null>(null);
 
   const handleSave = () => {
-    onSave(value);
+    onSave(Number(value));
     onClose();
   };
 
@@ -55,6 +54,7 @@ const SkipRowsPopover: React.FC<EditPopoverProps> = ({
   };
 
   const disableSaveButton = Number.isNaN(Number(value)) || (Number(value) < 0);
+  const isValidChange = !disableSaveButton && Number(value) !== currentSkipValue;
 
   return (
     <div className={styles.popover} style={{ top: `${top}px`, left: `${left}px` }}>
@@ -65,7 +65,11 @@ const SkipRowsPopover: React.FC<EditPopoverProps> = ({
       <div className={styles.content}>
         <div className={styles.stationBefore}>station {stationOnTop}</div>
         <div>{"Skip "} <NumberEditor /> {" rows"}</div>
-        <div className={styles.stationAfter}>station {stationUnder}</div>
+        <div className={styles.stationAfterChange}>
+          <div className={styles.stationAfter}>station {stationUnder}</div>
+          {isValidChange && <><FaArrowRight/>
+          <div className={styles.stationAfter}>station {stationOnTop + Number(value) + 1}</div></>}
+        </div>
         <div className={styles.buttonsContainer}>
           <button onClick={handleSave} className={styles.saveButton} disabled={disableSaveButton}><FaSave /></button>
         </div>

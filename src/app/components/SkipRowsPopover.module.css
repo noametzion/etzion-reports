@@ -50,6 +50,14 @@
     border-radius: 4px;
 }
 
+.stationAfterChange {
+    display: inline-flex;
+    color: #a8a8a8;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
 .stationBefore, .stationAfter {
     border: 1px dashed #ccc;
     border-radius: 4px;

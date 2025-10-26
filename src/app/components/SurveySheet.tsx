@@ -195,7 +195,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     });
   }, [errorCells, editedSurvey.surveyData, setEditPopover]);
 
-  const handleSave = useCallback((newValue?: EditableType) => {
+  const handleSaveCellValue = useCallback((newValue?: EditableType) => {
     if (!editPopover) return;
 
     const updatedData = [...editedSurvey.surveyData];
@@ -210,6 +210,26 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
     setEditPopover(null);
   }, [editPopover, editedSurvey.surveyData, onEdit, setEditPopover]);
+
+  const handleSaveSkippedRowsValue = useCallback((newSkippedValue: number) => {
+    if (!skipPopover) return;
+
+    const updatedData = [...editedSurvey.surveyData];
+    const diffSkipped = newSkippedValue - skipPopover.currentSkipValue;
+    for (let i = skipPopover.rowBottomIndex; i < updatedData.length; i++) {
+      updatedData[i] = {
+        ...updatedData[i],
+        "Station No": updatedData[i]["Station No"] + diffSkipped,
+        "Dist From Start": updatedData[i]["Dist From Start"] + diffSkipped,
+      };
+    }
+
+    // TODO: fix dcp data changes!
+    onEdit(updatedData);
+
+    setSkipPopover(null);
+  }, [skipPopover, editedSurvey.surveyData, onEdit, setSkipPopover]);
+
 
   const handlePlusRowClicked = useCallback((e: React.MouseEvent<SVGElement>) => {
     if(!plusRow) return;
@@ -369,7 +389,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           top={editPopover.top}
           left={editPopover.left}
           initialValue={editPopover.value}
-          onSave={handleSave}
+          onSave={handleSaveCellValue}
           onClose={() => setEditPopover(null)}
           type={editPopover.type}
           suggestions={suggest(editPopover.columnName, editPopover.rowIndex)}
@@ -382,7 +402,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
             stationOnTop={skipPopover.stationOnTop}
             stationUnder={skipPopover.stationUnder}
             currentSkipValue={skipPopover.currentSkipValue}
-            onSave={() => {}}
+            onSave={handleSaveSkippedRowsValue}
             onClose={() => setSkipPopover(null)}
           />
       )}
