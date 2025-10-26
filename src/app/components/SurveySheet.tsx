@@ -23,6 +23,7 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import {useFocusDistance} from '@/app/hooks/useFocusDistance';
 import EditPopover from './EditPopover';
 import {useSuggester} from '@/app/hooks/useSuggester';
+import SkipRowsPopover from "@/app/components/SkipRowsPopover";
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -37,11 +38,21 @@ interface ErrorCell {
   columnName: keyof SurveyDataRow;
 }
 
-interface PopoverState {
+interface EditPopoverState {
   rowIndex: number;
   columnName: keyof SurveyDataRow;
   value: EditableType | undefined;
   type?: EditableTypeName;
+  top: number;
+  left: number;
+}
+
+interface SkipPopoverState {
+  rowUpIndex: number;
+  rowBottomIndex: number;
+  stationOnTop: number;
+  stationUnder: number;
+  currentSkipValue: number;
   top: number;
   left: number;
 }
@@ -72,7 +83,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
-  const [popover, setPopover] = useState<PopoverState | null>(null);
+  const [editPopover, setEditPopover] = useState<EditPopoverState | null>(null);
+  const [skipPopover, setSkipPopover] = useState<SkipPopoverState | null>(null);
   const [plusRow, setPlusRow] = useState<PlusRowState | null>(null);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
@@ -173,7 +185,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     if (!isError && !isEditable) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    setPopover({
+    setEditPopover({
       rowIndex,
       columnName,
       value: editedSurvey.surveyData[rowIndex][columnName],
@@ -181,32 +193,44 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  }, [errorCells, editedSurvey.surveyData, setPopover]);
+  }, [errorCells, editedSurvey.surveyData, setEditPopover]);
 
   const handleSave = useCallback((newValue?: EditableType) => {
-    if (!popover) return;
+    if (!editPopover) return;
 
     const updatedData = [...editedSurvey.surveyData];
-    updatedData[popover.rowIndex] = {
-      ...updatedData[popover.rowIndex],
-      [popover.columnName]: newValue,
+    updatedData[editPopover.rowIndex] = {
+      ...updatedData[editPopover.rowIndex],
+      [editPopover.columnName]: newValue,
     };
     onEdit(updatedData);
 
     // Optional: Re-scan to see if the error is resolved
     // handleScan(currentThreshold); 
 
-    setPopover(null);
-  }, [popover, editedSurvey.surveyData, onEdit, setPopover]);
+    setEditPopover(null);
+  }, [editPopover, editedSurvey.surveyData, onEdit, setEditPopover]);
 
-  const handleAddRow = useCallback(() => {
-    alert('Not implemented yet');
-  },[]);
+  const handlePlusRowClicked = useCallback((e: React.MouseEvent<SVGElement>) => {
+    if(!plusRow) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const stationOnTop = Number(editedSurvey.surveyData[plusRow.rowUpIndex][SurveyStationKey]);
+    const stationUnder = Number(editedSurvey.surveyData[plusRow.rowBottomIndex][SurveyStationKey]);
+    setSkipPopover({
+      rowUpIndex: plusRow.rowUpIndex,
+      rowBottomIndex: plusRow.rowBottomIndex,
+      stationOnTop: stationOnTop,
+      stationUnder: stationUnder,
+      currentSkipValue: stationUnder - stationOnTop - 1,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  },[plusRow, editedSurvey.surveyData]);
 
   const PlusRowButton = memo(function PlusRowButton() {
     return (
       <>
-        <FaPlus className={styles.addRowsButton} onClick={() => handleAddRow()}/>
+        <FaPlus className={styles.addRowsButton} onClick={(e) => handlePlusRowClicked(e)}/>
         <div className={styles.addRowsButtonLine}/>
       </>
     );
@@ -340,16 +364,27 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           </AutoSizer>
         </div>
       </div>
-      {popover && (
+      {editPopover && (
         <EditPopover
-          top={popover.top}
-          left={popover.left}
-          initialValue={popover.value}
+          top={editPopover.top}
+          left={editPopover.left}
+          initialValue={editPopover.value}
           onSave={handleSave}
-          onClose={() => setPopover(null)}
-          type={popover.type}
-          suggestions={suggest(popover.columnName, popover.rowIndex)}
+          onClose={() => setEditPopover(null)}
+          type={editPopover.type}
+          suggestions={suggest(editPopover.columnName, editPopover.rowIndex)}
         />
+      )}
+      {skipPopover && (
+          <SkipRowsPopover
+            top={skipPopover.top}
+            left={skipPopover.left}
+            stationOnTop={skipPopover.stationOnTop}
+            stationUnder={skipPopover.stationUnder}
+            currentSkipValue={skipPopover.currentSkipValue}
+            onSave={() => {}}
+            onClose={() => setSkipPopover(null)}
+          />
       )}
       <SurveyInfoModal
         isOpen={isInfoModalOpen}
