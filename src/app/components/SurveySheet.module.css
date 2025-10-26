@@ -148,3 +148,37 @@
     border-top: 12px solid #ff9800;
     border-left: 12px solid transparent;
 }
+
+.addRowsButton {
+    position: absolute;
+    top: -9.5px;
+    left: 3px;
+    color: #aac9e6;
+    background-color: #f8f5f5;
+
+    /*margin-left: 10px;*/
+    /*margin-right: 10px;*/
+    width: 18px;
+    height: 18px;
+    padding: 2px;
+    border-color: #aac9e6;
+    border-width: 2px;
+    border-radius: 16px;
+    border-style: solid;
+}
+.addRowsButtonLine {
+    position: absolute;
+    top: -1.75px;
+    left: 20px;
+    background-color: #aac9e6;
+    height: 2px;
+    width: 200px;
+    border-bottom-right-radius: 2px;
+    border-top-right-radius: 2px;
+}
+.addRowsButton:hover {
+    color: #0041787C;
+    background-color: #e6eaed;
+
+    cursor: pointer;
+}

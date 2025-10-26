@@ -15,7 +15,7 @@ import {
   EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
-import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
+import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
 import {areEqual, FixedSizeGrid as Grid, GridOnScrollProps} from 'react-window';
@@ -49,6 +49,7 @@ interface PopoverState {
 interface PlusRowState {
   rowUpIndex: number;
   rowBottomIndex: number;
+  timeout: NodeJS.Timeout;
 }
 
 interface ItemData {
@@ -198,6 +199,32 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setPopover(null);
   }, [popover, editedSurvey.surveyData, onEdit, setPopover]);
 
+  const handleAddRow = useCallback(() => {
+    alert('Not implemented yet');
+  },[]);
+
+  const PlusRowButton = memo(function PlusRowButton() {
+    return (
+      <>
+        <FaPlus className={styles.addRowsButton} onClick={() => handleAddRow()}/>
+        <div className={styles.addRowsButtonLine}/>
+      </>
+    );
+  }, areEqual);
+
+  const SetPlus = useCallback((plus: {rowUpIndex: number, rowBottomIndex: number} | null) => {
+    setPlusRow(prevState => {
+      if(prevState !== null){
+        clearTimeout(prevState.timeout);
+      }
+      return plus !== null ? {
+        rowUpIndex: plus.rowUpIndex,
+        rowBottomIndex: plus.rowBottomIndex,
+        timeout: setTimeout(() => setPlusRow(null), 5000)
+      } : null;
+    });
+  }, []);
+
   const Cell = memo(function Cell({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}){
     const row = data.items[rowIndex];
     const distance = row[SurveyDistanceKey];
@@ -210,6 +237,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         err => err.rowIndex === rowIndex && err.columnName === header
     );
 
+    const isFirstColumn = columnIndex === 0;
+    const isHoverForPlusDetectable = isFirstColumn || columnIndex === 1;
     const isEditable = EditableColumnHeaders.has(header);
     const isSuggested = isEditable && !Number.isNaN(station) &&
       ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
@@ -225,6 +254,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isFocused && styles.focusedRow,
       isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
+    const isPlusVisible = isFirstColumn && plusRow && rowIndex === plusRow.rowBottomIndex;
 
     if (!originalSurvey || !editedSurvey || editedSurvey.surveyData.length === 0) {
       return <div>No survey data to display.</div>;
@@ -239,11 +269,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         style={style}
         dir={'rtl'}
       >
-        <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => setPlusRow({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>
+        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
+        {(isPlusVisible) && <PlusRowButton/>}
         <span className={styles.cellContent}>{displayValue}</span>
         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
-        <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => setPlusRow({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>
+        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => SetPlus({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>}
       </div>
     );
   }, areEqual);
