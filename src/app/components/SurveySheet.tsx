@@ -12,10 +12,10 @@ import {
   SurveyDistanceKey,
   EditableType,
   EditableTypeName,
-  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow
+  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow, EditedDCPDataRow
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
-import {FaInfoCircle, FaPencilAlt} from 'react-icons/fa';
+import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
 import {areEqual, FixedSizeGrid as Grid, GridOnScrollProps} from 'react-window';
@@ -23,13 +23,14 @@ import AutoSizer from "react-virtualized-auto-sizer";
 import {useFocusDistance} from '@/app/hooks/useFocusDistance';
 import EditPopover from './EditPopover';
 import {useSuggester} from '@/app/hooks/useSuggester';
+import SkipRowsPopover from "@/app/components/SkipRowsPopover";
 
 interface SurveySheetProps {
   originalSurvey: Survey;
   editedSurvey: EditedSurvey;
   surveyFileName: string;
   shouldFocus: boolean;
-  onEdit: (editedSurveyData: EditedSurveyDataRow[]) => void
+  onEdit: (editedSurveyData: EditedSurveyDataRow[], editedDCPData: EditedDCPDataRow[]) => void
 }
 
 interface ErrorCell {
@@ -37,13 +38,29 @@ interface ErrorCell {
   columnName: keyof SurveyDataRow;
 }
 
-interface PopoverState {
+interface EditPopoverState {
   rowIndex: number;
   columnName: keyof SurveyDataRow;
   value: EditableType | undefined;
   type?: EditableTypeName;
   top: number;
   left: number;
+}
+
+interface SkipPopoverState {
+  rowUpIndex: number;
+  rowBottomIndex: number;
+  stationOnTop: number;
+  stationUnder: number;
+  currentSkipValue: number;
+  top: number;
+  left: number;
+}
+
+interface PlusRowState {
+  rowUpIndex: number;
+  rowBottomIndex: number;
+  timeout: NodeJS.Timeout;
 }
 
 interface ItemData {
@@ -66,11 +83,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
-  const [popover, setPopover] = useState<PopoverState | null>(null);
+  const [editPopover, setEditPopover] = useState<EditPopoverState | null>(null);
+  const [skipPopover, setSkipPopover] = useState<SkipPopoverState | null>(null);
+  const [plusRow, setPlusRow] = useState<PlusRowState | null>(null);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
-  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey, editedSurvey);
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey);
   const tableHeaderRef = React.useRef<HTMLDivElement>(null);
   const tableGridRef = React.useRef<Grid>(null);
 
@@ -166,7 +185,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     if (!isError && !isEditable) return;
 
     const rect = e.currentTarget.getBoundingClientRect();
-    setPopover({
+    setEditPopover({
       rowIndex,
       columnName,
       value: editedSurvey.surveyData[rowIndex][columnName],
@@ -174,23 +193,92 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  }, [errorCells, editedSurvey.surveyData, setPopover]);
+  }, [errorCells, editedSurvey.surveyData, setEditPopover]);
 
-  const handleSave = useCallback((newValue?: EditableType) => {
-    if (!popover) return;
+  const handleSaveCellValue = useCallback((newValue?: EditableType) => {
+    if (!editPopover) return;
 
     const updatedData = [...editedSurvey.surveyData];
-    updatedData[popover.rowIndex] = {
-      ...updatedData[popover.rowIndex],
-      [popover.columnName]: newValue,
+    updatedData[editPopover.rowIndex] = {
+      ...updatedData[editPopover.rowIndex],
+      [editPopover.columnName]: newValue,
     };
-    onEdit(updatedData);
+    onEdit(updatedData, editedSurvey.DCPData);
 
     // Optional: Re-scan to see if the error is resolved
     // handleScan(currentThreshold); 
 
-    setPopover(null);
-  }, [popover, editedSurvey.surveyData, onEdit, setPopover]);
+    setEditPopover(null);
+  }, [editPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setEditPopover]);
+
+  const handleSaveSkippedRowsValue = useCallback((newSkippedValue: number) => {
+    if (!skipPopover) return;
+
+    const diffSkipped = newSkippedValue - skipPopover.currentSkipValue;
+    const minStationToChange = editedSurvey.surveyData[skipPopover.rowBottomIndex]["Station No"];
+
+    const updatedSurveyData = [...editedSurvey.surveyData];
+    for (let i = skipPopover.rowBottomIndex; i < updatedSurveyData.length; i++) {
+      updatedSurveyData[i] = {
+        ...updatedSurveyData[i],
+        "Station No": updatedSurveyData[i]["Station No"] + diffSkipped,
+        "Dist From Start": updatedSurveyData[i]["Dist From Start"] + diffSkipped,
+      };
+    }
+
+    const updatedDCPData = [...editedSurvey.DCPData];
+    for (let i = 0; i < updatedDCPData.length; i++) {
+      if (updatedDCPData[i]["Station No"] >= minStationToChange) {
+        updatedDCPData[i] = {
+          ...updatedDCPData[i],
+          "Station No": updatedDCPData[i]["Station No"] + diffSkipped,
+        }
+      }
+    }
+
+    onEdit(updatedSurveyData, updatedDCPData);
+
+    setSkipPopover(null);
+  }, [skipPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setSkipPopover]);
+
+
+  const handlePlusRowClicked = useCallback((e: React.MouseEvent<SVGElement>) => {
+    if(!plusRow) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const stationOnTop = Number(editedSurvey.surveyData[plusRow.rowUpIndex][SurveyStationKey]);
+    const stationUnder = Number(editedSurvey.surveyData[plusRow.rowBottomIndex][SurveyStationKey]);
+    setSkipPopover({
+      rowUpIndex: plusRow.rowUpIndex,
+      rowBottomIndex: plusRow.rowBottomIndex,
+      stationOnTop: stationOnTop,
+      stationUnder: stationUnder,
+      currentSkipValue: stationUnder - stationOnTop - 1,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  },[plusRow, editedSurvey.surveyData]);
+
+  const PlusRowButton = memo(function PlusRowButton() {
+    return (
+      <>
+        <FaPlus className={styles.addRowsButton} onClick={(e) => handlePlusRowClicked(e)}/>
+        <div className={styles.addRowsButtonLine}/>
+      </>
+    );
+  }, areEqual);
+
+  const SetPlus = useCallback((plus: {rowUpIndex: number, rowBottomIndex: number} | null) => {
+    setPlusRow(prevState => {
+      if(prevState !== null){
+        clearTimeout(prevState.timeout);
+      }
+      return plus !== null ? {
+        rowUpIndex: plus.rowUpIndex,
+        rowBottomIndex: plus.rowBottomIndex,
+        timeout: setTimeout(() => setPlusRow(null), 5000)
+      } : null;
+    });
+  }, []);
 
   const Cell = memo(function Cell({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}){
     const row = data.items[rowIndex];
@@ -204,6 +292,9 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         err => err.rowIndex === rowIndex && err.columnName === header
     );
 
+    const isFirstColumn = columnIndex === 0;
+    const isFirstRow = rowIndex === 0;
+    const isHoverForPlusDetectable = isFirstColumn || columnIndex === 1;
     const isEditable = EditableColumnHeaders.has(header);
     const isSuggested = isEditable && !Number.isNaN(station) &&
       ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
@@ -219,6 +310,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isFocused && styles.focusedRow,
       isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
+    const isPlusVisible = isFirstColumn && !isFirstRow && plusRow && rowIndex === plusRow.rowBottomIndex;
 
     if (!originalSurvey || !editedSurvey || editedSurvey.surveyData.length === 0) {
       return <div>No survey data to display.</div>;
@@ -233,9 +325,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         style={style}
         dir={'rtl'}
       >
+        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
+        {(isPlusVisible) && <PlusRowButton/>}
         <span className={styles.cellContent}>{displayValue}</span>
         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
+        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => SetPlus({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>}
       </div>
     );
   }, areEqual);
@@ -301,16 +396,27 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           </AutoSizer>
         </div>
       </div>
-      {popover && (
+      {editPopover && (
         <EditPopover
-          top={popover.top}
-          left={popover.left}
-          initialValue={popover.value}
-          onSave={handleSave}
-          onClose={() => setPopover(null)}
-          type={popover.type}
-          suggestions={suggest(popover.columnName, popover.rowIndex)}
+          top={editPopover.top}
+          left={editPopover.left}
+          initialValue={editPopover.value}
+          onSave={handleSaveCellValue}
+          onClose={() => setEditPopover(null)}
+          type={editPopover.type}
+          suggestions={suggest(editPopover.columnName, editPopover.rowIndex)}
         />
+      )}
+      {skipPopover && (
+          <SkipRowsPopover
+            top={skipPopover.top}
+            left={skipPopover.left}
+            stationOnTop={skipPopover.stationOnTop}
+            stationUnder={skipPopover.stationUnder}
+            currentSkipValue={skipPopover.currentSkipValue}
+            onSave={handleSaveSkippedRowsValue}
+            onClose={() => setSkipPopover(null)}
+          />
       )}
       <SurveyInfoModal
         isOpen={isInfoModalOpen}
