@@ -209,7 +209,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     // handleScan(currentThreshold); 
 
     setEditPopover(null);
-  }, [editPopover, editedSurvey.surveyData, onEdit, setEditPopover]);
+  }, [editPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setEditPopover]);
 
   const handleSaveSkippedRowsValue = useCallback((newSkippedValue: number) => {
     if (!skipPopover) return;
@@ -239,7 +239,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     onEdit(updatedSurveyData, updatedDCPData);
 
     setSkipPopover(null);
-  }, [skipPopover, editedSurvey.surveyData, onEdit, setSkipPopover]);
+  }, [skipPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setSkipPopover]);
 
 
   const handlePlusRowClicked = useCallback((e: React.MouseEvent<SVGElement>) => {

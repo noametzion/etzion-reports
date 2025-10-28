@@ -132,6 +132,7 @@ export interface EditedSurveyDataRow extends SurveyDataRow {
   // break: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EditedDCPDataRow extends DCPDataRow {
 
 }
