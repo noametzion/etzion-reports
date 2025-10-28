@@ -12,7 +12,7 @@ import {
   SurveyDistanceKey,
   EditableType,
   EditableTypeName,
-  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow
+  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow, EditedDCPDataRow
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
@@ -30,7 +30,7 @@ interface SurveySheetProps {
   editedSurvey: EditedSurvey;
   surveyFileName: string;
   shouldFocus: boolean;
-  onEdit: (editedSurveyData: EditedSurveyDataRow[]) => void
+  onEdit: (editedSurveyData: EditedSurveyDataRow[], editedDCPData: EditedDCPDataRow[]) => void
 }
 
 interface ErrorCell {
@@ -89,7 +89,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
-  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(originalSurvey, editedSurvey);
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey);
   const tableHeaderRef = React.useRef<HTMLDivElement>(null);
   const tableGridRef = React.useRef<Grid>(null);
 
@@ -203,7 +203,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       ...updatedData[editPopover.rowIndex],
       [editPopover.columnName]: newValue,
     };
-    onEdit(updatedData);
+    onEdit(updatedData, editedSurvey.DCPData);
 
     // Optional: Re-scan to see if the error is resolved
     // handleScan(currentThreshold); 
@@ -214,18 +214,29 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const handleSaveSkippedRowsValue = useCallback((newSkippedValue: number) => {
     if (!skipPopover) return;
 
-    const updatedData = [...editedSurvey.surveyData];
     const diffSkipped = newSkippedValue - skipPopover.currentSkipValue;
-    for (let i = skipPopover.rowBottomIndex; i < updatedData.length; i++) {
-      updatedData[i] = {
-        ...updatedData[i],
-        "Station No": updatedData[i]["Station No"] + diffSkipped,
-        "Dist From Start": updatedData[i]["Dist From Start"] + diffSkipped,
+    const minStationToChange = editedSurvey.surveyData[skipPopover.rowBottomIndex]["Station No"];
+
+    const updatedSurveyData = [...editedSurvey.surveyData];
+    for (let i = skipPopover.rowBottomIndex; i < updatedSurveyData.length; i++) {
+      updatedSurveyData[i] = {
+        ...updatedSurveyData[i],
+        "Station No": updatedSurveyData[i]["Station No"] + diffSkipped,
+        "Dist From Start": updatedSurveyData[i]["Dist From Start"] + diffSkipped,
       };
     }
 
-    // TODO: fix dcp data changes!
-    onEdit(updatedData);
+    const updatedDCPData = [...editedSurvey.DCPData];
+    for (let i = 0; i < updatedDCPData.length; i++) {
+      if (updatedDCPData[i]["Station No"] >= minStationToChange) {
+        updatedDCPData[i] = {
+          ...updatedDCPData[i],
+          "Station No": updatedDCPData[i]["Station No"] + diffSkipped,
+        }
+      }
+    }
+
+    onEdit(updatedSurveyData, updatedDCPData);
 
     setSkipPopover(null);
   }, [skipPopover, editedSurvey.surveyData, onEdit, setSkipPopover]);
@@ -282,6 +293,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     );
 
     const isFirstColumn = columnIndex === 0;
+    const isFirstRow = rowIndex === 0;
     const isHoverForPlusDetectable = isFirstColumn || columnIndex === 1;
     const isEditable = EditableColumnHeaders.has(header);
     const isSuggested = isEditable && !Number.isNaN(station) &&
@@ -298,7 +310,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isFocused && styles.focusedRow,
       isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
-    const isPlusVisible = isFirstColumn && plusRow && rowIndex === plusRow.rowBottomIndex;
+    const isPlusVisible = isFirstColumn && !isFirstRow && plusRow && rowIndex === plusRow.rowBottomIndex;
 
     if (!originalSurvey || !editedSurvey || editedSurvey.surveyData.length === 0) {
       return <div>No survey data to display.</div>;

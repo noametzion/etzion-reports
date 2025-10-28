@@ -132,8 +132,13 @@ export interface EditedSurveyDataRow extends SurveyDataRow {
   // break: boolean;
 }
 
+export interface EditedDCPDataRow extends DCPDataRow {
+
+}
+
 export interface EditedSurvey {
   surveyData: EditedSurveyDataRow[];
+  DCPData: EditedDCPDataRow[];
 }
 
 export const SurveyInfoNameKey = 'SurveyName' as keyof SurveyInfo;

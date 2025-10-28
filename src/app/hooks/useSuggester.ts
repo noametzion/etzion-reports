@@ -20,7 +20,7 @@ function getSuggestionsFromDCPData(surveyDCPData: DCPDataRow[], station: number,
         .filter(anomaly => anomaly !== undefined && anomaly !== "") as EditableType[];
 }
 
-const getCommentColumnSuggestions = (survey: Survey, rowIndex: number) => {
+const getCommentColumnSuggestions = (survey: EditedSurvey, rowIndex: number) => {
     const row = survey.surveyData[rowIndex];
     const station = Number(row[SurveyStationKey]);
     const initialValue = row[SurveyCommentKey];
@@ -34,7 +34,7 @@ const getCommentColumnSuggestions = (survey: Survey, rowIndex: number) => {
     return [...new Set(suggestions)]; // remove duplicates
 };
 
-const getAnomalyColumnSuggestions = (survey: Survey, rowIndex: number) => {
+const getAnomalyColumnSuggestions = (survey: EditedSurvey, rowIndex: number) => {
     const row = survey.surveyData[rowIndex];
     const station = Number(row[SurveyStationKey]);
     const initialValue = row[SurveyAnomalyKey];
@@ -67,36 +67,36 @@ const getAverageSuggestion = (eSurvey: EditedSurvey | Survey, rowIndex: number, 
     return [];
 }
 
-export const useSuggester = (originalSurvey: Survey, editedSurvey: EditedSurvey) => {
+export const useSuggester = (editedSurvey: EditedSurvey) => {
 
     const [suggestedCommentsStations, setSuggestedCommentsStations] = useState<number[]>([]);
     const [suggestedAnomaliesStations, setSuggestedAnomaliesStations] = useState<number[]>([]);
 
     useEffect(() => {
-        const commentsStations = originalSurvey.DCPData
+        const commentsStations = editedSurvey.DCPData
             .filter((dcpData) => dcpData[DCPDataCommentKey] !== undefined && dcpData[DCPDataCommentKey] !== "")
             .map((dcpData) => Number(dcpData[DCPDataStationKey]));
-        const anomaliesStations = originalSurvey.DCPData
+        const anomaliesStations = editedSurvey.DCPData
             .filter((dcpData) => dcpData[DCPDataAnomalyKey] !== undefined && dcpData[DCPDataAnomalyKey] !== "")
             .map((dcpData) => Number(dcpData[DCPDataStationKey]));
         setSuggestedCommentsStations(commentsStations);
         setSuggestedAnomaliesStations(anomaliesStations);
-    }, [originalSurvey]);
+    }, [editedSurvey]);
 
     const getSuggestionsForColumn = useCallback((columnName: keyof SurveyDataRow, rowIndex: number) : EditableType[] => {
         switch (columnName) {
             case SurveyCommentKey:
-                return getCommentColumnSuggestions(originalSurvey, rowIndex);
+                return getCommentColumnSuggestions(editedSurvey, rowIndex);
             case SurveyAnomalyKey:
-                return getAnomalyColumnSuggestions(originalSurvey, rowIndex);
+                return getAnomalyColumnSuggestions(editedSurvey, rowIndex);
             default: {
                 if (SurveyDSVGVoltageKeys.includes(columnName) || SurveyOnOffVoltageKeys.includes(columnName)) {
-                    return getAverageSuggestion(editedSurvey || originalSurvey, rowIndex, columnName);
+                    return getAverageSuggestion(editedSurvey, rowIndex, columnName);
                 }
                 return [];
             }
         }
-    },[originalSurvey, editedSurvey]);
+    },[editedSurvey]);
 
     return { suggest: getSuggestionsForColumn, suggestedCommentsStations, suggestedAnomaliesStations } ;
 };

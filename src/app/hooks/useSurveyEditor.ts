@@ -1,7 +1,7 @@
 "use client";
 
 import {useState, useEffect, useCallback, useMemo} from 'react';
-import {EditedSurvey, Survey, SurveyDataRow, SurveyFile} from '@/app/types/survey';
+import {EditedDCPDataRow, EditedSurvey, EditedSurveyDataRow, Survey, SurveyFile} from '@/app/types/survey';
 import {cloneDeep} from "es-toolkit";
 import {useEditedSurveyFile} from "@/app/hooks/useEditedSurveyFile";
 import {useEditedSurveyReader} from "@/app/hooks/useEditedSurveyReader";
@@ -19,12 +19,18 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
     if (originalSurvey && !originalSurveyIsSet) {
       // get the edited survey from the server or clone survey
       if (editedFile && lastEditedSurvey) {
-        setEditedSurvey(cloneDeep(lastEditedSurvey));
+        setEditedSurvey({
+          surveyData: cloneDeep(lastEditedSurvey.surveyData),
+          DCPData: cloneDeep(lastEditedSurvey.DCPData || originalSurvey.DCPData)
+        });
         setOriginalSurveyIsSet(true);
         setIsChanged(false);
       } else if (!editedFileLoading && !editedFileError && !editedFile &&
                  !lastEditedSurveyReading && !lastEditedSurveyError && !lastEditedSurvey) {
-        setEditedSurvey({surveyData: cloneDeep(originalSurvey.surveyData)});
+        setEditedSurvey({
+          surveyData: cloneDeep(originalSurvey.surveyData),
+          DCPData: cloneDeep(originalSurvey.DCPData)
+        });
         setOriginalSurveyIsSet(true);
         setIsChanged(false);
       } else if (!editedFileLoading && editedFileError) {
@@ -50,8 +56,8 @@ export const useSurveyEditor = (originalSurveyFile: SurveyFile | null, originalS
     }
   }, [originalSurvey, originalSurveyFile]);
 
-  const editLocally = useCallback((editedSurveyData: SurveyDataRow[]) => {
-    setEditedSurvey({surveyData: editedSurveyData});
+  const editLocally = useCallback((editedSurveyData: EditedSurveyDataRow[], editedDCPData: EditedDCPDataRow[]) => {
+    setEditedSurvey({surveyData: editedSurveyData, DCPData: editedDCPData});
     setIsChanged(true);
   }, [setEditedSurvey]);
 
