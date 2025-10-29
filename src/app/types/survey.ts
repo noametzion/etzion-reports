@@ -108,6 +108,7 @@ export interface Survey {
   DCPData: DCPDataRow[];
   surveyInfo: SurveyInfo;
   surveyDataHeaders: (keyof SurveyDataRow)[];
+  dcpDataHeaders: (keyof DCPDataRow)[];
 }
 
 export interface SurveyFile {

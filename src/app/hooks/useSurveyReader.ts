@@ -82,12 +82,14 @@ export const useSurveyReader = (file: SurveyFile | null) => {
         const dcpData = XLSX.utils.sheet_to_json<DCPDataRow>(dcpDataSheet);
         const surveyInfo = parseSurveyInfo(surveyInfoSheet);
         const surveyDataHeaders = getHeaders(surveyDataSheet) as (keyof SurveyDataRow)[];
+        const dcpDataHeaders = getHeaders(dcpDataSheet) as (keyof DCPDataRow)[];
 
         setSurvey({
           surveyData,
           DCPData: dcpData,
           surveyInfo,
-          surveyDataHeaders: surveyDataHeaders,
+          surveyDataHeaders,
+          dcpDataHeaders
         });
 
       } catch (err) {
