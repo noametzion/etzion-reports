@@ -170,3 +170,5 @@ EditableColumnHeaders.set('Latitude', 'number');
 EditableColumnHeaders.set('Longitude', 'number');
 
 export { EditableColumnHeaders };
+
+export const SURVEY_DATE_TIME_FORMAT = 'dd/mm/yyyy hh:mm:ss.000';
