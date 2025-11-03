@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { FaTrash, FaFolderOpen } from 'react-icons/fa';
+import {FaTrash, FaFolderOpen} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
@@ -11,6 +11,7 @@ import SurveySheet from './SurveySheet';
 import { SurveyFile } from '@/app/types/survey';
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import EditorStatusBar from "@/app/components/EditorStatusBar";
+import {useExcelExporter} from "@/app/hooks/useExcelExporter";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -27,7 +28,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const [selectedOriginalFile, setSelectedOriginalFile] = React.useState<SurveyFile | null>(null);
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
-
+  const { exportToExcel, isExporting } = useExcelExporter();
 
   const handleOpenFile = (fileName: string) => {
     const fileToOpen = getFile(fileName);
@@ -75,7 +76,14 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             isEditedFileExist={editedFileExists}
             unsavedChangesExists={isChanged}
             isUpdating={isUpdating}
+            isExporting={isExporting}
             onSave={() => saveEditedSurvey()}
+            onExportToExcel={() => exportToExcel(
+                editedSurvey,
+                originalSurvey.surveyInfo,
+                originalSurvey.surveyDataHeaders,
+                originalSurvey.dcpDataHeaders
+            )}
         />
         <SurveySheet
             originalSurvey={originalSurvey}

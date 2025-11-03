@@ -30,7 +30,7 @@ const SurveyInfoModal: React.FC<SurveyInfoModalProps> = ({
           {Object.entries(surveyInfo).map(([key, value]) => (
               <div key={key} className={styles.infoRow}>
                 <strong className={styles.infoKey}>{key}:</strong>
-                <span className={styles.infoValue}>{String(value)}</span>
+                <span className={styles.infoValue}>{String(value || "")}</span>
               </div>
           ))}
         </div>

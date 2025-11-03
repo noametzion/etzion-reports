@@ -17,23 +17,33 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.fileIcon {
+.fileIcon , .saveIcon{
     color: #c6c6c6;
+    pointer-events: none;
 }
+
 .fileExists {
     color: #82b6b1;
 }
 
-.saveIcon {
-    color: #c6c6c6;
+.exportPossible {
+    color: #56916b;
+    pointer-events: auto;
 }
 
 .changesExist {
     color: #ed9d5a;
+    pointer-events: auto;
 }
 
 .saveable:hover {
     border-radius: 4px;
     color: rgba(237, 157, 90, 0.49);
+    cursor: pointer;
+}
+
+.exporable:hover {
+    border-radius: 4px;
+    color: rgba(86, 145, 107, 0.49);
     cursor: pointer;
 }
