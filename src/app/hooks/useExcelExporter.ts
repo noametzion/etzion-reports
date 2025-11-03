@@ -63,6 +63,7 @@ const formatDateTimeColumns = (workSheet: WorkSheet, headers: string[], dateTime
     });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formatDateTimeRows = (workSheet: WorkSheet, entries: (never[] | [string, any])[], dateTimeKeys: (keyof SurveyInfo)[]) => {
     forEach(dateTimeKeys, (key) => {
         const rowNumber = entries.findIndex(row => row[0] === key);
