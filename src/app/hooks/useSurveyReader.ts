@@ -9,14 +9,14 @@ import {storage} from "@/app/config/firebase";
 const parseSurveyInfo = (sheet: XLSX.WorkSheet): SurveyInfo => {
   // eslint-disable-next-line
   const info: any = {};
-    const sheetData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
-    sheetData.forEach(row => {
-        if (row && row.length >= 2) {
-          const key = row[0];
-          info[key] = row[1];
-        }
-    });
-    return info as SurveyInfo;
+  const sheetData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
+  sheetData.forEach(row => {
+      if (row && row.length >= 1) {
+        const key = row[0];
+        info[key] = row[1];
+      }
+  });
+  return info as SurveyInfo;
 };
 
 const getHeaders = (sheet: XLSX.WorkSheet): string[] => {

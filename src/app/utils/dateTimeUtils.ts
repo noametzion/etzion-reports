@@ -17,5 +17,4 @@ export const formatExcelDate = (excelSerial: string) => {
   const excelEpoch = Date.UTC(1899, 11, 30);
   const jsDate = (Number(excelSerial) * 86400 * 1000) + excelEpoch;
   return dayjs.utc(jsDate).format("DD/MM/YYYY HH:mm:ss.SSS");
-
 };

@@ -6,9 +6,11 @@ import {
     DCPDataRow, DCPDateTimeKeys,
     EditedSurvey,
     SURVEY_DATE_TIME_FORMAT,
+    SURVEY_SHORT_DATE_TIME_FORMAT,
     SurveyDataRow,
     SurveyDateTimeKeys,
-    SurveyInfo
+    SurveyInfo,
+    SurveyInfoDateTimeKeys
 } from "@/app/types/survey";
 import {WorkSheet} from "xlsx";
 import {forEach} from "es-toolkit/compat";
@@ -41,10 +43,30 @@ const formatColumnAsDateTime = (workSheet: WorkSheet, columnIndex: number) => {
     }
 }
 
+export function formatRowAsDateTime(
+    workSheet: XLSX.WorkSheet,
+    rowNumber: number,
+) {
+    const ref = workSheet["!ref"];
+    if (ref) {
+        const valCellAddress = XLSX.utils.encode_cell({r: rowNumber, c: 1});
+        if (workSheet[valCellAddress]) {
+            workSheet[valCellAddress].z = SURVEY_SHORT_DATE_TIME_FORMAT;
+        }
+    }
+}
+
 const formatDateTimeColumns = (workSheet: WorkSheet, headers: string[], dateTimeKeys: (keyof SurveyDataRow | keyof DCPDataRow)[]) => {
     forEach(dateTimeKeys, (key) => {
         const index = headers.indexOf(key);
         formatColumnAsDateTime(workSheet, index);
+    });
+}
+
+const formatDateTimeRows = (workSheet: WorkSheet, entries: (never[] | [string, any])[], dateTimeKeys: (keyof SurveyInfo)[]) => {
+    forEach(dateTimeKeys, (key) => {
+        const rowNumber = entries.findIndex(row => row[0] === key);
+        formatRowAsDateTime(workSheet, rowNumber);
     });
 }
 
@@ -57,18 +79,25 @@ export const useExcelExporter = () => {
         try {
             const workbook = XLSX.utils.book_new();
 
+            // Survey Data
             const surveyDataWorksheet = XLSX.utils.json_to_sheet(editedSurvey.surveyData, {
                 header: surveyDataHeaders
             });
             formatDateTimeColumns(surveyDataWorksheet, surveyDataHeaders, SurveyDateTimeKeys)
 
+            // DCP Data
             const dcpDataWorksheet = XLSX.utils.json_to_sheet(editedSurvey.DCPData, {
                 header: dcpDataHeaders
             });
             formatDateTimeColumns(dcpDataWorksheet, dcpDataHeaders, DCPDateTimeKeys)
 
-            const surveyInfoRows = Object.entries(surveyInfo);
+            // Survey Info
+            const surveyInfoRows = [
+                [],  // empty first row
+                ...Object.entries(surveyInfo)
+            ];
             const surveyInfoWorksheet = XLSX.utils.aoa_to_sheet(surveyInfoRows);
+            formatDateTimeRows(surveyInfoWorksheet, surveyInfoRows, SurveyInfoDateTimeKeys)
 
             XLSX.utils.book_append_sheet(workbook, surveyDataWorksheet, 'Survey Data');
             XLSX.utils.book_append_sheet(workbook, dcpDataWorksheet, 'DCP Data');

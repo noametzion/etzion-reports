@@ -144,9 +144,11 @@ export interface EditedSurvey {
 }
 
 export const SURVEY_DATE_TIME_FORMAT = 'dd/mm/yyyy hh:mm:ss.000';
+export const SURVEY_SHORT_DATE_TIME_FORMAT = 'dd/mm/yyyy';
 
 
 export const SurveyInfoNameKey = 'SurveyName' as keyof SurveyInfo;
+export const SurveyInfoDateTimeKeys = ['date / time'] as (keyof SurveyInfo)[];
 
 export const DCPDataStationKey = "Station No" as keyof DCPDataRow;
 export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;

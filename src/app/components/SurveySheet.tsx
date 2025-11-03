@@ -1,6 +1,7 @@
 "use client";
 
 import React, {useState, useEffect, useCallback, useRef, memo, useMemo} from 'react';
+import { Tooltip } from 'react-tooltip';
 import {
   SurveyDSVGVoltageKeys,
   SurveyInfoNameKey,
@@ -306,11 +307,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const isSuggested = isEditable && !Number.isNaN(station) &&
       ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
         (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
+    let isOverflow = false;
 
     const cellValue = row[header];
     let displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;
     if (SurveyDateTimeKeys.includes(header)) {
       displayValue = formatExcelDate(displayValue?.toString() || "");
+      isOverflow = true;
     }
 
     const cellClassName = [
@@ -328,8 +331,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
     return (
       <div
-        onMouseEnter={() => { setFocusDistance(Number(distance)); setSelectedRow(rowIndex)}}
-        onMouseLeave={() => {setFocusDistance(null); setSelectedRow(null)}}
+        onMouseEnter={() => { setFocusDistance(Number(distance)); setSelectedRow(rowIndex) }}
+        onMouseLeave={() => { setFocusDistance(null); setSelectedRow(null) }}
         onClick={(e) => isEditable && data.handleCellClick(e, rowIndex, header)}
         className={cellClassName}
         style={style}
@@ -337,7 +340,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       >
         {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
         {(isPlusVisible) && <PlusRowButton/>}
-        <span className={styles.cellContent}>{displayValue}</span>
+        <span
+            className={styles.cellContent}
+            data-tooltip-id={isOverflow ? 'extended-value' : ''}
+            data-tooltip-content={displayValue?.toString() || ""}
+        >
+          {displayValue}
+        </span>
         {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
         {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => SetPlus({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>}
@@ -406,6 +415,13 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           </AutoSizer>
         </div>
       </div>
+      <Tooltip
+          id="extended-value"
+          place="left"
+          render={({ activeAnchor }) =>
+              activeAnchor?.getAttribute("data-tooltip-content") ?? ""
+          }
+      />
       {editPopover && (
         <EditPopover
           top={editPopover.top}
