@@ -9,14 +9,14 @@ import {storage} from "@/app/config/firebase";
 const parseSurveyInfo = (sheet: XLSX.WorkSheet): SurveyInfo => {
   // eslint-disable-next-line
   const info: any = {};
-    const sheetData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
-    sheetData.forEach(row => {
-        if (row && row.length >= 2) {
-          const key = row[0];
-          info[key] = row[1];
-        }
-    });
-    return info as SurveyInfo;
+  const sheetData = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });
+  sheetData.forEach(row => {
+      if (row && row.length >= 1) {
+        const key = row[0];
+        info[key] = row[1];
+      }
+  });
+  return info as SurveyInfo;
 };
 
 const getHeaders = (sheet: XLSX.WorkSheet): string[] => {
@@ -79,15 +79,23 @@ export const useSurveyReader = (file: SurveyFile | null) => {
         }
 
         const surveyData = XLSX.utils.sheet_to_json<SurveyDataRow>(surveyDataSheet);
+        // TODO: in the future...
+        // const rows = XLSX.utils.sheet_to_json(sheet, {
+        //   raw: false,              // apply number formats
+        //   cellDates: true,         // emit Date objects when possible
+        //   dateNF: "dd/mm/yyyy hh:mm:ss.000" // (for string formatting)
+        // });
         const dcpData = XLSX.utils.sheet_to_json<DCPDataRow>(dcpDataSheet);
         const surveyInfo = parseSurveyInfo(surveyInfoSheet);
         const surveyDataHeaders = getHeaders(surveyDataSheet) as (keyof SurveyDataRow)[];
+        const dcpDataHeaders = getHeaders(dcpDataSheet) as (keyof DCPDataRow)[];
 
         setSurvey({
           surveyData,
           DCPData: dcpData,
           surveyInfo,
-          surveyDataHeaders: surveyDataHeaders,
+          surveyDataHeaders,
+          dcpDataHeaders
         });
 
       } catch (err) {
