@@ -16,6 +16,7 @@ import {
     LabelList,
 } from 'recharts';
 import {useFocusDistance} from "@/app/hooks/useFocusDistance";
+import { scaleLinear } from "d3-scale";
 
 interface GraphDisplayProps {
   graphInfo: GraphInfo;
@@ -25,6 +26,13 @@ interface GraphDisplayProps {
 }
 
 const margin = { top: 5, right: 30, left: 20, bottom: 5 }
+
+const defaultDCVGDomain = [-20, 20];
+
+const niceDomain = (min: number, max: number, ticks = 6): [number, number] => {
+    const s = scaleLinear().domain([min, max]).nice(ticks);
+    return s.domain() as [number, number];
+};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
@@ -135,7 +143,17 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
             domain={[graphInfo.startDistance, graphInfo.endDistance]}
             label={{ value: 'Distance (stations)', position: 'insideBottomRight', offset: 0 }}
         />
-        <YAxis label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }} />
+        <YAxis
+            label={{ value: 'Voltage (mV)', angle: -90, position: 'insideLeft' }}
+            domain={
+                ([dataMin, dataMax]) => {
+                    return niceDomain(
+                        dataMin < defaultDCVGDomain[0] ? dataMin : defaultDCVGDomain[0],
+                        dataMax > defaultDCVGDomain[1] ? dataMax : defaultDCVGDomain[1]
+                    );
+                }
+            }
+        />
         <Tooltip />
         <Legend />
         <Line type="linear" dataKey="dcvg" stroke="#878788" name="DCVG Diff" dot={false}/>
