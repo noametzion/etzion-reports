@@ -12,7 +12,13 @@ import {
   SurveyDistanceKey,
   EditableType,
   EditableTypeName,
-  EditableColumnHeaders, EditedSurvey, SurveyStationKey, SurveyAnomalyKey, EditedSurveyDataRow, EditedDCPDataRow
+  EditableColumnHeaders,
+  EditedSurvey,
+  SurveyStationKey,
+  SurveyAnomalyKey,
+  EditedSurveyDataRow,
+  EditedDCPDataRow,
+  SurveyDateTimeKeys
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
@@ -24,6 +30,7 @@ import {useFocusDistance} from '@/app/hooks/useFocusDistance';
 import EditPopover from './EditPopover';
 import {useSuggester} from '@/app/hooks/useSuggester';
 import SkipRowsPopover from "@/app/components/SkipRowsPopover";
+import {formatExcelDate} from "@/app/utils/dateTimeUtils";
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -301,7 +308,10 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
 
     const cellValue = row[header];
-    const displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;
+    let displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;
+    if (SurveyDateTimeKeys.includes(header)) {
+      displayValue = formatExcelDate(displayValue?.toString() || "");
+    }
 
     const cellClassName = [
       styles.tableCell,

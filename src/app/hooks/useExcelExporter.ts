@@ -2,8 +2,16 @@
 
 import * as XLSX from "xlsx";
 import {useState} from "react";
-import {EditedSurvey, SURVEY_DATE_TIME_FORMAT, SurveyInfo} from "@/app/types/survey";
+import {
+    DCPDataRow, DCPDateTimeKeys,
+    EditedSurvey,
+    SURVEY_DATE_TIME_FORMAT,
+    SurveyDataRow,
+    SurveyDateTimeKeys,
+    SurveyInfo
+} from "@/app/types/survey";
 import {WorkSheet} from "xlsx";
+import {forEach} from "es-toolkit/compat";
 
 
 const formatColumnAsDateTime = (workSheet: WorkSheet, columnIndex: number) => {
@@ -33,6 +41,13 @@ const formatColumnAsDateTime = (workSheet: WorkSheet, columnIndex: number) => {
     }
 }
 
+const formatDateTimeColumns = (workSheet: WorkSheet, headers: string[], dateTimeKeys: (keyof SurveyDataRow | keyof DCPDataRow)[]) => {
+    forEach(dateTimeKeys, (key) => {
+        const index = headers.indexOf(key);
+        formatColumnAsDateTime(workSheet, index);
+    });
+}
+
 export const useExcelExporter = () => {
     const [isExporting, setIsExporting] = useState<boolean>(false);
 
@@ -40,27 +55,17 @@ export const useExcelExporter = () => {
         setIsExporting(true);
 
         try {
-            const onTimeIndex = surveyDataHeaders.indexOf('On Time');
-            const offTimeIndex = surveyDataHeaders.indexOf('Off Time');
-            const fixTimeIndex = surveyDataHeaders.indexOf('Fix Time');
             const workbook = XLSX.utils.book_new();
 
             const surveyDataWorksheet = XLSX.utils.json_to_sheet(editedSurvey.surveyData, {
                 header: surveyDataHeaders
             });
-            formatColumnAsDateTime(surveyDataWorksheet, onTimeIndex);
-            formatColumnAsDateTime(surveyDataWorksheet, offTimeIndex);
-            formatColumnAsDateTime(surveyDataWorksheet, fixTimeIndex);
+            formatDateTimeColumns(surveyDataWorksheet, surveyDataHeaders, SurveyDateTimeKeys)
 
-            const dcpOnTimeIndex = dcpDataHeaders.indexOf('On Time');
-            const dcpOffTimeIndex = dcpDataHeaders.indexOf('Off Time');
-            const dcpFixTimeIndex = dcpDataHeaders.indexOf('Fix Time');
             const dcpDataWorksheet = XLSX.utils.json_to_sheet(editedSurvey.DCPData, {
                 header: dcpDataHeaders
             });
-            formatColumnAsDateTime(dcpDataWorksheet, dcpOnTimeIndex);
-            formatColumnAsDateTime(dcpDataWorksheet, dcpOffTimeIndex);
-            formatColumnAsDateTime(dcpDataWorksheet, dcpFixTimeIndex);
+            formatDateTimeColumns(dcpDataWorksheet, dcpDataHeaders, DCPDateTimeKeys)
 
             const surveyInfoRows = Object.entries(surveyInfo);
             const surveyInfoWorksheet = XLSX.utils.aoa_to_sheet(surveyInfoRows);

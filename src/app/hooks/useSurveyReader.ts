@@ -79,6 +79,12 @@ export const useSurveyReader = (file: SurveyFile | null) => {
         }
 
         const surveyData = XLSX.utils.sheet_to_json<SurveyDataRow>(surveyDataSheet);
+        // TODO: in the future...
+        // const rows = XLSX.utils.sheet_to_json(sheet, {
+        //   raw: false,              // apply number formats
+        //   cellDates: true,         // emit Date objects when possible
+        //   dateNF: "dd/mm/yyyy hh:mm:ss.000" // (for string formatting)
+        // });
         const dcpData = XLSX.utils.sheet_to_json<DCPDataRow>(dcpDataSheet);
         const surveyInfo = parseSurveyInfo(surveyInfoSheet);
         const surveyDataHeaders = getHeaders(surveyDataSheet) as (keyof SurveyDataRow)[];
