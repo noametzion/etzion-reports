@@ -88,13 +88,29 @@
     height: 6px;
     width: 100%;
     position: absolute;
-    top: 0;
+    top: -1px;
     left: 0;
 }
 
 .hoverBorderCellZoneBottom {
     height: 6px;
     width: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+}
+
+.hoverBorderCellZoneRight {
+    height: 100%;
+    width: 10px;
+    position: absolute;
+    bottom: 0;
+    right: -1px;
+}
+
+.hoverBorderCellZoneLeft {
+    height: 100%;
+    width: 14px;
     position: absolute;
     bottom: 0;
     left: 0;
@@ -155,9 +171,6 @@
     left: 3px;
     color: #aac9e6;
     background-color: #f8f5f5;
-
-    /*margin-left: 10px;*/
-    /*margin-right: 10px;*/
     width: 18px;
     height: 18px;
     padding: 2px;
@@ -180,5 +193,26 @@
     color: #0041787C;
     background-color: #e6eaed;
 
+    cursor: pointer;
+}
+
+.switchCellsButton {
+    position: absolute;
+    left: -15px;
+    color: #eab7b8;
+    background-color: #f8f5f5;
+    width: 20px;
+    height: 20px;
+    padding: 3px;
+    border-color: #cc909e;
+    border-width: 1.5px;
+    border-radius: 3px;
+    border-style: dashed;
+}
+
+.switchCellsButton:hover {
+    color: rgba(195, 128, 143, 0.74);
+    background-color: #efe3e3;
+    border-color: #aa818c;
     cursor: pointer;
 }
