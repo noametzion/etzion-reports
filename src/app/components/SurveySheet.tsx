@@ -19,7 +19,9 @@ import {
   SurveyAnomalyKey,
   EditedSurveyDataRow,
   EditedDCPDataRow,
-  SurveyDateTimeKeys
+  SurveyDateTimeKeys,
+  SwitchableSurveyKeys,
+  SurveySwitchablePair
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
@@ -32,6 +34,7 @@ import EditPopover from './EditPopover';
 import {useSuggester} from '@/app/hooks/useSuggester';
 import SkipRowsPopover from "@/app/components/SkipRowsPopover";
 import {formatExcelDate} from "@/app/utils/dateTimeUtils";
+import {FaArrowRightArrowLeft} from "react-icons/fa6";
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -71,6 +74,12 @@ interface PlusRowState {
   timeout: NodeJS.Timeout;
 }
 
+interface SwitchCellsState {
+  rowIndex: number;
+  switchPair: SurveySwitchablePair;
+  timeout: NodeJS.Timeout;
+}
+
 interface ItemData {
   items: EditedSurveyDataRow[];
   headers: (keyof SurveyDataRow)[];
@@ -94,6 +103,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const [editPopover, setEditPopover] = useState<EditPopoverState | null>(null);
   const [skipPopover, setSkipPopover] = useState<SkipPopoverState | null>(null);
   const [plusRow, setPlusRow] = useState<PlusRowState | null>(null);
+  const [switchCells, setSwitchCells] = useState<SwitchCellsState | null>(null);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
@@ -266,12 +276,44 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     });
   },[plusRow, editedSurvey.surveyData]);
 
+  const switchCellsValue = useCallback((rowIndex: number, switchPair: SurveySwitchablePair) => {
+
+    const switchPairKeyToValue = editedSurvey.surveyData[rowIndex][switchPair[0]];
+    const switchPairValueToKey = editedSurvey.surveyData[rowIndex][switchPair[1]];
+
+    const updatedSurveyData = [...editedSurvey.surveyData];
+    updatedSurveyData[rowIndex] = {
+      ...updatedSurveyData[rowIndex],
+      [switchPair[0]]: switchPairValueToKey,
+      [switchPair[1]]: switchPairKeyToValue,
+    };
+
+    onEdit(updatedSurveyData, editedSurvey.DCPData);
+
+  }, [editedSurvey.surveyData, editedSurvey.DCPData, onEdit]);
+
+
+  const handleSwitchCellsClicked = useCallback((e: React.MouseEvent<SVGElement>) => {
+    e.stopPropagation();
+    if(!switchCells) return
+
+    switchCellsValue(switchCells.rowIndex, switchCells.switchPair);
+    setTimeout(() => setPlusRow(null), 1000)
+
+  },[switchCellsValue, switchCells, setSwitchCells]);
+
   const PlusRowButton = memo(function PlusRowButton() {
     return (
       <>
         <FaPlus className={styles.addRowsButton} onClick={(e) => handlePlusRowClicked(e)}/>
         <div className={styles.addRowsButtonLine}/>
       </>
+    );
+  }, areEqual);
+
+  const SwitchCellsButton = memo(function SwitchCellsButton() {
+    return (
+        <FaArrowRightArrowLeft className={styles.switchCellsButton} onClick={(e) => handleSwitchCellsClicked(e)}/>
     );
   }, areEqual);
 
@@ -288,26 +330,44 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     });
   }, []);
 
+  const SetSwitch = useCallback((switchDetails: {rowIndex: number, switchPair: SurveySwitchablePair} | null) => {
+    setSwitchCells(prevState => {
+      if(prevState !== null){
+        clearTimeout(prevState.timeout);
+      }
+      return switchDetails !== null ? {
+        rowIndex: switchDetails.rowIndex,
+        switchPair: switchDetails.switchPair,
+        timeout: setTimeout(() => setSwitchCells(null), 9000)
+      } : null;
+    });
+  }, []);
+
   const Cell = memo(function Cell({rowIndex, columnIndex, style, data}: {rowIndex: number, columnIndex: number, style: React.CSSProperties, data: ItemData}){
     const row = data.items[rowIndex];
     const distance = row[SurveyDistanceKey];
     const station = Number(row[SurveyStationKey]);
+    const header = data.headers[columnIndex];
+    const isFirstColumn = columnIndex === 0;
+    const isFirstRow = rowIndex === 0;
+    const switchPair = SwitchableSurveyKeys.findLast(([headerKey, headerValue]) => {
+      return header === headerKey || header === headerValue;
+    });
+
     const isFocused = data.focusDistance === distance;
     const isSelected = data.selectedRow === rowIndex;
-
-    const header = data.headers[columnIndex];
     const isError = data.errorCells.some(
         err => err.rowIndex === rowIndex && err.columnName === header
     );
-
-    const isFirstColumn = columnIndex === 0;
-    const isFirstRow = rowIndex === 0;
-    const isHoverForPlusDetectable = isFirstColumn || columnIndex === 1;
     const isEditable = EditableColumnHeaders.has(header);
     const isSuggested = isEditable && !Number.isNaN(station) &&
       ((header === SurveyCommentKey && data.suggestedCommentsStations.includes(station)) ||
         (header === SurveyAnomalyKey && data.suggestedAnomaliesStations.includes(station)));
     let isOverflow = false;
+
+    const isHoverForPlusDetectable = isFirstColumn || columnIndex === 1;
+    const isHoverForSwitchDetectableAtEnd = switchPair && switchPair[0] === header;
+    const isHoverForSwitchDetectableAtStart = switchPair && switchPair[1] === header;
 
     const cellValue = row[header];
     let displayValue = typeof cellValue === "number" ? Number(cellValue.toFixed(6)) : cellValue;
@@ -324,6 +384,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       isSelected && styles.selectedRowCell,
     ].filter(Boolean).join(' ');
     const isPlusVisible = isFirstColumn && !isFirstRow && plusRow && rowIndex === plusRow.rowBottomIndex;
+    const isSwitchVisible = switchPair && switchPair[1] === header && switchCells && switchCells.rowIndex === rowIndex;
+    const isSwitchVisibleOnPair = switchPair && switchPair[0] === header && switchCells && switchCells.rowIndex === rowIndex;
 
     if (!originalSurvey || !editedSurvey || editedSurvey.surveyData.length === 0) {
       return <div>No survey data to display.</div>;
@@ -338,8 +400,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         style={style}
         dir={'rtl'}
       >
-        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
         {(isPlusVisible) && <PlusRowButton/>}
+        {(isSwitchVisible) && <SwitchCellsButton/>}
         <span
             className={styles.cellContent}
             data-tooltip-id={isOverflow ? 'extended-value' : ''}
@@ -347,9 +409,12 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         >
           {displayValue}
         </span>
-        {(isEditable) && <span className={styles.editIcon}><FaPencilAlt/></span>}
+        {(isEditable && !isSwitchVisibleOnPair) && <span className={styles.editIcon}><FaPencilAlt/></span>}
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
+        {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
         {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => SetPlus({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>}
+        {(isHoverForSwitchDetectableAtEnd) && <div className={styles.hoverBorderCellZoneRight} onMouseMove={() => SetSwitch({rowIndex, switchPair})}/>}
+        {(isHoverForSwitchDetectableAtStart) && <div className={styles.hoverBorderCellZoneLeft} onMouseMove={() => SetSwitch({rowIndex, switchPair})}/>}
       </div>
     );
   }, areEqual);

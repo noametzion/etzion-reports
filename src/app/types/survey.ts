@@ -143,6 +143,8 @@ export interface EditedSurvey {
   DCPData: EditedDCPDataRow[];
 }
 
+export type SurveySwitchablePair = [keyof SurveyDataRow,keyof SurveyDataRow];
+
 export const SURVEY_DATE_TIME_FORMAT = 'dd/mm/yyyy hh:mm:ss.000';
 export const SURVEY_SHORT_DATE_TIME_FORMAT = 'dd/mm/yyyy';
 
@@ -164,6 +166,7 @@ export const SurveyStationKeys = ['Dist From Start', 'Station No'] as const;
 export const SurveyOnOffVoltageKeys= ['On Voltage', 'Off Voltage'] as (keyof SurveyDataRow)[];
 export const SurveyDSVGVoltageKeys = ['DCVG Voltage'] as (keyof SurveyDataRow)[]; //['DCVG Voltage On', 'DCVG Voltage Off']
 export const SurveyDateTimeKeys= ['On Time', 'Off Time', 'Fix Time'] as (keyof SurveyDataRow)[];
+export const SwitchableSurveyKeys = [['On Voltage','Off Voltage']] as (SurveySwitchablePair)[];
 
 export type EditableType = number | string ;
 export type EditableTypeName = "string" | "number";
