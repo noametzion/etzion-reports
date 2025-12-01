@@ -93,6 +93,7 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedM
   }, [allMapsInfos]);
 
   // TODO: move and display
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const extendedPositionsKm = useMemo(() => {
     const segmentedAll = extendedPositions.map((s) => s.map((d) => L.latLng(d)));
     const flatAll = [segmentedAll.flat()];
