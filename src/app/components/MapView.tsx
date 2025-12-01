@@ -37,6 +37,20 @@ const MapUpdater = ({ positions }: MapUpdaterProps) => {
   return null;
 };
 
+function pathLengthKm(latlngs: L.LatLng[][]) {
+  const distThreshold = 105; // meters
+  let total = 0;
+  for (let s=0; s < latlngs.length; s++) {
+    for (let i = 1; i < latlngs[s].length; i++) {
+      const dist = latlngs[s][i - 1].distanceTo(latlngs[s][i]); // meters
+      if(dist < distThreshold) {
+        total += dist;
+      }
+    }
+  }
+  return total / 1000; // km
+}
+
 const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
   const positions: [number, number][][] = [];
   let currentLineSegment: [number, number][] = [];
@@ -77,6 +91,17 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedM
     const allData = allMapsInfos?.map((map) => map.data).flat() || [];
     return dataPointsToPositions(allData);
   }, [allMapsInfos]);
+
+  // TODO: move and display
+  const extendedPositionsKm = useMemo(() => {
+    const segmentedAll = extendedPositions.map((s) => s.map((d) => L.latLng(d)));
+    const flatAll = [segmentedAll.flat()];
+    const km = pathLengthKm(segmentedAll);
+    const kmflat = pathLengthKm(flatAll);
+    console.log("EX POS ", km);
+    console.log("EX POS FLAT ", kmflat);
+    return km;
+  }, [extendedPositions]);
 
   if (positions.length === 0 || positions[0].length === 0) {
     return <div>No location data available to display on the map.</div>;
