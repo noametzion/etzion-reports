@@ -38,7 +38,7 @@ const MapUpdater = ({ positions }: MapUpdaterProps) => {
 };
 
 function pathLengthKm(latlngs: L.LatLng[][]) {
-  const distThreshold = 105; // meters
+  const distThreshold = 60; // meters
   let total = 0;
   for (let s=0; s < latlngs.length; s++) {
     for (let i = 1; i < latlngs[s].length; i++) {
