@@ -163,7 +163,7 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, 
       <Marker key={"end"} position={lastPosition} icon={getMarker("end")} />
       <Polyline positions={extendedPositions} color="lightblue" />
       <Polyline positions={positions} color="blue"/>
-      {/*{showPointsMode && <MeasureDistanceControl />}*/}
+      {showPointsMode && <MeasureDistanceControl />}
       {showPointsMode && positions.map((segment, si) => (
           segment.map((point, pi) =>
             <CircleMarker
