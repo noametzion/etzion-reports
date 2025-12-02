@@ -1,15 +1,21 @@
 "use client";
 
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import {MapContainer, TileLayer, Marker, Polyline, useMap, CircleMarker, Popup} from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import styles from './MapView.module.css';
 import L from 'leaflet';
 import {useEffect, useMemo} from 'react';
 import {MapDataPoint, MapInfo} from "@/app/types/report";
 import {useFocusDistance} from "@/app/hooks/useFocusDistance";
+import {MeasureDistanceControl} from "@/app/components/MeasureTool";
 
 // Fix for default icon issue with webpack
 // delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+interface PositionInfo {
+  position: [number, number];
+  distance: number;
+}
 
 interface MapUpdaterProps {
   positions: [number, number][][];
@@ -19,6 +25,7 @@ interface MapViewProps {
   mapInfo: MapInfo;
   allMapsInfos?: MapInfo[];
   shouldFocus: boolean;
+  showPointsMode?: boolean;
   mode?: "view" | "export";
   extendedMap?: boolean;
 }
@@ -51,26 +58,35 @@ function pathLengthKm(latlngs: L.LatLng[][]) {
   return total / 1000; // km
 }
 
-const dataPointsToPositions = (data: MapDataPoint[]) : [number, number][][] => {
+const dataPointsToPositions = (data: MapDataPoint[]) : {positions: [number, number][][], positionsInfo: PositionInfo[][]} => {
   const positions: [number, number][][] = [];
+  const positionsInfo: PositionInfo[][] = [];
   let currentLineSegment: [number, number][] = [];
+  let currentLineSegmentInfo: PositionInfo[] = [];
   data.forEach((point) => {
     if (point.location === "break") {
       if (currentLineSegment.length > 0) {
         positions.push(currentLineSegment);
+        positionsInfo.push(currentLineSegmentInfo);
         currentLineSegment = [];
+        currentLineSegmentInfo = [];
       }
     } else if (point.location !== undefined && point.location.latitude !== undefined && point.location.longitude !== undefined) {
       currentLineSegment.push([point.location.latitude, point.location.longitude]);
+      currentLineSegmentInfo.push({
+        position: [point.location.latitude, point.location.longitude],
+        distance: point.distance
+      });
     } // else: ignore in case of undefined location
   });
   if (currentLineSegment.length > 0) {
     positions.push(currentLineSegment);
+    positionsInfo.push(currentLineSegmentInfo);
   }
-  return positions;
+  return {positions, positionsInfo};
 }
 
-const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedMap = false}: MapViewProps) => {
+const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, mode = "view", extendedMap = false}: MapViewProps) => {
 
   const { focusDistance } = useFocusDistance(shouldFocus);
 
@@ -83,13 +99,13 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedM
         : undefined;
   }, [focusDistance, mapInfo]);
 
-  const positions: [number, number][][] = useMemo(() => {
+  const {positions, positionsInfo} = useMemo(() => {
     return dataPointsToPositions(mapInfo.data);
   }, [mapInfo]);
 
   const extendedPositions: [number, number][][] = useMemo(() => {
     const allData = allMapsInfos?.map((map) => map.data).flat() || [];
-    return dataPointsToPositions(allData);
+    return dataPointsToPositions(allData).positions;
   }, [allMapsInfos]);
 
   // TODO: move and display
@@ -98,9 +114,9 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedM
     const segmentedAll = extendedPositions.map((s) => s.map((d) => L.latLng(d)));
     const flatAll = [segmentedAll.flat()];
     const km = pathLengthKm(segmentedAll);
-    const kmflat = pathLengthKm(flatAll);
+    const kmFlat = pathLengthKm(flatAll);
     console.log("EX POS ", km);
-    console.log("EX POS FLAT ", kmflat);
+    console.log("EX POS FLAT ", kmFlat);
     return km;
   }, [extendedPositions]);
 
@@ -146,7 +162,41 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, mode = "view", extendedM
       <Marker key={"start"} position={firstPosition} icon={getMarker("start")} />
       <Marker key={"end"} position={lastPosition} icon={getMarker("end")} />
       <Polyline positions={extendedPositions} color="lightblue" />
-      <Polyline positions={positions} color="blue" />
+      <Polyline positions={positions} color="blue"/>
+      {/*{showPointsMode && <MeasureDistanceControl />}*/}
+      {showPointsMode && positions.map((segment, si) => (
+          segment.map((point, pi) =>
+            <CircleMarker
+                key={`point_${si}_${pi}`}
+                center={point}
+                radius={2}
+                color="white"
+                fillColor="darkorange"
+                weight={0}
+                fillOpacity={0.8}
+                eventHandlers={{
+                  mouseover: (e) => {
+                    e.target.setStyle({
+                      fillColor: "orange",
+                      weight: 1,
+                      radius: 4,
+                    });
+                  },
+                  mouseout: (e) => {
+                    e.target.setStyle({
+                      fillColor: "darkorange",
+                      radius: 2,
+                      weight: 0,
+                    });
+                  },
+                }}
+            >
+              <Popup minWidth={20}>
+                <div>Distance: {positionsInfo[si][pi].distance}</div>
+              </Popup>
+            </CircleMarker>
+          )
+      ))}
       {focusDistancePosition && (
         <Marker
           key={'focus-point'}
