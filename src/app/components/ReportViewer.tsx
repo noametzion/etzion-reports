@@ -22,11 +22,12 @@ const MapView =
 interface ReportViewerProps {
   originalSurveyFile: SurveyFile | null;
   shouldFocus: boolean;
+  shouldShowMapPoints: boolean;
 }
 
 const DEFAULT_SPLIT_DISTANCE = 500;
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , shouldFocus}) => {
+const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , shouldFocus, shouldShowMapPoints}) => {
   const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
@@ -101,6 +102,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
                 mapInfo={maps[index]}
                 allMapsInfos={maps}
                 shouldFocus={shouldFocus}
+                showPointsMode={shouldShowMapPoints}
             />
           </div>
         ))}

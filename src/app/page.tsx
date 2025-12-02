@@ -11,6 +11,7 @@ import {FocusPointProvider} from "@/app/context/FocusDistanceContext";
 export default function Home() {
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyFile | null>(null);
   const [shouldFocus, setShouldFocus] = useState<boolean>(false);
+  const [shouldShowMapPoints, setShouldShowMapPoints] = useState<boolean>(false);
 
   const handleSurveySelected = (surveyFile: SurveyFile | null) => {
     setSelectedSurvey(surveyFile);
@@ -21,8 +22,18 @@ export default function Home() {
       <div className={styles.page}>
         <main className={styles.main}>
           <ResizableView
-            left={<SurveysViewer onSurveySelected={handleSurveySelected} shouldFocus={shouldFocus} onShouldFocusDistanceChanges={setShouldFocus}/>}
-            right={<ReportViewer originalSurveyFile={selectedSurvey} shouldFocus={shouldFocus}/>}
+            left={<SurveysViewer
+                onSurveySelected={handleSurveySelected}
+                shouldFocus={shouldFocus}
+                onShouldFocusDistanceChanges={setShouldFocus}
+                shouldShowMapPoints={shouldShowMapPoints}
+                onShouldShowMapPointsChanges={setShouldShowMapPoints}
+            />}
+            right={<ReportViewer
+                originalSurveyFile={selectedSurvey}
+                shouldFocus={shouldFocus}
+                shouldShowMapPoints={shouldShowMapPoints}
+            />}
             defaultSplit={50}
             minWidth={25}
           />

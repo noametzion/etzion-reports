@@ -1,0 +1,16 @@
+.leaflet-control-measure-btn {
+    background: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 18px;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+.leaflet-control-measure-btn:hover {
+    background: #f0f0f0;
+}

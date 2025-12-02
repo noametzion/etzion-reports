@@ -17,12 +17,16 @@ interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
     shouldFocus: boolean;
     onShouldFocusDistanceChanges: (shouldFocus: boolean) => void;
+    shouldShowMapPoints: boolean;
+    onShouldShowMapPointsChanges: (shouldShowPointsOnMap: boolean) => void;
 }
 
 const SurveysViewer: React.FC<SurveysViewerProps> = ({
   onSurveySelected,
   onShouldFocusDistanceChanges,
-  shouldFocus
+  shouldFocus,
+  shouldShowMapPoints,
+  onShouldShowMapPointsChanges
  }) => {
   const { files: originalFiles, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedOriginalFile, setSelectedOriginalFile] = React.useState<SurveyFile | null>(null);
@@ -41,6 +45,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const handleCloseFile = () => {
     setSelectedOriginalFile(null);
     onShouldFocusDistanceChanges(false);
+    onShouldShowMapPointsChanges(false);
     onSurveySelected(null)
   };
 
@@ -53,6 +58,10 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
       onShouldFocusDistanceChanges(e.target.checked);
   };
+
+    const handleShowMapPointsCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onShouldShowMapPointsChanges(e.target.checked);
+    };
 
   if (isReading || (originalSurvey && !editedSurvey)) {
     return <div className={styles.loading}>Reading survey...</div>;
@@ -71,7 +80,8 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     return (
       <div className={styles.sheetContainer}>
         <button onClick={handleCloseFile} className={styles.closeButton}>Back to Surveys</button>
-        <span> Focus on distance: </span><input type={"checkbox"} onChange={handleFocusCheckboxChanges}/>
+        <span> Focus on distance: </span><input type={"checkbox"} checked={shouldFocus} onChange={handleFocusCheckboxChanges}/>
+        <span> Show map points: </span><input type={"checkbox"} checked={shouldShowMapPoints} onChange={handleShowMapPointsCheckboxChanges}/>
         <EditorStatusBar
             isEditedFileExist={editedFileExists}
             unsavedChangesExists={isChanged}
