@@ -24,7 +24,7 @@ import {
   SurveySwitchablePair
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
-import {FaInfoCircle, FaPencilAlt, FaPlus} from 'react-icons/fa';
+import {FaInfoCircle, FaPencilAlt, FaPlus, FaTrash} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
 import ErrorPanel from './ErrorPanel';
 import {areEqual, FixedSizeGrid as Grid, GridOnScrollProps} from 'react-window';
@@ -35,6 +35,8 @@ import {useSuggester} from '@/app/hooks/useSuggester';
 import SkipRowsPopover from "@/app/components/SkipRowsPopover";
 import {formatExcelDate} from "@/app/utils/dateTimeUtils";
 import {FaArrowRightArrowLeft} from "react-icons/fa6";
+import DeleteRowPopover from "@/app/components/DeleteRowPopover";
+import {forEach} from "es-toolkit/compat";
 
 interface SurveySheetProps {
   originalSurvey: Survey;
@@ -64,6 +66,12 @@ interface SkipPopoverState {
   stationOnTop: number;
   stationUnder: number;
   currentSkipValue: number;
+  top: number;
+  left: number;
+}
+
+interface DeleteRowPopoverState {
+  rowIndex: number;
   top: number;
   left: number;
 }
@@ -102,6 +110,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const [errorCells, setErrorCells] = useState<ErrorCell[]>([]);
   const [editPopover, setEditPopover] = useState<EditPopoverState | null>(null);
   const [skipPopover, setSkipPopover] = useState<SkipPopoverState | null>(null);
+  const [deleteRowPopover, setDeleteRowPopover] = useState<DeleteRowPopoverState | null>(null);
   const [plusRow, setPlusRow] = useState<PlusRowState | null>(null);
   const [switchCells, setSwitchCells] = useState<SwitchCellsState | null>(null);
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
@@ -276,6 +285,37 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     });
   },[plusRow, editedSurvey.surveyData]);
 
+  const handleDeleteRowClicked = useCallback((e: React.MouseEvent<SVGElement>, rowIndex: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDeleteRowPopover({
+      rowIndex: rowIndex,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  },[])
+
+  const handleApproveDeleteRowClicked = useCallback(() => {
+    if (!deleteRowPopover) return;
+
+    const updatedSurveyData = [...editedSurvey.surveyData];
+    updatedSurveyData.splice(deleteRowPopover.rowIndex, 1);
+
+    const updatedDCPData = [...editedSurvey.DCPData];
+    console.log(updatedDCPData);
+    const stationOfRowToDelete = editedSurvey.surveyData[deleteRowPopover.rowIndex][SurveyStationKey];
+    const indexesOfDCPDataToDelete = updatedDCPData
+        .map((item, index) => item["Station No"] === stationOfRowToDelete ? index : -1)
+        .filter(index => index !== -1);
+    console.log(indexesOfDCPDataToDelete);
+    forEach(indexesOfDCPDataToDelete, index => updatedDCPData.splice(index, 1));
+    console.log(updatedDCPData);
+    console.log("------");
+
+    onEdit(updatedSurveyData, updatedDCPData);
+
+    setDeleteRowPopover(null);
+  },[deleteRowPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setDeleteRowPopover])
+
   const switchCellsValue = useCallback((rowIndex: number, switchPair: SurveySwitchablePair) => {
 
     const switchPairKeyToValue = editedSurvey.surveyData[rowIndex][switchPair[0]];
@@ -298,7 +338,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     if(!switchCells) return
 
     switchCellsValue(switchCells.rowIndex, switchCells.switchPair);
-    setTimeout(() => setPlusRow(null), 1000)
+    setTimeout(() => setSwitchCells(null), 1000)
 
   },[switchCellsValue, switchCells, setSwitchCells]);
 
@@ -338,7 +378,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       return switchDetails !== null ? {
         rowIndex: switchDetails.rowIndex,
         switchPair: switchDetails.switchPair,
-        timeout: setTimeout(() => setSwitchCells(null), 9000)
+        timeout: setTimeout(() => setSwitchCells(null), 5000)
       } : null;
     });
   }, []);
@@ -379,6 +419,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const cellClassName = [
       styles.tableCell,
       isEditable ? styles.editableCell : styles.nonEditableCell,
+      isFirstColumn && styles.deletableCell,
       isError && styles.errorCell,
       isFocused && styles.focusedRow,
       isSelected && styles.selectedRowCell,
@@ -410,6 +451,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
           {displayValue}
         </span>
         {(isEditable && !isSwitchVisibleOnPair) && <span className={styles.editIcon}><FaPencilAlt/></span>}
+        {(isFirstColumn) && <span className={styles.deleteIcon}><FaTrash onClick={(e) => handleDeleteRowClicked(e, rowIndex)}/></span> }
         {(isSuggested) && <div className={styles.suggestedMarker}/>}
         {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneTop} onMouseMove={() => SetPlus({rowUpIndex: rowIndex-1, rowBottomIndex: rowIndex})}/>}
         {(isHoverForPlusDetectable) && <div className={styles.hoverBorderCellZoneBottom} onMouseMove={() => SetPlus({rowUpIndex: rowIndex, rowBottomIndex: rowIndex+1})}/>}
@@ -507,6 +549,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
             currentSkipValue={skipPopover.currentSkipValue}
             onSave={handleSaveSkippedRowsValue}
             onClose={() => setSkipPopover(null)}
+          />
+      )}
+      {deleteRowPopover && (
+          <DeleteRowPopover
+              top={deleteRowPopover.top}
+              left={deleteRowPopover.left}
+              onApproveDelete={handleApproveDeleteRowClicked}
+              onClose={() => setDeleteRowPopover(null)}
           />
       )}
       <SurveyInfoModal
