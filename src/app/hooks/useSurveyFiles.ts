@@ -7,7 +7,6 @@ import {authedFetch} from "@/app/utils/authedFetch";
 interface ResponseSurveyFileData {
   fileName: string;
   filePath: string;
-  url?: string;
   isLocal: boolean;
 }
 
@@ -30,7 +29,6 @@ export const useSurveyFiles = () => {
           name: file.fileName,
           path: file.filePath,
           isLocal: file.isLocal,
-          url: responseData.url,
           uploadedAt: new Date().toISOString(), // Placeholder, ideally from server
         }));
         setFiles(fileList);
@@ -70,7 +68,6 @@ export const useSurveyFiles = () => {
             path: responseData.filePath,
             uploadedAt: new Date().toISOString(),
             isLocal: responseData.isLocal,
-            url: responseData.url,
           }, ...prev,
         ]);
       }

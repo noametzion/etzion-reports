@@ -9,7 +9,6 @@ type StorageType = 'local' | 'firebase';
 interface FileData {
   fileName: string;
   filePath: string;
-  url?: string;
   isLocal: boolean;
 }
 
@@ -54,17 +53,11 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
       const filePromises = files.map(async (file) => {
         // Skip directories
         if (file.name.endsWith('/')) return null;
-        
-        const [url] = await file.getSignedUrl({
-          action: 'read',
-          expires: '03-01-2500' // Far future expiration
-        });
 
         const fileName = file.name.split('/').pop() || '';
         return {
           fileName,
           filePath: file.name,
-          url,
           isLocal: false
         };
       });
@@ -84,7 +77,6 @@ export const getFiles = async (dirName: string): Promise<FileData[]> => {
       return files.map(fileName => ({
         fileName,
         filePath: `/${dirName}/${fileName}`,
-        url: `/${dirName}/${fileName}`,
         isLocal: true
       }));
     } catch (error) {
@@ -119,13 +111,9 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       // Make the file publicly accessible
       await fileRef.makePublic();
       
-      // Get the public URL
-      const url = `https://storage.googleapis.com/${admin.storage().bucket().name}/${filePath}`;
-      
       return {
         fileName: file.name,
         filePath,
-        url,
         isLocal: false
       };
     } catch (error) {
@@ -147,7 +135,6 @@ export const saveFile = async (dirName: string, file: File): Promise<FileData> =
       return {
         fileName: file.name,
         filePath: `/${dirName}/${file.name}`,
-        url: `/${dirName}/${file.name}`,
         isLocal: true
       };
     } catch (error) {
