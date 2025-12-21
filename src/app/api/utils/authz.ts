@@ -1,5 +1,5 @@
 import { NextRequest , NextResponse} from "next/server";
-import {adminAuth} from "@/app/api/utils/firebase-admin";
+import {getFirebaseAdminAuth} from "@/app/api/utils/firebase-admin";
 
 const ALLOWED_ROLES = new Set(["admin", "editor"]);
 
@@ -8,7 +8,7 @@ export async function requireRole(req: NextRequest, allowed = ALLOWED_ROLES) {
     const match = authHeader.match(/^Bearer (.+)$/);
     if (!match) throw new Error("UNAUTHORIZED");
 
-    const decoded = await adminAuth.verifyIdToken(match[1]);
+    const decoded = await getFirebaseAdminAuth().verifyIdToken(match[1]);
     const role = decoded.role as string | undefined;
 
     if (!role || !allowed.has(role)) throw new Error("FORBIDDEN");

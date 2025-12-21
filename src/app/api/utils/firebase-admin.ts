@@ -3,7 +3,6 @@ import { ServiceAccount} from "firebase-admin";
 import * as admin from 'firebase-admin';
 
 export const getFirebaseAdmin = () => {
-
   const firebaseAdminApps = admin.apps;
   if (firebaseAdminApps.length > 0 && firebaseAdminApps[0]) {
     return firebaseAdminApps[0];
@@ -15,4 +14,6 @@ export const getFirebaseAdmin = () => {
   }
 }
 
-export const adminAuth = admin.auth();
+export const getFirebaseAdminAuth = () => {
+  return getFirebaseAdmin()?.auth();
+}
