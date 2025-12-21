@@ -43,7 +43,7 @@ const getFileRef = (dirName: string, fileName: string = '') => {
 export const getFiles = async (dirName: string): Promise<FileData[]> => {
   const storageType = getStorageType();
 
-  if (storageType === 'firebase' || true) {
+  if (storageType === 'firebase') {
     try {
       const [files] = await admin.storage().bucket().getFiles({
         prefix: dirName,
