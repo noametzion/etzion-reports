@@ -1,4 +1,4 @@
-import serviceAccount from "../../../etzionreports-firebase-adminsdk-fbsvc-ef7fcd4575.json"
+import serviceAccount from "../../../../etzionreports-firebase-adminsdk-fbsvc-ef7fcd4575.json"
 import { ServiceAccount} from "firebase-admin";
 import * as admin from 'firebase-admin';
 
@@ -14,3 +14,5 @@ export const getFirebaseAdmin = () => {
     });
   }
 }
+
+export const adminAuth = admin.auth();

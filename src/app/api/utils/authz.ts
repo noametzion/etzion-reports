@@ -1,5 +1,5 @@
 import { NextRequest , NextResponse} from "next/server";
-import { adminAuth } from "./firebaseAdmin";
+import {adminAuth} from "@/app/api/utils/firebase-admin";
 
 const ALLOWED_ROLES = new Set(["admin", "editor"]);
 
