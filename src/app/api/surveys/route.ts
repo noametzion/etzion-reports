@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
+import { getFiles, saveFile, deleteFile } from '@/app/api/utils/fileUtils';
 import { NextRequest } from 'next/server';
 import {authErrorToResponse, requireRole} from "@/app/api/utils/authz";
 
