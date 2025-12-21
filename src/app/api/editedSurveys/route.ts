@@ -66,14 +66,13 @@ export async function PUT(request: NextRequest) {
       await deleteFile(FILES_CATEGORY, editedFileName);
     }
 
-    const { fileName, filePath, url, isLocal} = await saveFile(FILES_CATEGORY, file);
+    const { fileName, filePath, isLocal} = await saveFile(FILES_CATEGORY, file);
 
     return NextResponse.json({
       success: true,
       originalFileName,
       fileName,
       filePath,
-      url,
       isLocal
     });
   } catch (error) {

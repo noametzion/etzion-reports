@@ -35,13 +35,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { fileName, filePath, url, isLocal } = await saveFile(FILES_CATEGORY, file);
+    const { fileName, filePath, isLocal } = await saveFile(FILES_CATEGORY, file);
 
     return NextResponse.json({
       success: true,
       fileName,
       filePath,
-      url,
       isLocal
     });
   } catch (error) {
