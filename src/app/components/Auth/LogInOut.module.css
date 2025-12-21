@@ -1,0 +1,32 @@
+.loginPanel {
+  position: fixed;
+  top: 16px;
+  left: 180px;
+  z-index: 1000;
+
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  padding: 10px 14px;
+  background: rgba(250, 236, 213, 0.85);
+  backdrop-filter: blur(6px);
+
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(172, 123, 90, 0.3);
+
+  font-size: 14px;
+}
+
+.loginButton {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: none;
+  background: #dd9142;
+  color: white;
+  cursor: pointer;
+}
+
+.loginButton:hover {
+  opacity: 0.85;
+}

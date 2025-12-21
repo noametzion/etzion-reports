@@ -7,6 +7,8 @@ import ReportViewer from "@/app/components/ReportViewer";
 import {useState} from "react";
 import {SurveyFile} from "@/app/types/survey";
 import {FocusPointProvider} from "@/app/context/FocusDistanceContext";
+import LogInOut from "@/app/components/Auth/LogInOut";
+import {RequireRole} from "@/app/components/Auth/RequireRole";
 
 export default function Home() {
   const [selectedSurvey, setSelectedSurvey] = useState<SurveyFile | null>(null);
@@ -17,28 +19,31 @@ export default function Home() {
     setSelectedSurvey(surveyFile);
   }
 
-  return (
-    <FocusPointProvider>
-      <div className={styles.page}>
-        <main className={styles.main}>
-          <ResizableView
-            left={<SurveysViewer
-                onSurveySelected={handleSurveySelected}
-                shouldFocus={shouldFocus}
-                onShouldFocusDistanceChanges={setShouldFocus}
-                shouldShowMapPoints={shouldShowMapPoints}
-                onShouldShowMapPointsChanges={setShouldShowMapPoints}
-            />}
-            right={<ReportViewer
-                originalSurveyFile={selectedSurvey}
-                shouldFocus={shouldFocus}
-                shouldShowMapPoints={shouldShowMapPoints}
-            />}
-            defaultSplit={50}
-            minWidth={25}
-          />
-        </main>
-      </div>
-    </FocusPointProvider>
-  );
+  return (<>
+    <LogInOut />
+    <RequireRole>
+      <FocusPointProvider>
+        <div className={styles.page}>
+          <main className={styles.main}>
+            <ResizableView
+              left={<SurveysViewer
+                  onSurveySelected={handleSurveySelected}
+                  shouldFocus={shouldFocus}
+                  onShouldFocusDistanceChanges={setShouldFocus}
+                  shouldShowMapPoints={shouldShowMapPoints}
+                  onShouldShowMapPointsChanges={setShouldShowMapPoints}
+              />}
+              right={<ReportViewer
+                  originalSurveyFile={selectedSurvey}
+                  shouldFocus={shouldFocus}
+                  shouldShowMapPoints={shouldShowMapPoints}
+              />}
+              defaultSplit={50}
+              minWidth={25}
+            />
+          </main>
+        </div>
+      </FocusPointProvider>
+    </RequireRole>
+  </>);
 }
