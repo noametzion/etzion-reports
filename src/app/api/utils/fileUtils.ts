@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { getFirebaseAdmin } from '../config/firebase-admin';
+import { getFirebaseAdmin } from './firebase-admin';
 
 const admin = getFirebaseAdmin();
 
