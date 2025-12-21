@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {SurveyFile} from "@/app/types/survey";
+import {authedFetch} from "@/app/utils/authedFetch";
 
 interface ResponseSurveyFileData {
   fileName: string;
@@ -21,7 +22,7 @@ export const useSurveyFiles = () => {
   const fetchFiles = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(SURVEYS_API);
+      const response = await authedFetch(SURVEYS_API);
       const responseData = await response.json();
       if (!response.ok) setError(responseData.error || 'Failed to fetch files');
       else {
@@ -56,7 +57,7 @@ export const useSurveyFiles = () => {
     requestData.append('file', file);
 
     try {
-      const response = await fetch(SURVEYS_API, {
+      const response = await authedFetch(SURVEYS_API, {
         method: 'POST',
         body: requestData,
       });
@@ -86,7 +87,7 @@ export const useSurveyFiles = () => {
     setFiles(prev => prev.filter(file => file.name !== fileName));
 
     try {
-      const response = await fetch(`${SURVEYS_API}?fileName=${encodeURIComponent(fileName)}`, {
+      const response = await authedFetch(`${SURVEYS_API}?fileName=${encodeURIComponent(fileName)}`, {
         method: 'DELETE',
       });
       if (!response.ok) {

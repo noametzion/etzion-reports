@@ -23,7 +23,7 @@ export function RequireRole({ children }: { children: React.ReactNode }) {
             const token = await u.getIdTokenResult();
             const role = token.claims.role as string | undefined;
 
-            setAllowed(!!role && ALLOWED.includes(role) || true);
+            setAllowed(!!role && ALLOWED.includes(role));
         });
     }, []);
 

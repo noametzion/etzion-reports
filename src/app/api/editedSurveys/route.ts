@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { getFiles, saveFile, deleteFile } from '@/app/utils/fileUtils';
 import { NextRequest } from 'next/server';
+import {authErrorToResponse, requireRole} from "@/app/api/utils/authz";
 
 const FILES_CATEGORY = process.env.EDITED_SURVEYS_FOLDER as string;
 const EDITED_FILE_NAME_FORMAT = (originalFileName: string) => `${originalFileName}_edited`;
 
 export async function GET(request: NextRequest) {
   try {
+    await requireRole(request);
     const params = request.nextUrl.searchParams;
 
     const originalFileName = params.get("originalFileName");
@@ -28,7 +30,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching file:', error);
-    return NextResponse.json(
+    const authRes = authErrorToResponse(error);
+    return authRes ? authRes : NextResponse.json(
       { error: 'Failed to fetch file' },
       { status: 500 }
     );
@@ -37,6 +40,7 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    await requireRole(request);
     const formData = await request.formData();
 
     const originalFileName = formData.get('originalFileName') as string;
@@ -74,7 +78,8 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json(
+    const authRes = authErrorToResponse(error);
+    return authRes ? authRes : NextResponse.json(
       { error: 'Failed to upload file' },
       { status: 500 }
     );
@@ -83,6 +88,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    await requireRole(request);
     const { searchParams } = new URL(request.url);
     const fileName = searchParams.get('fileName');
 
@@ -97,7 +103,8 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting file:', error);
-    return NextResponse.json(
+    const authRes = authErrorToResponse(error);
+    return authRes ? authRes : NextResponse.json(
       { error: 'Failed to delete file' },
       { status: 500 }
     );

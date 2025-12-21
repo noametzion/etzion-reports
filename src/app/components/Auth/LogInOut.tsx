@@ -29,7 +29,7 @@ export default function LogInOut() {
   return (<div className={styles.loginPanel}>
     {user
         ? <div>
-            <span> Logged In as: {user.displayName}</span>
+            <span> Logged In as: {user.displayName} </span>
             <button onClick={handleSignOut} className={styles.loginButton}>Sign Out</button>
           </div>
         : <button onClick={handleGoogle} className={styles.loginButton}>Sign In with Google</button>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {EditedSurveyFile} from "@/app/types/survey";
+import {authedFetch} from "@/app/utils/authedFetch";
 
 interface ResponseEditedSurveyFileData {
   fileName: string;
@@ -24,7 +25,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
 
     setIsLoading(true);
     try {
-      const response = await fetch(`${EDITED_SURVEYS_API}?originalFileName=${encodeURIComponent(originalFileName)}`);
+      const response = await authedFetch(`${EDITED_SURVEYS_API}?originalFileName=${encodeURIComponent(originalFileName)}`);
 
       const responseData = await response.json();
       if (!response.ok) setError(responseData.error || 'Failed to fetch file');
@@ -63,7 +64,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
     requestData.append('originalFileName', originalFileName)
 
     try {
-      const response = await fetch(EDITED_SURVEYS_API, {
+      const response = await authedFetch(EDITED_SURVEYS_API, {
         method: 'PUT',
         body: requestData,
       });
@@ -92,7 +93,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
     setEditedFile(null);
 
     try {
-      const response = await fetch(`${EDITED_SURVEYS_API}?fileName=${encodeURIComponent(editedFileName)}`, {
+      const response = await authedFetch(`${EDITED_SURVEYS_API}?fileName=${encodeURIComponent(editedFileName)}`, {
         method: 'DELETE',
       });
       if (!response.ok) {
