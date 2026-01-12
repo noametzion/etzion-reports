@@ -55,10 +55,10 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
   // eslint-disable-next-line
   const handleMouseMove = useCallback((e: any) => {
     if (e) {
-      const hoveredDistance : number = Number(e.activeIndex)*graphInfo.distanceDiff + graphInfo.startDistance;
+      const hoveredDistance : number = Number(e.activeLabel);
       setFocusDistance(hoveredDistance)
     }
-  },[graphInfo.startDistance, setFocusDistance]);
+  },[setFocusDistance]);
 
   const handleMouseLeave = useCallback(() => {
     setFocusDistance(null);
