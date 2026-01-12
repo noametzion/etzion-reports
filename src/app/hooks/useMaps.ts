@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {MapDataPoint, MapInfo} from "@/app/types/report";
-import {createSegments} from "@/app/utils/reportUtils";
+import {createSegments, getDistanceIndexInSegment, getSegmentIndex} from "@/app/utils/reportUtils";
 
 export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: number): MapInfo[] => {
   const [maps, setMaps] = useState<MapInfo[]>([]);
@@ -16,26 +16,28 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
 
     // init segments with default values
     const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
-    const mapSegments: { [key: number]: MapDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: MapDataPoint[] };
+    // TODO: check if all distances have the same difference
+    const distanceDiff = Number(surveyData[1][SurveyDistanceKey]) - Number(surveyData[0][SurveyDistanceKey]);
+    const mapSegments: { [key: number]: MapDataPoint[] } = createSegments(lastDistance, distanceDiff, splitDistance) as { [key: number]: MapDataPoint[] };
 
     surveyData.forEach((row, index) => {
       const distance = row[SurveyDistanceKey];
       if (distance === undefined) return;
 
-      const segmentIndex = Math.floor(Number(distance) / splitDistance);
+      const segmentIndex = getSegmentIndex(Number(distance), splitDistance);
 
       // modify to "break" for empty distances
       let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
-      while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
-        prevDistance++;
-        const prevDistanceIndexInSegment = prevDistance % splitDistance;
+      while (prevDistance !== undefined && (prevDistance + distanceDiff) < Number(distance)) {
+        prevDistance+=distanceDiff;
+        const prevDistanceIndexInSegment = getDistanceIndexInSegment(prevDistance, distanceDiff, splitDistance);
         mapSegments[segmentIndex][prevDistanceIndexInSegment] = {
           ...mapSegments[segmentIndex][prevDistanceIndexInSegment],
           location: "break"
         };
       }
 
-      const distanceIndexInSegment = Number(distance) % splitDistance;
+      const distanceIndexInSegment = getDistanceIndexInSegment(Number(distance), distanceDiff, splitDistance);
 
       mapSegments[segmentIndex][distanceIndexInSegment] = {
         ...mapSegments[segmentIndex][distanceIndexInSegment],
@@ -48,15 +50,16 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
     });
 
     // eslint-disable-next-line
-    setMaps(Object.entries(mapSegments).map(([_, segment]) => {
-      const startDist = segment[0].distance
-      const endDist = segment[segment.length - 1].distance
+    setMaps(Object.entries(mapSegments).map(([segmentIndex, segment]) => {
+      const startDist = Number(segmentIndex) * splitDistance;
+      const endDist = (Number(segmentIndex) + 1) * splitDistance - 0.1;
 
       return {
         title: `Map: distance (stations) ${startDist}-${endDist}`,
         data: segment,
         startDistance: startDist,
-        endDistance: endDist
+        endDistance: endDist,
+        distanceDiff: distanceDiff
       };
     }));
 

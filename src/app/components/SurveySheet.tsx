@@ -21,7 +21,8 @@ import {
   EditedDCPDataRow,
   SurveyDateTimeKeys,
   SwitchableSurveyKeys,
-  SurveySwitchablePair
+  SurveySwitchablePair,
+  SurveyInfoStationDiffKey
 } from '@/app/types/survey';
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt, FaPlus, FaTrash} from 'react-icons/fa';
@@ -65,7 +66,8 @@ interface SkipPopoverState {
   rowBottomIndex: number;
   stationOnTop: number;
   stationUnder: number;
-  currentSkipValue: number;
+  currentSkipValueMeters: number;
+  stationDiffDist: number;
   top: number;
   left: number;
 }
@@ -179,6 +181,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
+    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
 
     for (let i = 1; i < editedSurvey.surveyData.length; i++) {
       const prevRow = editedSurvey.surveyData[i - 1];
@@ -187,7 +190,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       for (const key of SurveyStationKeys) {
         const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
-        if (voltageDiff > 1) { // Convert mV to V for comparison
+        if (voltageDiff > stationDiff) { // Convert mV to V for comparison
           errors.push({rowIndex: i - 1, columnName: key});
           errors.push({rowIndex: i - 1, columnName: SurveyCommentKey});
           errors.push({rowIndex: i - 1, columnName: SurveyAnomalyKey});
@@ -241,7 +244,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const handleSaveSkippedRowsValue = useCallback((newSkippedValue: number) => {
     if (!skipPopover) return;
 
-    const diffSkipped = newSkippedValue - skipPopover.currentSkipValue;
+    const diffSkipped = newSkippedValue - skipPopover.currentSkipValueMeters;
     const minStationToChange = editedSurvey.surveyData[skipPopover.rowBottomIndex]["Station No"];
 
     const updatedSurveyData = [...editedSurvey.surveyData];
@@ -274,12 +277,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const stationOnTop = Number(editedSurvey.surveyData[plusRow.rowUpIndex][SurveyStationKey]);
     const stationUnder = Number(editedSurvey.surveyData[plusRow.rowBottomIndex][SurveyStationKey]);
+    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
     setSkipPopover({
       rowUpIndex: plusRow.rowUpIndex,
       rowBottomIndex: plusRow.rowBottomIndex,
       stationOnTop: stationOnTop,
       stationUnder: stationUnder,
-      currentSkipValue: stationUnder - stationOnTop - 1,
+      currentSkipValueMeters: stationUnder - stationOnTop - stationDiff,
+      stationDiffDist: stationDiff,
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
@@ -546,7 +551,8 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
             left={skipPopover.left}
             stationOnTop={skipPopover.stationOnTop}
             stationUnder={skipPopover.stationUnder}
-            currentSkipValue={skipPopover.currentSkipValue}
+            stationDiffDist={skipPopover.stationDiffDist}
+            currentSkipValueMeters={skipPopover.currentSkipValueMeters}
             onSave={handleSaveSkippedRowsValue}
             onClose={() => setSkipPopover(null)}
           />

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {SurveyDataRow, SurveyDistanceKey} from '@/app/types/survey';
 import {GraphInfo, GraphDataPoint} from "@/app/types/report";
-import {createSegments} from "@/app/utils/reportUtils";
+import {createSegments, getDistanceIndexInSegment, getSegmentIndex} from "@/app/utils/reportUtils";
 
 const CONSTANT_VOLTAGE = -850;
 const voltToMillyVolt= (V: number| undefined) => V!==undefined ? V * 1000 : V;
@@ -19,19 +19,21 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
 
     // init segments with default values
     const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
-    const graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, splitDistance) as { [key: number]: GraphDataPoint[] };
+    // TODO: check if all distances have the same difference
+    const distanceDiff = Number(surveyData[1][SurveyDistanceKey]) - Number(surveyData[0][SurveyDistanceKey]);
+    const graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, distanceDiff, splitDistance) as { [key: number]: GraphDataPoint[] };
 
     surveyData.forEach((row, index) => {
       const distance = row[SurveyDistanceKey];
       if (distance === undefined) return;
 
-      const segmentIndex = Math.floor(Number(distance) / splitDistance);
+      const segmentIndex = getSegmentIndex(Number(distance), splitDistance);
 
       // modify empty distances
       let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
-      while (prevDistance !== undefined && (prevDistance + 1) < Number(distance)) {
-        prevDistance++;
-        const prevDistanceIndexInSegment = prevDistance % splitDistance;
+      while (prevDistance !== undefined && (prevDistance + distanceDiff) < Number(distance)) {
+        prevDistance+=distanceDiff;
+        const prevDistanceIndexInSegment = getDistanceIndexInSegment(prevDistance, distanceDiff, splitDistance);
         graphSegments[segmentIndex][prevDistanceIndexInSegment] = {
           ...graphSegments[segmentIndex][prevDistanceIndexInSegment],
           onVoltage: undefined,
@@ -41,7 +43,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         };
       }
 
-      const distanceIndexInSegment = Number(distance) % splitDistance;
+      const distanceIndexInSegment = getDistanceIndexInSegment(Number(distance), distanceDiff, splitDistance);
 
       graphSegments[segmentIndex][distanceIndexInSegment] = {
         ...graphSegments[segmentIndex][distanceIndexInSegment],
@@ -54,16 +56,17 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
     });
 
     // eslint-disable-next-line
-    setGraphs(Object.entries(graphSegments).map(([_, segment]) => {
-      const startDist = segment[0].distance
-      const endDist = segment[segment.length - 1].distance
+    setGraphs(Object.entries(graphSegments).map(([segmentIndex, segment]) => {
+      const startDist = Number(segmentIndex) * splitDistance;
+      const endDist = (Number(segmentIndex) + 1) * splitDistance - 0.1;
 
       return {
         title: titles.primary && titles.primary !== '' ? titles.primary : `Graph`,
-        subtitle: `${titles.secondary}${titles.secondary && titles.secondary !== '' ? ', ' : ''}distance (stations) ${startDist}-${endDist}`,
+        subtitle: `${titles.secondary}${titles.secondary && titles.secondary !== '' ? ', ' : ''}distance (meters) ${startDist}-${endDist}`,
         data: segment,
         startDistance: startDist,
-        endDistance: endDist
+        endDistance: endDist,
+        distanceDiff: distanceDiff,
       };
     }));
 

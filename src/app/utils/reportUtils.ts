@@ -1,19 +1,26 @@
 import {DataPoint} from "@/app/types/report";
 
-export const createSegments = (numberOfDataPoints: number, splitDistance: number) : { [key: number]: DataPoint[] }=> {
+export const createSegments = (lastDistance: number, distanceDiff: number, splitDistance: number) : { [key: number]: DataPoint[] }=> {
     const segments: { [key: number]: DataPoint[] } = {};
-    const totalSegments = Math.ceil(numberOfDataPoints / splitDistance);
+    const numberOfSegments = Math.ceil(lastDistance / splitDistance);
 
-    for (let segmentIndex = 0; segmentIndex < totalSegments; segmentIndex++) {
-        const start = segmentIndex * splitDistance;
-        const end = (segmentIndex + 1) * splitDistance - 1;
+    let distance = 0;
+    for (let segmentIndex = 0; segmentIndex < numberOfSegments; segmentIndex++) {
 
         segments[segmentIndex] = [];
 
-        for (let distance = start; distance <= end; distance++) {
+        for (distance; distance <= splitDistance*(segmentIndex+1); distance+=distanceDiff) {
             segments[segmentIndex].push({ distance: distance });
         }
     }
 
     return segments;
+}
+
+export const getSegmentIndex = (distance: number, splitDistance: number)=> {
+    return Math.floor(distance / splitDistance);
+}
+
+export const getDistanceIndexInSegment = (distance: number, distanceDiff: number, splitDistance: number, )=> {
+    return Math.floor((distance % splitDistance) / distanceDiff);
 }
