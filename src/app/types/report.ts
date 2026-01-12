@@ -20,6 +20,7 @@ export interface MapDataPoint extends DataPoint {
 export interface SegmentInfo {
   startDistance: number;
   endDistance: number;
+  distanceDiff: number
 }
 
 export interface GraphInfo extends SegmentInfo {
