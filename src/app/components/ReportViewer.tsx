@@ -32,6 +32,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
   const [includeDCVG, setIncludeDCVG] = useState<boolean>(true);
+  const [includeMap, setIncludeMap] = useState<boolean>(true);
   const [isExportMode, setIsExportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
@@ -60,13 +61,20 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
               className={styles.splitDistanceInput}
             />
           </div>
-            <div style={{display: 'block', alignItems: 'center'}}>
+          <div style={{display: 'block', alignItems: 'center'}}>
               <input
-                type={"checkbox"}
-                onChange={(e) => setIncludeDCVG(e.target.checked)}
-                checked={includeDCVG}/>
-                {" Include DCVG Graph"}
-            </div>
+                  type={"checkbox"}
+                  onChange={(e) => setIncludeDCVG(e.target.checked)}
+                  checked={includeDCVG}/>
+              {" Include DCVG Graph"}
+          </div>
+          <div style={{display: 'block', alignItems: 'center'}}>
+                <input
+                    type={"checkbox"}
+                    onChange={(e) => setIncludeMap(e.target.checked)}
+                    checked={includeMap}/>
+                {" Include map"}
+          </div>
         </div>
         <button
             onClick={() => setIsExportMode(true)}
@@ -103,6 +111,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
                 allMapsInfos={maps}
                 shouldFocus={shouldFocus}
                 showPointsMode={shouldShowMapPoints}
+                includeMap={includeMap}
             />
           </div>
         ))}
@@ -114,6 +123,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
           graphs={graphs}
           maps={maps}
           includeDCVG={includeDCVG}
+          includeMap={includeMap}
       />
     </div>
   );
