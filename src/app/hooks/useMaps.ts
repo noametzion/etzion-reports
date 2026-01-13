@@ -49,7 +49,6 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       };
     });
 
-    // eslint-disable-next-line
     setMaps(Object.entries(mapSegments).map(([segmentIndex, segment]) => {
       const startDist = Number(segmentIndex) * splitDistance;
       const endDist = (Number(segmentIndex) + 1) * splitDistance - 0.1;

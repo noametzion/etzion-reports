@@ -1,17 +1,30 @@
+.mapContainerWrapper {
+  position: relative;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
 .mapContainerView {
   height: 300px;
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 8px;
-  margin-top: 20px;
-  margin-bottom: 20px;
 }
 
 .mapContainerExport {
   height: 180px;
   width: 100%;
-  margin-top: 20px;
-  margin-bottom: 20px;
+}
+
+.mapMuted {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.45);
+  pointer-events: none;
+  z-index: 500;
 }
 
 .extendedMapContainerExport {
