@@ -201,7 +201,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData]);
+  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
 
   const handleCellClick = useCallback((
     e: React.MouseEvent<HTMLDivElement>,
@@ -288,7 +288,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  },[plusRow, editedSurvey.surveyData]);
+  },[plusRow, editedSurvey.surveyData, originalSurvey.surveyInfo]);
 
   const handleDeleteRowClicked = useCallback((e: React.MouseEvent<SVGElement>, rowIndex: number) => {
     const rect = e.currentTarget.getBoundingClientRect();

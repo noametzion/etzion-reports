@@ -28,6 +28,7 @@ interface MapViewProps {
   showPointsMode?: boolean;
   mode?: "view" | "export";
   extendedMap?: boolean;
+  includeMap?: boolean;
 }
 
 const MapUpdater = ({ positions }: MapUpdaterProps) => {
@@ -86,7 +87,7 @@ const dataPointsToPositions = (data: MapDataPoint[]) : {positions: [number, numb
   return {positions, positionsInfo};
 }
 
-const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, mode = "view", extendedMap = false}: MapViewProps) => {
+const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, mode = "view", extendedMap = false, includeMap = true}: MapViewProps) => {
 
   const { focusDistance } = useFocusDistance(shouldFocus);
 
@@ -144,8 +145,11 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, 
     mode === "export" && extendedMap && styles.extendedMapContainerExport,
   ].filter(Boolean).join(' ');
 
-  return (
-    <MapContainer
+  const showMap = includeMap || mode === "view";
+  const isMuted = !includeMap && mode === "view";
+
+  return (<div className={styles.mapContainerWrapper}>
+    {showMap && <MapContainer
       center={[positions[0][0][0], positions[0][0][1]]}
       zoom={13}
       className={mapContainerClassName}
@@ -205,7 +209,9 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, 
         />
       )}
       <MapUpdater positions={positions} />
-    </MapContainer>
+    </MapContainer>}
+    {isMuted && <div className={styles.mapMuted} />}
+    </div>
   );
 };
 

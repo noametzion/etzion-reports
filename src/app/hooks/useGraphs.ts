@@ -55,7 +55,6 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       };
     });
 
-    // eslint-disable-next-line
     setGraphs(Object.entries(graphSegments).map(([segmentIndex, segment]) => {
       const startDist = Number(segmentIndex) * splitDistance;
       const endDist = (Number(segmentIndex) + 1) * splitDistance - 0.1;

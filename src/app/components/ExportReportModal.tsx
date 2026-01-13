@@ -20,6 +20,7 @@ interface ExportReportModalProps {
   graphs: GraphInfo[];
   maps: MapInfo[];
   includeDCVG?: boolean;
+  includeMap?: boolean;
 }
 
 const ExportReportModal: React.FC<ExportReportModalProps> = ({
@@ -28,7 +29,8 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
   surveyName,
   graphs,
   maps,
-  includeDCVG = true
+  includeDCVG = true,
+  includeMap = true,
 }) => {
 
   const [loading, setLoading] = useState<boolean>(false);
@@ -142,6 +144,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({
                         shouldFocus={false}
                         mode="export"
                         extendedMap={!includeDCVG}
+                        includeMap={includeMap}
                     />
                   </div>
                 </div>
