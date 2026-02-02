@@ -46,8 +46,6 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
 
       const distanceIndexInSegment = getDistanceIndexInSegment(Number(distance), distanceDiff, splitDistance);
 
-      console.log("GGGG", graphSegments);
-
       graphSegments[segmentIndex][distanceIndexInSegment] = {
         ...graphSegments[segmentIndex][distanceIndexInSegment],
         onVoltage: voltToMillyVolt(row['On Voltage']),

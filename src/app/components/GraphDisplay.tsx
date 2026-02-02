@@ -35,7 +35,7 @@ const niceDomain = (min: number, max: number, ticks = 6): [number, number] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CommentLabel = ({ x, y, index, value, firstDistance, distanceDiff}: any) => {
+const CommentLabel = ({ x, y, index, value, firstDistanceOnSegment, distanceDiff}: any) => {
     return (
         <text
             x={x} y={y} dy={2.5} dx={y-350}
@@ -43,7 +43,7 @@ const CommentLabel = ({ x, y, index, value, firstDistance, distanceDiff}: any) =
             textAnchor="start"
             transform={(x !== undefined && y != undefined) ?`rotate(-90, ${x}, ${y})` : ''}
         >
-            { value !== undefined ? ` ── ${firstDistance + index * distanceDiff} | ${value}` : '' }
+            { value !== undefined ? ` ── ${firstDistanceOnSegment + index * distanceDiff} | ${value}` : '' }
         </text>
     );
 };
@@ -92,7 +92,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
                     dataKey="comment"
                     content={(props) =>
                         <CommentLabel
-                            firstDistance={graphInfo.startDistance}
+                            firstDistanceOnSegment={graphInfo.data[0].distance}
                             distanceDiff={graphInfo.distanceDiff}
                             {...props}
                         />}
