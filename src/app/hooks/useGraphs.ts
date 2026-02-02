@@ -8,7 +8,7 @@ import {createSegments, getDistanceIndexInSegment, getSegmentIndex} from "@/app/
 const CONSTANT_VOLTAGE = -850;
 const voltToMillyVolt= (V: number| undefined) => V!==undefined ? V * 1000 : V;
 
-export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: number, titles: {primary: string, secondary: string}): GraphInfo[] => {
+export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: number, distanceDiff: number, titles: {primary: string, secondary: string}): GraphInfo[] => {
   const [graphs, setGraphs] = useState<GraphInfo[]>([]);
 
   useEffect(() => {
@@ -19,8 +19,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
 
     // init segments with default values
     const lastDistance = Number(surveyData[surveyData.length - 1][SurveyDistanceKey]);
-    // TODO: check if all distances have the same difference
-    const distanceDiff = Number(surveyData[1][SurveyDistanceKey]) - Number(surveyData[0][SurveyDistanceKey]);
+    // TODO: check if all distances have the same difference?
     const graphSegments: { [key: number]: GraphDataPoint[] } = createSegments(lastDistance, distanceDiff, splitDistance) as { [key: number]: GraphDataPoint[] };
 
     surveyData.forEach((row, index) => {
