@@ -49,3 +49,5 @@ next-env.d.ts
 ui-debug.log
 *.serviceAccount*.json
 /firebase-debug.log
+.firebase-data/
+/firestore-debug.log
