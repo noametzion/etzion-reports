@@ -62,7 +62,7 @@
   letter-spacing: 0.5px;
 }
 
-.filesTable tbody tr:hover {
+.fileRow:hover {
   background-color: #fff9f4;
 }
 
@@ -88,7 +88,8 @@
 }
 
 .openButton,
-.deleteButton {
+.deleteButton,
+.addToProjectButton {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -139,6 +140,25 @@
   margin-right: 5px;
 }
 
+.addToProjectButton {
+  background-color: #f0f9fd;
+  border-color: #bbe2f7;
+  color: #167da3;
+}
+
+.addToProjectButton:hover {
+  background-color: #dcf2fc;
+  border-color: #86c7ef;
+}
+
+.addToProjectButton:active {
+  background-color: #bbe2f7;
+}
+
+.addToProjectIcon {
+  font-size: 0.9em;
+}
+
 .closeButton {
   background-color: #f44336;
   color: white;
@@ -177,4 +197,11 @@
   color: #42362b;
   font-size: 1.5rem;
   font-weight: 600;
+}
+
+.projectSection {
+  background-color: #f0f9fd;
+}
+.projectSection:hover {
+  background-color: #e1f1f8;
 }

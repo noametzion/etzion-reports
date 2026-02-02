@@ -14,6 +14,7 @@ import EditorStatusBar from "@/app/components/EditorStatusBar";
 import {useExcelExporter} from "@/app/hooks/useExcelExporter";
 import ProjectsArranger from "@/app/components/ProjectsArranger";
 import {useProjects} from "@/app/hooks/useProjects";
+import {FaFolderTree} from "react-icons/fa6";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -70,6 +71,9 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     }
   };
 
+    const handleLinkToProject = async (fileName: string) => {
+    };
+
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
       onShouldFocusDistanceChanges(e.target.checked);
   };
@@ -123,7 +127,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
 
   const FileTr = ({file}: {file: SurveyFile}) => {
     return (
-      <tr key={file.name}>
+      <tr key={file.name} className={styles.fileRow}>
           <td>{file.name}</td>
           <td>{formatDate(file.uploadedAt)}</td>
           <td className={styles.actionsCell}>
@@ -135,6 +139,13 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                   >
                       <FaFolderOpen className={styles.openIcon} />
                       <span>Open</span>
+                  </button>
+                  <button
+                      onClick={() => handleLinkToProject(file.name)}
+                      className={styles.addToProjectButton}
+                      title={`Delete ${file.name}`}
+                  >
+                      <FaFolderTree className={styles.addToProjectIcon} />
                   </button>
                   <button
                       onClick={() => handleDelete(file.name)}
@@ -184,7 +195,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             <tbody>
               {filesByProjects.map((projectWithFiles) => (
                   <React.Fragment key={projectWithFiles.project.projectName+"_section"}>
-                  <tr key={projectWithFiles.project.projectName}>
+                  <tr key={projectWithFiles.project.projectName} className={styles.projectSection}>
                     <td>{projectWithFiles.project.projectName}</td>
                     <td/>
                     <td/>

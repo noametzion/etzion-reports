@@ -3,6 +3,7 @@
 import React, {useState} from 'react';
 import styles from './ProjectsArranger.module.css';
 import ProjectsPopover from "@/app/components/ProjectsPopover";
+import {FaFolderPlus} from "react-icons/fa";
 
 interface ProjectsArrangerProps {
 }
@@ -12,8 +13,14 @@ const ProjectsArranger: React.FC<ProjectsArrangerProps> = ({}) => {
 
     return (
         <div className={styles.container}>
-            <label>Projects: </label>
-            <button onClick={() => setShowProjectsPopover(true)}> + </button>
+            <button
+                onClick={() => setShowProjectsPopover(true)}
+                className={styles.addButton}
+                title={`Add New Project`}
+            >
+                <FaFolderPlus className={styles.addIcon} />
+                <span> Add New Project</span>
+            </button>
             { showProjectsPopover && <ProjectsPopover onClose={() => setShowProjectsPopover(false)}/> }
         </div>
     );

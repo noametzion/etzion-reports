@@ -3,6 +3,7 @@
 import React, {useState} from 'react';
 import {useProjects} from "@/app/hooks/useProjects";
 import styles from './ProjectsPopover.module.css';
+import {FaSave, FaTimes} from "react-icons/fa";
 
 
 interface ProjectsPopoverProps {
@@ -17,13 +18,14 @@ const ProjectsPopover: React.FC<ProjectsPopoverProps> = ({
   left = 100,
 }) => {
   const [projectName, setProjectName] = useState<string>("");
-  const { add, upsert, remove, status, error } = useProjects();
+  const { add } = useProjects();
 
 
   const ProjectNameEditor = () => {
     return (<input
         type="text"
         value={projectName}
+        className={styles.input}
         onChange={(e) => setProjectName(e.target.value)}
         autoFocus
     />);
@@ -36,8 +38,17 @@ const ProjectsPopover: React.FC<ProjectsPopoverProps> = ({
 
   return (
     <div className={styles.popover} style={{ top: `${top}px`, left: `${left}px` }}>
-      <ProjectNameEditor/>
-      <button onClick={handleSave}>Save</button>
+      <div className={styles.header}>
+        <h4>Add New Project</h4>
+        <button onClick={onClose} className={styles.closeButton}><FaTimes /></button>
+      </div>
+      <div className={styles.content}>
+        <ProjectNameEditor/>
+        <div className={styles.buttonsContainer}>
+          {/*TODO: disable if name already exist*/}
+          <button onClick={handleSave} className={styles.saveButton} disabled={false}><FaSave className={styles.saveIcon} /> Save</button>
+        </div>
+      </div>
     </div>
   );
 };
