@@ -33,9 +33,10 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       let prevDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
       while (prevDistance !== undefined && (prevDistance + distanceDiff) < Number(distance)) {
         prevDistance+=distanceDiff;
+        const prevDistanceIndex = getSegmentIndex(Number(prevDistance), splitDistance);
         const prevDistanceIndexInSegment = getDistanceIndexInSegment(prevDistance, distanceDiff, splitDistance);
-        graphSegments[segmentIndex][prevDistanceIndexInSegment] = {
-          ...graphSegments[segmentIndex][prevDistanceIndexInSegment],
+        graphSegments[prevDistanceIndex][prevDistanceIndexInSegment] = {
+          ...graphSegments[prevDistanceIndex][prevDistanceIndexInSegment],
           onVoltage: undefined,
           offVoltage: undefined,
           constantVoltage: CONSTANT_VOLTAGE,
@@ -44,6 +45,8 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       }
 
       const distanceIndexInSegment = getDistanceIndexInSegment(Number(distance), distanceDiff, splitDistance);
+
+      console.log("GGGG", graphSegments);
 
       graphSegments[segmentIndex][distanceIndexInSegment] = {
         ...graphSegments[segmentIndex][distanceIndexInSegment],

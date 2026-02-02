@@ -38,19 +38,15 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { exportToExcel, isExporting } = useExcelExporter();
 
   const filesByProjects = useMemo(() => {
-      const filesByProjects = projects.map((project) => ({
+      return projects.map((project) => ({
           project: project,
           projectFiles: originalFiles.filter((file) =>
               (project.projectFiles.some((pf) => pf.path === file.path)))
       }));
-      console.log(filesByProjects);
-      return filesByProjects;
   },[projects, originalFiles]);
 
   const filesWithoutProject = useMemo(() => {
-      const filesWithout = originalFiles.filter((file) => !filesByProjects.some((projectWithFiles) => projectWithFiles.projectFiles.some((pf) => pf.path === file.path)));
-      console.log(filesWithout);
-      return filesWithout;
+      return originalFiles.filter((file) => !filesByProjects.some((projectWithFiles) => projectWithFiles.projectFiles.some((pf) => pf.path === file.path)));
   },[filesByProjects, originalFiles]);
 
   const handleOpenFile = (fileName: string) => {
