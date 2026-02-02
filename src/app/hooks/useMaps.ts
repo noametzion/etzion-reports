@@ -62,7 +62,7 @@ export const useMaps = (surveyData: SurveyDataRow[] | null, splitDistance: numbe
       };
     }));
 
-  }, [surveyData, splitDistance]);
+  }, [surveyData, splitDistance, distanceDiff]);
 
   return maps;
 };

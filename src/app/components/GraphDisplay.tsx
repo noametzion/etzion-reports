@@ -131,6 +131,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
     graphInfo.data,
     graphInfo.startDistance,
     graphInfo.endDistance,
+    graphInfo.distanceDiff,
     handleMouseMove,
     handleMouseLeave,
     focusGraphPoint,

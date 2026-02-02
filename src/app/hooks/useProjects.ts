@@ -21,9 +21,10 @@ export function useProjects() {
       const res = await fn();
       setStatus("success");
       return res;
-    } catch (e: any) {
+    } catch (e: Error | unknown) {
       setStatus("error");
-      setError(e?.message ?? "Unknown error");
+      // TODO: change
+      setError("Unknown error");
       throw e;
     }
   }, []);

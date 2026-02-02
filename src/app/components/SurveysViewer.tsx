@@ -72,6 +72,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   };
 
     const handleLinkToProject = async (fileName: string) => {
+        console.log("link " + fileName + " to project..");
     };
 
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {

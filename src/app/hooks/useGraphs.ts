@@ -69,7 +69,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
       };
     }));
 
-  }, [surveyData, splitDistance, titles]);
+  }, [surveyData, splitDistance, distanceDiff, titles]);
 
   return graphs;
 };
