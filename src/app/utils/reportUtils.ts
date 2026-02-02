@@ -9,7 +9,7 @@ export const createSegments = (lastDistance: number, distanceDiff: number, split
 
         segments[segmentIndex] = [];
 
-        for (distance; distance <= splitDistance*(segmentIndex+1); distance+=distanceDiff) {
+        for (distance; distance < splitDistance*(segmentIndex+1); distance+=distanceDiff) {
             segments[segmentIndex].push({ distance: distance });
         }
     }

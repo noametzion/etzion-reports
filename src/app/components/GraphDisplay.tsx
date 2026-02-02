@@ -35,7 +35,7 @@ const niceDomain = (min: number, max: number, ticks = 6): [number, number] => {
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
+const CommentLabel = ({ x, y, index, value, firstDistanceOnSegment, distanceDiff}: any) => {
     return (
         <text
             x={x} y={y} dy={2.5} dx={y-350}
@@ -43,8 +43,7 @@ const CommentLabel = ({ x, y, index, value, firstDistance}: any) => {
             textAnchor="start"
             transform={(x !== undefined && y != undefined) ?`rotate(-90, ${x}, ${y})` : ''}
         >
-            {/*{ value !== undefined ? `${value} | ${firstDistance + index} ──` : '' }*/}
-            { value !== undefined ? ` ── ${firstDistance + index} | ${value}` : '' }
+            { value !== undefined ? ` ── ${firstDistanceOnSegment + index * distanceDiff} | ${value}` : '' }
         </text>
     );
 };
@@ -89,7 +88,15 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
             <Line type="linear" dataKey="onVoltage" stroke="#82ca9d" name="On Voltage" dot={false} />
             <Line type="linear" dataKey="offVoltage" stroke="#8884d8" name="Off Voltage" dot={false}/>
             <Line type="linear" dataKey="constantVoltage" stroke="#ff0000" name="-850mV Ref" dot={false}>
-                <LabelList dataKey="comment" content={(props) => <CommentLabel firstDistance={graphInfo.startDistance} {...props}/>}/>
+                <LabelList
+                    dataKey="comment"
+                    content={(props) =>
+                        <CommentLabel
+                            firstDistanceOnSegment={graphInfo.data[0].distance}
+                            distanceDiff={graphInfo.distanceDiff}
+                            {...props}
+                        />}
+                />
             </Line>
             <ReferenceDot
                 x={focusGraphPoint?.distance}
@@ -124,6 +131,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
     graphInfo.data,
     graphInfo.startDistance,
     graphInfo.endDistance,
+    graphInfo.distanceDiff,
     handleMouseMove,
     handleMouseLeave,
     focusGraphPoint,

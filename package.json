@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node_modules/.bin/next dev",
+    "emu": "firebase emulators:start --import=./.firebase-data --export-on-exit",
+    "dev": "concurrently -k \"npm:emu\" \"node_modules/.bin/next dev\"",
     "build": "node_modules/.bin/next build",
     "start": "node_modules/.bin/next start",
     "lint": "node_modules/.bin/next lint"
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19",
     "@types/react-window": "^1.8.8",
     "@types/recharts": "^1.8.29",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "typescript": "^5"

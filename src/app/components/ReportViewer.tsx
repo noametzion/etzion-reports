@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useState} from 'react';
-import {SurveyInfoNameKey, SurveyFile} from '@/app/types/survey';
+import {SurveyInfoNameKey, SurveyFile, SurveyInfoStationDiffKey} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
 import styles from './ReportViewer.module.css';
@@ -26,8 +26,9 @@ interface ReportViewerProps {
 }
 
 const DEFAULT_SPLIT_DISTANCE = 500;
+const DEFAULT_DIST_PER_READING = 1; //m
 
-const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , shouldFocus, shouldShowMapPoints}) => {
+const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldFocus, shouldShowMapPoints }) => {
   const {survey: originalSurvey} = useSurveyReader(originalSurveyFile);
   const {editedSurvey, reload: reloadEditedSurvey} = useSurveyEditor(originalSurveyFile, originalSurvey);
   const [splitDistance, setSplitDistance] = React.useState<number>(DEFAULT_SPLIT_DISTANCE);
@@ -36,8 +37,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile , should
   const [isExportMode, setIsExportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
-  const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, titles);
-  const maps = useMaps(editedSurvey?.surveyData || null, splitDistance);
+  const distPerReading = Number(originalSurvey?.surveyInfo[SurveyInfoStationDiffKey]) || DEFAULT_DIST_PER_READING;
+  const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, distPerReading, titles);
+  const maps = useMaps(editedSurvey?.surveyData || null, splitDistance, distPerReading);
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
 
