@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, {useMemo} from 'react';
 import {FaTrash, FaFolderOpen} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
@@ -12,6 +12,9 @@ import { SurveyFile } from '@/app/types/survey';
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import EditorStatusBar from "@/app/components/EditorStatusBar";
 import {useExcelExporter} from "@/app/hooks/useExcelExporter";
+import ProjectsArranger from "@/app/components/ProjectsArranger";
+import {useProjects} from "@/app/hooks/useProjects";
+import {FaFolderTree} from "react-icons/fa6";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -28,11 +31,24 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   shouldShowMapPoints,
   onShouldShowMapPointsChanges
  }) => {
+  const {projects} = useProjects();
   const { files: originalFiles, isLoading, isUploading, error: surveyFilesError, getFile, uploadFile, deleteFile } = useSurveyFiles();
   const [selectedOriginalFile, setSelectedOriginalFile] = React.useState<SurveyFile | null>(null);
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
+
+  const filesByProjects = useMemo(() => {
+      return projects.map((project) => ({
+          project: project,
+          projectFiles: originalFiles.filter((file) =>
+              (project.projectFiles.some((pf) => pf.path === file.path)))
+      }));
+  },[projects, originalFiles]);
+
+  const filesWithoutProject = useMemo(() => {
+      return originalFiles.filter((file) => !filesByProjects.some((projectWithFiles) => projectWithFiles.projectFiles.some((pf) => pf.path === file.path)));
+  },[filesByProjects, originalFiles]);
 
   const handleOpenFile = (fileName: string) => {
     const fileToOpen = getFile(fileName);
@@ -54,6 +70,10 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
       await deleteFile(fileName);
     }
   };
+
+    const handleLinkToProject = async (fileName: string) => {
+        console.log("link " + fileName + " to project..");
+    };
 
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
       onShouldFocusDistanceChanges(e.target.checked);
@@ -106,10 +126,47 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     );
   }
 
+  const FileTr = ({file}: {file: SurveyFile}) => {
+    return (
+      <tr key={file.name} className={styles.fileRow}>
+          <td>{file.name}</td>
+          <td>{formatDate(file.uploadedAt)}</td>
+          <td className={styles.actionsCell}>
+              <div className={styles.actionsContainer}>
+                  <button
+                      onClick={() => handleOpenFile(file.name)}
+                      className={styles.openButton}
+                      title={`Open ${file.name}`}
+                  >
+                      <FaFolderOpen className={styles.openIcon} />
+                      <span>Open</span>
+                  </button>
+                  <button
+                      onClick={() => handleLinkToProject(file.name)}
+                      className={styles.addToProjectButton}
+                      title={`Delete ${file.name}`}
+                  >
+                      <FaFolderTree className={styles.addToProjectIcon} />
+                  </button>
+                  <button
+                      onClick={() => handleDelete(file.name)}
+                      className={styles.deleteButton}
+                      title={`Delete ${file.name}`}
+                  >
+                      <FaTrash className={styles.deleteIcon} />
+                      <span>Delete</span>
+                  </button>
+              </div>
+          </td>
+      </tr>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Surveys</h2>
+        <ProjectsArranger />
         <SurveyUploader
           isUploading={isUploading}
           error={surveyFilesError}
@@ -137,31 +194,20 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
               </tr>
             </thead>
             <tbody>
-              {originalFiles.map((file) => (
-                <tr key={file.name}>
-                  <td>{file.name}</td>
-                  <td>{formatDate(file.uploadedAt)}</td>
-                  <td className={styles.actionsCell}>
-                    <div className={styles.actionsContainer}>
-                      <button
-                        onClick={() => handleOpenFile(file.name)}
-                        className={styles.openButton}
-                        title={`Open ${file.name}`}
-                      >
-                        <FaFolderOpen className={styles.openIcon} />
-                        <span>Open</span>
-                      </button>
-                      <button
-                        onClick={() => handleDelete(file.name)}
-                        className={styles.deleteButton}
-                        title={`Delete ${file.name}`}
-                      >
-                        <FaTrash className={styles.deleteIcon} />
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+              {filesByProjects.map((projectWithFiles) => (
+                  <React.Fragment key={projectWithFiles.project.projectName+"_section"}>
+                  <tr key={projectWithFiles.project.projectName} className={styles.projectSection}>
+                    <td>{projectWithFiles.project.projectName}</td>
+                    <td/>
+                    <td/>
+                  </tr>
+                 {projectWithFiles.projectFiles.map((file) => (
+                     <FileTr file={file} key={file.name}/>
+                ))}
+                  </React.Fragment>
+              ))}
+              {filesWithoutProject.map((file) => (
+                  <FileTr file={file} key={file.name}/>
               ))}
             </tbody>
           </table>
