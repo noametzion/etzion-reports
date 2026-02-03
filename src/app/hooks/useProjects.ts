@@ -54,6 +54,7 @@ export function useProjects() {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, DB_PATH), (snap) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const list = snap.docs.map(d => ({ ...(d.data() as any), id: d.id })) as DBProject[];
       setProjects(list);
     }, console.error);
