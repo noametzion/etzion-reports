@@ -4,8 +4,10 @@ import {useCallback, useEffect, useState} from "react";
 import { Project } from "@/app/types/project";
 import {createProject, deleteProject, updateProject, upsertProject} from "@/app/db/projectsRepo";
 import {DBProject} from "@/app/types/dbTypes";
-import {collection, getDocs} from "firebase/firestore";
+import {collection, onSnapshot} from "firebase/firestore";
 import { db } from "../config/firebase";
+
+const DB_PATH = "projects";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -29,6 +31,7 @@ export function useProjects() {
     }
   }, []);
 
+
   const add = useCallback(
       (data: Project) => run(() => createProject(data)),
       [run]
@@ -49,17 +52,15 @@ export function useProjects() {
       [run]
   );
 
-  const getProjects = async () => {
-    const querySnapshot = await getDocs(collection(db, "projects"));
-    return querySnapshot.docs.map((doc) => {
-      return doc.data() as DBProject;
-    });
-  };
-
   useEffect(() => {
-    getProjects().then(DBProjects => setProjects([...DBProjects]))
-  }, []);
+    const unsub = onSnapshot(collection(db, DB_PATH), (snap) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const list = snap.docs.map(d => ({ ...(d.data() as any), id: d.id })) as DBProject[];
+      setProjects(list);
+    }, console.error);
 
+    return () => unsub();
+  }, []);
 
   return {
     add,

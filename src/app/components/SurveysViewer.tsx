@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useMemo} from 'react';
+import React, {useMemo, useState} from 'react';
 import {FaTrash, FaFolderOpen} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
@@ -15,6 +15,8 @@ import {useExcelExporter} from "@/app/hooks/useExcelExporter";
 import ProjectsArranger from "@/app/components/ProjectsArranger";
 import {useProjects} from "@/app/hooks/useProjects";
 import {FaFolderTree} from "react-icons/fa6";
+import {DBProject} from "@/app/types/dbTypes";
+import LinkToProjectPopover from "@/app/components/LinkToProjectPopover";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -22,6 +24,13 @@ interface SurveysViewerProps {
     onShouldFocusDistanceChanges: (shouldFocus: boolean) => void;
     shouldShowMapPoints: boolean;
     onShouldShowMapPointsChanges: (shouldShowPointsOnMap: boolean) => void;
+}
+
+interface LinkToProjectPopoverState {
+    top: number;
+    left: number;
+    file: SurveyFile;
+    currentSelectedProject?: DBProject;
 }
 
 const SurveysViewer: React.FC<SurveysViewerProps> = ({
@@ -37,6 +46,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
+  const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
 
   const filesByProjects = useMemo(() => {
       return projects.map((project) => ({
@@ -71,8 +81,14 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     }
   };
 
-    const handleLinkToProject = async (fileName: string) => {
-        console.log("link " + fileName + " to project..");
+    const handleLinkToProject = async (e: React.MouseEvent<HTMLButtonElement>, file: SurveyFile, project?: DBProject) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        setLinkToProjectPopover({
+            file: file,
+            currentSelectedProject: project,
+            top: rect.top + window.scrollY,
+            left: rect.left + window.scrollX + rect.width,
+        });
     };
 
   const handleFocusCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,7 +142,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     );
   }
 
-  const FileTr = ({file}: {file: SurveyFile}) => {
+  const FileTr = ({file, project}: {file: SurveyFile, project?: DBProject}) => {
     return (
       <tr key={file.name} className={styles.fileRow}>
           <td>{file.name}</td>
@@ -142,7 +158,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                       <span>Open</span>
                   </button>
                   <button
-                      onClick={() => handleLinkToProject(file.name)}
+                      onClick={(e) => handleLinkToProject(e, file, project)}
                       className={styles.addToProjectButton}
                       title={`Delete ${file.name}`}
                   >
@@ -162,7 +178,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     );
   }
 
-  return (
+  return (<>
     <div className={styles.container}>
       <div className={styles.header}>
         <h2>Surveys</h2>
@@ -202,10 +218,11 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                     <td/>
                   </tr>
                  {projectWithFiles.projectFiles.map((file) => (
-                     <FileTr file={file} key={file.name}/>
+                     <FileTr file={file} project={projectWithFiles.project} key={file.name}/>
                 ))}
                   </React.Fragment>
               ))}
+              <tr className={styles.separatorRow}><td>No project assigned</td><td/><td/></tr>
               {filesWithoutProject.map((file) => (
                   <FileTr file={file} key={file.name}/>
               ))}
@@ -214,7 +231,14 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
         )}
       </div>
     </div>
-  );
+    {linkToProjectPopover && <LinkToProjectPopover
+        onClose={() => setLinkToProjectPopover(null)}
+        top={linkToProjectPopover.top}
+        left={linkToProjectPopover.left}
+        file={linkToProjectPopover.file}
+        currentSelectedProject={linkToProjectPopover.currentSelectedProject}
+    />}
+  </>);
 };
 
 export default SurveysViewer;
