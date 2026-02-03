@@ -205,3 +205,7 @@
 .projectSection:hover {
   background-color: #e1f1f8;
 }
+
+.separatorRow {
+  background-color: #ebf4f8;
+}
