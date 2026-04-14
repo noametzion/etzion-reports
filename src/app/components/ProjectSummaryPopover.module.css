@@ -1,0 +1,172 @@
+.popover {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 12px;
+    z-index: 100;
+    width: 480px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.header h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0;
+}
+
+.content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.summaryContent {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    position: relative;
+}
+
+.summaryRow {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summaryRowInline {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.summaryField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.summaryRow strong {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.summaryRow span {
+    font-size: 0.95rem;
+    color: #333;
+    word-break: break-word;
+}
+
+.gpsThresholdInput {
+    width: 100px;
+    padding: 6px 22px 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.gpsThresholdInputWrap {
+    position: relative;
+    width: fit-content;
+}
+
+.gpsThresholdSuffix {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    pointer-events: none;
+    font-size: 0.9rem;
+}
+
+.summaryLabelWithInfoButton {
+    position: relative;
+    line-height: 1.2;
+}
+
+.summaryLabelWithInfoButton strong {
+    display: inline;
+}
+
+.summaryInfoButton {
+    border: none;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.summaryInfoTooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #dceefe;
+    border: 1px solid #9fc4e8;
+    font-size: 0.8rem;
+    color: #183a5a;
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 290px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.summaryInfoTooltip::after {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: calc(50% - 8px);
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #9fc4e8;
+}
+
+.summaryInfoRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.summaryInfoRow span:first-child {
+    flex: 1 1 55%;
+    min-width: 0;
+}
+
+.summaryInfoRow span:last-child {
+    flex: 0 0 auto;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.summaryErrorText {
+    color: red !important;
+}
