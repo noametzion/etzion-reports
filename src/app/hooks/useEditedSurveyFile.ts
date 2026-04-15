@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {EditedSurveyFile} from "@/app/types/survey";
-import {authedFetch} from "@/app/utils/authedFetch";
+import { fetchFileByQueryParam, uploadFileWithDataToAPI, deleteFileFromAPI } from "@/app/utils/readFileUtils";
 
 interface ResponseEditedSurveyFileData {
   fileName: string;
@@ -23,26 +23,24 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
     if(!originalFileName) return;
 
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await authedFetch(`${EDITED_SURVEYS_API}?originalFileName=${encodeURIComponent(originalFileName)}`);
+      const responseData = await fetchFileByQueryParam(EDITED_SURVEYS_API, 'originalFileName', originalFileName);
+      const resFile = responseData.file as ResponseEditedSurveyFileData | null;
 
-      const responseData = await response.json();
-      if (!response.ok) setError(responseData.error || 'Failed to fetch file');
-      else {
-        const resFile = (responseData.file as (ResponseEditedSurveyFileData | null));
-
-        if(!resFile)
-          setEditedFile(null);
-        else
-          setEditedFile({
-            name: resFile.fileName,
-            path: resFile.filePath,
-            isLocal: resFile.isLocal,
-            originalFileName: resFile.originalFileName,
-            updatedAt: new Date().toISOString(), // Placeholder, ideally from server
-          });
+      if (!resFile) {
+        setEditedFile(null);
+      } else {
+        setEditedFile({
+          name: resFile.fileName,
+          path: resFile.filePath,
+          isLocal: resFile.isLocal,
+          originalFileName: resFile.originalFileName,
+          updatedAt: new Date().toISOString(),
+        });
       }
     } catch (err) {
+      setEditedFile(null);
       setError((err as Error).message);
     } finally {
       setIsLoading(false);
@@ -57,26 +55,16 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
   const updateFile = async (file: File, originalFileName: string) => {
     setIsUpdating(true);
     setError(null);
-    const requestData = new FormData();
-    requestData.append('file', file);
-    requestData.append('originalFileName', originalFileName)
 
     try {
-      const response = await authedFetch(EDITED_SURVEYS_API, {
-        method: 'PUT',
-        body: requestData,
+      const responseData = await uploadFileWithDataToAPI(EDITED_SURVEYS_API, file, { originalFileName });
+      setEditedFile({
+        name: responseData.fileName,
+        path: responseData.filePath,
+        isLocal: responseData.isLocal,
+        originalFileName: responseData.originalFileName,
+        updatedAt: new Date().toISOString(),
       });
-      const responseData = await response.json();
-      if (!response.ok) setError(responseData.error ||'Upload failed');
-      else {
-        setEditedFile({
-              name: responseData.fileName,
-              path: responseData.filePath,
-              isLocal: responseData.isLocal,
-              originalFileName: responseData.originalFileName,
-              updatedAt: new Date().toISOString()}, //from server
-        );
-      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -90,15 +78,7 @@ export const useEditedSurveyFile = (originalFileName?: string) => {
     setEditedFile(null);
 
     try {
-      const response = await authedFetch(`${EDITED_SURVEYS_API}?fileName=${encodeURIComponent(editedFileName)}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        // Revert on error
-        setEditedFile(originalEditedFile);
-        const responseData = await response.json();
-        setError(responseData.error || 'Failed to delete file on server');
-      }
+      await deleteFileFromAPI(EDITED_SURVEYS_API, editedFileName);
     } catch (err) {
       // Revert on error
       setEditedFile(originalEditedFile);
