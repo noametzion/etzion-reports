@@ -5,6 +5,7 @@ import { DBProject } from '@/app/types/dbTypes';
 import { SurveyDistanceKey, SurveyDataRow, SurveyInfo, EditedSurveyFile } from '@/app/types/survey';
 import { fetchFileByQueryParam } from '@/app/utils/readFileUtils';
 import { readEditedSurveyData, readOriginalSurveyFile } from '@/app/utils/fileDataUtils';
+import { calculatePathLengthKm } from '@/app/utils/gpsUtils';
 
 interface ResponseEditedSurveyFileData {
   fileName: string;
