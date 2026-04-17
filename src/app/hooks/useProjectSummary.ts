@@ -40,8 +40,8 @@ interface ProjectSummary {
 export const useProjectSummary = () => {
   const [summary, setSummary] = useState<ProjectSummary | null>(null);
 
-  const calculateGpsDist = (pathSegments: SurveyDataRow[][], gpsThreshold: number): number => {
-    return calculatePathLengthKm(pathSegments, gpsThreshold);
+  const calculateGpsDist = async (pathSegments: SurveyDataRow[][], gpsThreshold: number): Promise<number> => {
+    return await calculatePathLengthKm(pathSegments, gpsThreshold);
   };
 
   const calculateProjectSummary = useCallback(async (project: Project, thresholdMeters = 35) => {
@@ -111,8 +111,8 @@ export const useProjectSummary = () => {
         const flatSurveyData = surveyData.filter(
           (row) => row['Latitude'] !== undefined && row['Longitude'] !== undefined
         );
-        const gpsDist = calculateGpsDist(pathSegments, thresholdMeters);
-        const extendedGpsDist = calculateGpsDist(flatSurveyData.length > 0 ? [flatSurveyData] : [], thresholdMeters);
+        const gpsDist = await calculateGpsDist(pathSegments, thresholdMeters);
+        const extendedGpsDist = await calculateGpsDist(flatSurveyData.length > 0 ? [flatSurveyData] : [], thresholdMeters);
 
         const stationNo = surveyData.reduce((max, row) => {
           const distance = row['Station No'] || 0;

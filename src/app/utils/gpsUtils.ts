@@ -1,5 +1,3 @@
-import L from 'leaflet';
-
 export const splitSurveyDataByBreaks = <T extends { Latitude?: number; Longitude?: number; [key: string]: any }>(
   surveyData: T[],
   distanceKey: string,
@@ -36,10 +34,13 @@ export const splitSurveyDataByBreaks = <T extends { Latitude?: number; Longitude
   return pathSegments;
 };
 
-export const calculatePathLengthKm = <T extends { Latitude?: number; Longitude?: number }>(
+export const calculatePathLengthKm = async <T extends { Latitude?: number; Longitude?: number }>(
   pathSegments: T[][],
   distThresholdMeters: number = 35
-): number => {
+): Promise<number> => {
+  // Dynamic import to avoid SSR issues with window object
+  const L = (await import('leaflet')).default;
+
   let total = 0;
 
   for (let s = 0; s < pathSegments.length; s++) {
