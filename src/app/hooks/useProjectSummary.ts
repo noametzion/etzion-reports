@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useCallback } from 'react';
-import { DBProject } from '@/app/types/dbTypes';
+import { Project } from '@/app/types/project';
 import { SurveyDistanceKey, SurveyDataRow, SurveyInfo, EditedSurveyFile } from '@/app/types/survey';
 import { fetchFileByQueryParam } from '@/app/utils/readFileUtils';
 import { readEditedSurveyData, readOriginalSurveyFile } from '@/app/utils/fileDataUtils';
-import { calculatePathLengthKm } from '@/app/utils/gpsUtils';
+import { calculatePathLengthKm, splitSurveyDataByBreaks } from '@/app/utils/gpsUtils';
 
 interface ResponseEditedSurveyFileData {
   fileName: string;
@@ -40,75 +40,12 @@ interface ProjectSummary {
 export const useProjectSummary = () => {
   const [summary, setSummary] = useState<ProjectSummary | null>(null);
 
-  const calculateGpsDist = (surveySegments: SurveyDataRow[][], gpsThreshold: number): number => {
-    let total = 0;
-
-    for (const surveyData of surveySegments) {
-      for (let i = 1; i < surveyData.length; i++) {
-        const prevRow = surveyData[i - 1];
-        const currentRow = surveyData[i];
-
-        const lat1 = prevRow['Latitude'];
-        const lon1 = prevRow['Longitude'];
-        const lat2 = currentRow['Latitude'];
-        const lon2 = currentRow['Longitude'];
-
-        if (lat1 !== undefined && lon1 !== undefined && lat2 !== undefined && lon2 !== undefined) {
-          const earthRadiusMeters = 6371e3;
-          const phi1 = lat1 * Math.PI / 180;
-          const phi2 = lat2 * Math.PI / 180;
-          const deltaPhi = (lat2 - lat1) * Math.PI / 180;
-          const deltaLambda = (lon2 - lon1) * Math.PI / 180;
-
-          const a = Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
-            Math.cos(phi1) * Math.cos(phi2) *
-            Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-          const dist = earthRadiusMeters * c;
-
-          if (dist < gpsThreshold) {
-            total += dist;
-          }
-        }
-      }
-    }
-
-    return total / 1000;
+  const calculateGpsDist = (pathSegments: SurveyDataRow[][], gpsThreshold: number): number => {
+    return calculatePathLengthKm(pathSegments, gpsThreshold);
   };
 
-  const splitSurveyDataByBreaks = (surveyData: SurveyDataRow[], distanceDiff: number): SurveyDataRow[][] => {
-    const segments: SurveyDataRow[][] = [];
-    let currentSegment: SurveyDataRow[] = [];
+  const calculateProjectSummary = useCallback(async (project: Project, thresholdMeters = 35) => {
 
-    surveyData.forEach((row, index) => {
-      const currentDistance = Number(row[SurveyDistanceKey]);
-      const previousDistance = index > 0 ? Number(surveyData[index - 1][SurveyDistanceKey]) : undefined;
-
-      if (
-        index > 0 &&
-        previousDistance !== undefined &&
-        distanceDiff > 0 &&
-        (previousDistance + distanceDiff) < currentDistance
-      ) {
-        if (currentSegment.length > 0) {
-          segments.push(currentSegment);
-          currentSegment = [];
-        }
-      }
-
-      if (row['Latitude'] !== undefined && row['Longitude'] !== undefined) {
-        currentSegment.push(row);
-      }
-    });
-
-    if (currentSegment.length > 0) {
-      segments.push(currentSegment);
-    }
-
-    return segments;
-  };
-
-  const calculateProjectSummary = useCallback(async (project: DBProject, thresholdMeters = 35) => {
     setSummary({
       totalGpsDist: 0,
       totalExtendedGpsDist: 0,
@@ -170,11 +107,11 @@ export const useProjectSummary = () => {
         }
 
         const distPerReading = Number(surveyInfo['Dist per reading']) || 0;
-        const segmentedSurveyData = splitSurveyDataByBreaks(surveyData, distPerReading);
+        const pathSegments = splitSurveyDataByBreaks(surveyData, SurveyDistanceKey, distPerReading);
         const flatSurveyData = surveyData.filter(
           (row) => row['Latitude'] !== undefined && row['Longitude'] !== undefined
         );
-        const gpsDist = calculateGpsDist(segmentedSurveyData, thresholdMeters);
+        const gpsDist = calculateGpsDist(pathSegments, thresholdMeters);
         const extendedGpsDist = calculateGpsDist(flatSurveyData.length > 0 ? [flatSurveyData] : [], thresholdMeters);
 
         const stationNo = surveyData.reduce((max, row) => {

@@ -1,15 +1,51 @@
 import L from 'leaflet';
 
+export const splitSurveyDataByBreaks = <T extends { Latitude?: number; Longitude?: number; [key: string]: any }>(
+  surveyData: T[],
+  distanceKey: string,
+  distanceDiff: number
+): T[][] => {
+  const pathSegments: T[][] = [];
+  let currentPathSegment: T[] = [];
+
+  surveyData.forEach((row, index) => {
+    const currentDistance = Number(row[distanceKey]);
+    const previousDistance = index > 0 ? Number(surveyData[index - 1][distanceKey]) : undefined;
+
+    if (
+      index > 0 &&
+      previousDistance !== undefined &&
+      distanceDiff > 0 &&
+      (previousDistance + distanceDiff) < currentDistance
+    ) {
+      if (currentPathSegment.length > 0) {
+        pathSegments.push(currentPathSegment);
+        currentPathSegment = [];
+      }
+    }
+
+    if (row.Latitude !== undefined && row.Longitude !== undefined) {
+      currentPathSegment.push(row);
+    }
+  });
+
+  if (currentPathSegment.length > 0) {
+    pathSegments.push(currentPathSegment);
+  }
+
+  return pathSegments;
+};
+
 export const calculatePathLengthKm = <T extends { Latitude?: number; Longitude?: number }>(
-  segments: T[][],
+  pathSegments: T[][],
   distThresholdMeters: number = 35
 ): number => {
   let total = 0;
 
-  for (let s = 0; s < segments.length; s++) {
-    for (let i = 1; i < segments[s].length; i++) {
-      const prevPoint = segments[s][i - 1];
-      const currentPoint = segments[s][i];
+  for (let s = 0; s < pathSegments.length; s++) {
+    for (let i = 1; i < pathSegments[s].length; i++) {
+      const prevPoint = pathSegments[s][i - 1];
+      const currentPoint = pathSegments[s][i];
 
       const lat1 = prevPoint.Latitude;
       const lon1 = prevPoint.Longitude;
