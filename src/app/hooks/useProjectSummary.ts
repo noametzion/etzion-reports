@@ -89,7 +89,7 @@ export const useProjectSummary = () => {
               updatedAt: new Date().toISOString(),
             };
           }
-        } catch (err) {
+        } catch {
           // No edited file exists, continue with original
         }
 

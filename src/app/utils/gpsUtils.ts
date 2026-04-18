@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const splitSurveyDataByBreaks = <T extends { Latitude?: number; Longitude?: number; [key: string]: any }>(
   surveyData: T[],
   distanceKey: string,

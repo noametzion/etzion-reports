@@ -70,7 +70,7 @@ export const deleteFileFromAPI = async (apiEndpoint: string, fileName: string): 
 };
 
 // Generic function to fetch a single file by query parameter
-export const fetchFileByQueryParam = async (apiEndpoint: string, queryParam: string, queryValue: string): Promise<any> => {
+export const fetchFileByQueryParam = async (apiEndpoint: string, queryParam: string, queryValue: string) => {
   const response = await authedFetch(`${apiEndpoint}?${queryParam}=${encodeURIComponent(queryValue)}`);
   const responseData = await response.json();
 
@@ -82,7 +82,7 @@ export const fetchFileByQueryParam = async (apiEndpoint: string, queryParam: str
 };
 
 // Generic function to upload file with extra form data (for PUT requests)
-export const uploadFileWithDataToAPI = async (apiEndpoint: string, file: File, extraData?: Record<string, string>): Promise<any> => {
+export const uploadFileWithDataToAPI = async (apiEndpoint: string, file: File, extraData?: Record<string, string>) => {
   const requestData = new FormData();
   requestData.append('file', file);
 
