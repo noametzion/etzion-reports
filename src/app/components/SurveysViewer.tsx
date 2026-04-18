@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useMemo, useState} from 'react';
-import {FaTrash, FaFolderOpen} from 'react-icons/fa';
+import {FaTrash, FaFolderOpen, FaFileAlt} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
@@ -17,6 +17,7 @@ import {useProjects} from "@/app/hooks/useProjects";
 import {FaFolderTree} from "react-icons/fa6";
 import {DBProject} from "@/app/types/dbTypes";
 import LinkToProjectPopover from "@/app/components/LinkToProjectPopover";
+import ProjectSummaryPopover from "@/app/components/ProjectSummaryPopover";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -33,6 +34,13 @@ interface LinkToProjectPopoverState {
     currentSelectedProject?: DBProject;
 }
 
+interface ProjectSummaryPopoverState {
+    top: number;
+    left: number;
+    project: DBProject;
+    fileCount: number;
+}
+
 const SurveysViewer: React.FC<SurveysViewerProps> = ({
   onSurveySelected,
   onShouldFocusDistanceChanges,
@@ -47,6 +55,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
+  const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
 
   const filesByProjects = useMemo(() => {
       return projects.map((project) => ({
@@ -98,6 +107,16 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     const handleShowMapPointsCheckboxChanges = (e: React.ChangeEvent<HTMLInputElement>) => {
         onShouldShowMapPointsChanges(e.target.checked);
     };
+
+  const handleProjectSummary = (e: React.MouseEvent<HTMLButtonElement>, project: DBProject, fileCount: number) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setProjectSummaryPopover({
+      project: project,
+      fileCount: fileCount,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  };
 
   if (isReading || (originalSurvey && !editedSurvey)) {
     return <div className={styles.loading}>Reading survey...</div>;
@@ -213,9 +232,24 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
               {filesByProjects.map((projectWithFiles) => (
                   <React.Fragment key={projectWithFiles.project.projectName+"_section"}>
                   <tr key={projectWithFiles.project.projectName} className={styles.projectSection}>
-                    <td>{projectWithFiles.project.projectName}</td>
+                    <td>
+                      <div className={styles.projectNameContainer}>
+                        <span>{projectWithFiles.project.projectName}</span>
+                      </div>
+                    </td>
                     <td/>
-                    <td/>
+                    <td className={styles.actionsCell}>
+                      <div className={styles.projectActionsContainer}>
+                        <button
+                          onClick={(e) => handleProjectSummary(e, projectWithFiles.project, projectWithFiles.projectFiles.length)}
+                          className={styles.projectSummaryButton}
+                          title={`View summary for ${projectWithFiles.project.projectName}`}
+                        >
+                          <FaFileAlt className={styles.summaryIcon} />
+                          <span>Summary</span>
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                  {projectWithFiles.projectFiles.map((file) => (
                      <FileTr file={file} project={projectWithFiles.project} key={file.name}/>
@@ -237,6 +271,13 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
         left={linkToProjectPopover.left}
         file={linkToProjectPopover.file}
         currentSelectedProject={linkToProjectPopover.currentSelectedProject}
+    />}
+    {projectSummaryPopover && <ProjectSummaryPopover
+        onClose={() => setProjectSummaryPopover(null)}
+        top={projectSummaryPopover.top}
+        left={projectSummaryPopover.left}
+        project={projectSummaryPopover.project}
+        fileCount={projectSummaryPopover.fileCount}
     />}
   </>);
 };

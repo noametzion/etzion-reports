@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {SurveyFile} from "@/app/types/survey";
-import {authedFetch} from "@/app/utils/authedFetch";
+import { fetchFilesFromAPI, uploadFileToAPI, deleteFileFromAPI } from "@/app/utils/readFileUtils";
 
 interface ResponseSurveyFileData {
   fileName: string;
@@ -20,19 +20,16 @@ export const useSurveyFiles = () => {
 
   const fetchFiles = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
-      const response = await authedFetch(SURVEYS_API);
-      const responseData = await response.json();
-      if (!response.ok) setError(responseData.error || 'Failed to fetch files');
-      else {
-        const fileList = (responseData.files as ResponseSurveyFileData[]).map((file) => ({
-          name: file.fileName,
-          path: file.filePath,
-          isLocal: file.isLocal,
-          uploadedAt: new Date().toISOString(), // Placeholder, ideally from server
-        }));
-        setFiles(fileList);
-      }
+      const responseFiles = await fetchFilesFromAPI<ResponseSurveyFileData>(SURVEYS_API);
+      const fileList = responseFiles.map((file: ResponseSurveyFileData) => ({
+        name: file.fileName,
+        path: file.filePath,
+        isLocal: file.isLocal,
+        uploadedAt: new Date().toISOString(), // Placeholder, ideally from server
+      }));
+      setFiles(fileList);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -51,26 +48,17 @@ export const useSurveyFiles = () => {
   const uploadFile = async (file: File) => {
     setIsUploading(true);
     setError(null);
-    const requestData = new FormData();
-    requestData.append('file', file);
 
     try {
-      const response = await authedFetch(SURVEYS_API, {
-        method: 'POST',
-        body: requestData,
-      });
-      const responseData = await response.json();
-      if (!response.ok) setError(responseData.error ||'Upload failed');
-      else {
-        setFiles(prev => [
-          {
-            name: responseData.fileName,
-            path: responseData.filePath,
-            uploadedAt: new Date().toISOString(),
-            isLocal: responseData.isLocal,
-          }, ...prev,
-        ]);
-      }
+      const responseData = await uploadFileToAPI(SURVEYS_API, file);
+      setFiles(prev => [
+        {
+          name: responseData.fileName,
+          path: responseData.filePath,
+          uploadedAt: new Date().toISOString(),
+          isLocal: responseData.isLocal,
+        }, ...prev,
+      ]);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -84,15 +72,7 @@ export const useSurveyFiles = () => {
     setFiles(prev => prev.filter(file => file.name !== fileName));
 
     try {
-      const response = await authedFetch(`${SURVEYS_API}?fileName=${encodeURIComponent(fileName)}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) {
-        // Revert on error
-        setFiles(originalFiles);
-        const responseData = await response.json();
-        setError(responseData.error || 'Failed to delete file on server');
-      }
+      await deleteFileFromAPI(SURVEYS_API, fileName);
     } catch (err) {
       // Revert on error
       setFiles(originalFiles);
