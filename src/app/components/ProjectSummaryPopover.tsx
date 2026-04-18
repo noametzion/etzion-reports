@@ -47,7 +47,7 @@ const ProjectSummaryPopover: React.FC<ProjectSummaryPopoverProps> = ({
     ? loadingProgress
     : summary?.error
       ? summary.error
-      : `${summary?.totalStationNo.toFixed(2)} m`;
+      : `${summary?.totalStationNo.toFixed(2)}`;
 
   const stationDistCalcValue = summary?.isCalculating
     ? loadingProgress
