@@ -1,32 +1,79 @@
-.loginPanel {
+.loginWidget {
   position: fixed;
   bottom: 16px;
   left: 16px;
   z-index: 1000;
-
   display: flex;
-  gap: 8px;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
 
-  padding: 10px 14px;
-  background: rgba(250, 236, 213, 0.85);
+.loginPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+
+  min-width: 220px;
+  padding: 12px 14px;
+  background: rgba(250, 236, 213, 0.94);
   backdrop-filter: blur(6px);
 
   border-radius: 12px;
   box-shadow: 0 6px 18px rgba(172, 123, 90, 0.3);
+  border: 1px solid rgba(172, 123, 90, 0.18);
 
   font-size: 14px;
 }
 
+.toggleButton {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  background: #dd9142;
+  color: white;
+  box-shadow: 0 6px 18px rgba(172, 123, 90, 0.3);
+  cursor: pointer;
+  font-size: 22px;
+}
+
+.toggleButton:hover {
+  opacity: 0.9;
+}
+
 .loginButton {
-  padding: 6px 10px;
+  padding: 7px 10px;
   border-radius: 8px;
   border: none;
   background: #dd9142;
   color: white;
   cursor: pointer;
+  width: 100%;
 }
 
 .loginButton:hover {
   opacity: 0.85;
+}
+
+.userLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #8a5a33;
+}
+
+.userName {
+  font-weight: 700;
+  color: #4d2f19;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #6f4b2c;
+  word-break: break-word;
 }

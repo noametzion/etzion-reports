@@ -36,7 +36,6 @@
   overflow-y: auto;
   background-color: #fff;
   border-radius: 6px;
-  padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -85,6 +84,11 @@
 .actionsContainer {
   display: flex;
   gap: 8px;
+}
+
+.projectActionsContainer {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .openButton,
@@ -208,4 +212,36 @@
 
 .separatorRow {
   background-color: #ebf4f8;
+}
+
+.projectNameContainer {
+  display: flex;
+  align-items: center;
+}
+
+.projectSummaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid #d4a574;
+  background-color: #fff9f0;
+  color: #8b5a2b;
+}
+
+.projectSummaryButton:hover {
+  background-color: #fef3e6;
+  border-color: #b8894d;
+}
+
+.projectSummaryButton:active {
+  background-color: #fcecd3;
+}
+
+.summaryIcon {
+  font-size: 0.85em;
 }

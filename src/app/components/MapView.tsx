@@ -45,20 +45,6 @@ const MapUpdater = ({ positions }: MapUpdaterProps) => {
   return null;
 };
 
-function pathLengthKm(latlngs: L.LatLng[][]) {
-  const distThreshold = 35; // meters
-  let total = 0;
-  for (let s=0; s < latlngs.length; s++) {
-    for (let i = 1; i < latlngs[s].length; i++) {
-      const dist = latlngs[s][i - 1].distanceTo(latlngs[s][i]); // meters
-      if(dist < distThreshold) {
-        total += dist;
-      }
-    }
-  }
-  return total / 1000; // km
-}
-
 const dataPointsToPositions = (data: MapDataPoint[]) : {positions: [number, number][][], positionsInfo: PositionInfo[][]} => {
   const positions: [number, number][][] = [];
   const positionsInfo: PositionInfo[][] = [];
@@ -108,18 +94,6 @@ const MapView = ({ mapInfo, allMapsInfos , shouldFocus, showPointsMode = false, 
     const allData = allMapsInfos?.map((map) => map.data).flat() || [];
     return dataPointsToPositions(allData).positions;
   }, [allMapsInfos]);
-
-  // TODO: move and display
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const extendedPositionsKm = useMemo(() => {
-    const segmentedAll = extendedPositions.map((s) => s.map((d) => L.latLng(d)));
-    const flatAll = [segmentedAll.flat()];
-    const km = pathLengthKm(segmentedAll);
-    const kmFlat = pathLengthKm(flatAll);
-    console.log("EX POS ", km);
-    console.log("EX POS FLAT ", kmFlat);
-    return km;
-  }, [extendedPositions]);
 
   if (positions.length === 0 || positions[0].length === 0) {
     return <div>No location data available to display on the map.</div>;
