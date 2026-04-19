@@ -41,12 +41,12 @@ export function useReportsInformation() {
     );
 
     const upsert = useCallback(
-        (id: string, patch: ReportInformation) => run(() => upsertReportInformation(id, patch)),
+        (id: string, patch: Partial<ReportInformation>) => run(() => upsertReportInformation(id, patch)),
         [run]
     );
 
     const update = useCallback(
-        (id: string, patch: ReportInformation) => run(() => updateReportInformation(id, patch)),
+        (id: string, patch: Partial<ReportInformation>) => run(() => updateReportInformation(id, patch)),
         [run]
     );
 

@@ -23,7 +23,7 @@ export async function createReportInformation(data: ReportInformation) {
     return ref;
 }
 
-export async function upsertReportInformation(id: string, patch: ReportInformation) {
+export async function upsertReportInformation(id: string, patch: Partial<ReportInformation>) {
     await setDoc(
         doc(db, collectionPath, id),
         { ...patch, updatedAt: serverTimestamp() },
@@ -31,7 +31,7 @@ export async function upsertReportInformation(id: string, patch: ReportInformati
     );
 }
 
-export async function updateReportInformation(id: string, patch: ReportInformation) {
+export async function updateReportInformation(id: string, patch: Partial<ReportInformation>) {
     await updateDoc(doc(db, collectionPath, id), {
         ...patch,
         updatedAt: serverTimestamp(),
