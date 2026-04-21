@@ -46,9 +46,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
 
   const { reportInfo, updateReportInfo, loaded } = useSurveyReportInformation(originalSurveyFile?.name);
 
-  const handleTitleSave = (title: string, subtitle: string) => {
+  const handleTitleSave = useCallback((title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle });
-  };
+  }, []);
 
   const handleInfoChange = useCallback((info: {
       projectName: string;

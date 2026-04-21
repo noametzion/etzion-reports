@@ -37,8 +37,7 @@ const TitleEditorPanel: React.FC<TitleEditorPanelProps> = ({ initialValues, onSa
   useEffect(() => {
     onSave(buildTitle(projectName, from, to, pipelineSize), buildSubtitle(date));
     onInfoChange({ projectName, from, to, pipelineSize, date });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectName, from, to, pipelineSize, date]);
+  }, [projectName, from, to, pipelineSize, date, onSave, onInfoChange]);
 
   return (
     <div className={styles.panel}>
