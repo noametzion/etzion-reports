@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {SurveyInfoNameKey, SurveyFile, SurveyInfoStationDiffKey} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
@@ -9,10 +9,12 @@ import {useSurveyReader} from "@/app/hooks/useSurveyReader";
 import {useMaps} from "@/app/hooks/useMaps";
 import dynamic from "next/dynamic";
 import TitleEditorPanel from './TitleEditorPanel';
+import { TitleInfo } from '@/app/types/reportInformation';
 import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
+import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
 
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
@@ -43,10 +45,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
 
-  const handleTitleSave = (title: string, subtitle: string) => {
-      setTitles({ primary: title, secondary: subtitle})
-      setShowTitleEditor(false);
-  };
+  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
+
+  const handleTitleInfoChange = useCallback((info: TitleInfo, title: string, subtitle: string) => {
+      setTitles({ primary: title, secondary: subtitle });
+      updateReportInfo({ survey: originalSurveyFile ?? undefined, ...info });
+  }, [originalSurveyFile, updateReportInfo]);
 
   return (
     <div className={styles.container}>
@@ -92,10 +96,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
               <span className={styles.secondaryTitle}>{titles.secondary}</span>
             </span>
             <div hidden={!showTitleEditor}>
-                <TitleEditorPanel
-                    initialProjectName={surveyName}
-                    onSave={handleTitleSave}
-                />
+                {loaded && <TitleEditorPanel
+                    key={originalSurveyFile?.name}
+                    initialValues={reportInfo ?? undefined}
+                    projectNameOptions={projectNameSuggestions}
+                    locationOptions={locationSuggestions}
+                    onTitleInfoChange={handleTitleInfoChange}
+                />}
             </div>
         </div>
       }
