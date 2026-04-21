@@ -8,3 +8,11 @@ export interface ReportInformation {
     pipelineSize: string;
     date: string;
 }
+
+export interface TitleInfo {
+    projectName: string;
+    from: string;
+    to: string;
+    pipelineSize: string;
+    date: string;
+}

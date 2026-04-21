@@ -9,6 +9,7 @@ import {useSurveyReader} from "@/app/hooks/useSurveyReader";
 import {useMaps} from "@/app/hooks/useMaps";
 import dynamic from "next/dynamic";
 import TitleEditorPanel from './TitleEditorPanel';
+import { TitleInfo } from '@/app/types/reportInformation';
 import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
@@ -44,19 +45,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
 
-  const { reportInfo, updateReportInfo, loaded } = useSurveyReportInformation(originalSurveyFile?.name);
+  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
 
-  const handleTitleSave = useCallback((title: string, subtitle: string) => {
+  const handleTitleInfoChange = useCallback((info: TitleInfo, title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle });
-  }, []);
-
-  const handleInfoChange = useCallback((info: {
-      projectName: string;
-      from: string;
-      to: string;
-      pipelineSize: string;
-      date: string;
-  }) => {
       updateReportInfo({ survey: originalSurveyFile ?? undefined, ...info });
   }, [originalSurveyFile, updateReportInfo]);
 
@@ -107,8 +99,9 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
                 {loaded && <TitleEditorPanel
                     key={originalSurveyFile?.name}
                     initialValues={reportInfo ?? undefined}
-                    onSave={handleTitleSave}
-                    onInfoChange={handleInfoChange}
+                    projectNameOptions={projectNameSuggestions}
+                    locationOptions={locationSuggestions}
+                    onTitleInfoChange={handleTitleInfoChange}
                 />}
             </div>
         </div>

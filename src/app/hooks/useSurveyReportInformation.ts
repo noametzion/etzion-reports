@@ -18,5 +18,14 @@ export function useSurveyReportInformation(surveyName: string | null | undefined
         }, 1000);
     }, [surveyName, upsert]);
 
-    return { reportInfo, updateReportInfo, loaded };
+    const projectNameSuggestions = [...new Set(
+        reportsInformation.map(r => r.projectName).filter(Boolean)
+    )];
+
+    const locationSuggestions = [...new Set([
+        ...reportsInformation.map(r => r.from).filter(Boolean),
+        ...reportsInformation.map(r => r.to).filter(Boolean),
+    ])];
+
+    return { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions };
 }
