@@ -1,34 +1,44 @@
 "use client";
 
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './TitleEditorPanel.module.css';
 
 interface TitleEditorPanelProps {
-  initialProjectName: string;
+  initialValues?: {
+    projectName?: string;
+    from?: string;
+    to?: string;
+    pipelineSize?: string;
+    date?: string;
+  };
   onSave: (title: string, subtitle: string) => void;
+  onInfoChange: (info: { projectName: string; from: string; to: string; pipelineSize: string; date: string }) => void;
 }
 
-const TitleEditorPanel: React.FC<TitleEditorPanelProps> = ({ initialProjectName, onSave }) => {
-  const [projectName, setProjectName] = useState(initialProjectName);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [pipelineSize, setPipelineSize] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+const buildTitle = (projectName: string, from: string, to: string, pipelineSize: string) =>
+    [
+        projectName,
+        from && to && `${from}-${to}`,
+        from && !to && from,
+        to && !from && to,
+        pipelineSize && `${pipelineSize}"`,
+    ].filter(Boolean).join(' ');
 
-  const handleSave = () => {
-      const title = [
-          projectName,
-          from && to && `${from}-${to}`,
-          from && !to && from,
-          to && !from && to,
-          pipelineSize && `${pipelineSize}"`,
-      ].filter(Boolean).join(' ');
-      const subtitle = `${new Date(date).toLocaleDateString('en-GB', {day: 'numeric', month: 'long', year: 'numeric'})}`
-      onSave(
-          title,
-          subtitle,
-      );
-  };
+const buildSubtitle = (date: string) =>
+    new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+const TitleEditorPanel: React.FC<TitleEditorPanelProps> = ({ initialValues, onSave, onInfoChange }) => {
+  const [projectName, setProjectName] = useState(initialValues?.projectName ?? '');
+  const [from, setFrom] = useState(initialValues?.from ?? '');
+  const [to, setTo] = useState(initialValues?.to ?? '');
+  const [pipelineSize, setPipelineSize] = useState(initialValues?.pipelineSize ?? '');
+  const [date, setDate] = useState(initialValues?.date ?? new Date().toISOString().split('T')[0]);
+
+  useEffect(() => {
+    onSave(buildTitle(projectName, from, to, pipelineSize), buildSubtitle(date));
+    onInfoChange({ projectName, from, to, pipelineSize, date });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectName, from, to, pipelineSize, date]);
 
   return (
     <div className={styles.panel}>
@@ -55,7 +65,6 @@ const TitleEditorPanel: React.FC<TitleEditorPanelProps> = ({ initialProjectName,
         <label>Date</label>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
       </div>
-      <button onClick={handleSave} className={styles.saveButton}>Save</button>
     </div>
   );
 };

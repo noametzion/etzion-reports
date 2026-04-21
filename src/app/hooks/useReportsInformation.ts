@@ -18,6 +18,7 @@ type Status = "idle" | "loading" | "success" | "error";
 
 export function useReportsInformation() {
     const [reportsInformation, setReportsInformation] = useState<DBReportInformation[]>([]);
+    const [loaded, setLoaded] = useState(false);
     const [status, setStatus] = useState<Status>("idle");
     const [error, setError] = useState<string | null>(null);
 
@@ -60,6 +61,7 @@ export function useReportsInformation() {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const list = snap.docs.map(d => ({ ...(d.data() as any), id: d.id })) as DBReportInformation[];
             setReportsInformation(list);
+            setLoaded(true);
         }, console.error);
 
         return () => unsub();
@@ -73,5 +75,6 @@ export function useReportsInformation() {
         status,
         error,
         reportsInformation,
+        loaded,
     };
 }

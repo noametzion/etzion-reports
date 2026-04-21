@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {SurveyInfoNameKey, SurveyFile, SurveyInfoStationDiffKey} from '@/app/types/survey';
 import { useGraphs } from '@/app/hooks/useGraphs';
 import GraphDisplay from './GraphDisplay';
@@ -13,6 +13,7 @@ import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
+import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
 
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
@@ -43,10 +44,21 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
 
+  const { reportInfo, updateReportInfo, loaded } = useSurveyReportInformation(originalSurveyFile?.name);
+
   const handleTitleSave = (title: string, subtitle: string) => {
-      setTitles({ primary: title, secondary: subtitle})
-      setShowTitleEditor(false);
+      setTitles({ primary: title, secondary: subtitle });
   };
+
+  const handleInfoChange = useCallback((info: {
+      projectName: string;
+      from: string;
+      to: string;
+      pipelineSize: string;
+      date: string;
+  }) => {
+      updateReportInfo({ survey: originalSurveyFile ?? undefined, ...info });
+  }, [originalSurveyFile, updateReportInfo]);
 
   return (
     <div className={styles.container}>
@@ -92,10 +104,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
               <span className={styles.secondaryTitle}>{titles.secondary}</span>
             </span>
             <div hidden={!showTitleEditor}>
-                <TitleEditorPanel
-                    initialProjectName={surveyName}
+                {loaded && <TitleEditorPanel
+                    key={originalSurveyFile?.name}
+                    initialValues={reportInfo ?? undefined}
                     onSave={handleTitleSave}
-                />
+                    onInfoChange={handleInfoChange}
+                />}
             </div>
         </div>
       }
