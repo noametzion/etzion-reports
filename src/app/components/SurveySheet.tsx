@@ -27,7 +27,7 @@ import {
 import styles from './SurveySheet.module.css';
 import {FaInfoCircle, FaPencilAlt, FaPlus, FaTrash} from 'react-icons/fa';
 import SurveyInfoModal from './SurveyInfoModal';
-import ErrorPanel from './ErrorPanel';
+import ErrorPanel, {ErrorScanType} from './ErrorPanel';
 import {areEqual, FixedSizeGrid as Grid, GridOnScrollProps} from 'react-window';
 import AutoSizer from "react-virtualized-auto-sizer";
 import {useFocusDistance} from '@/app/hooks/useFocusDistance';
@@ -44,6 +44,7 @@ interface SurveySheetProps {
   editedSurvey: EditedSurvey;
   surveyFileName: string;
   shouldFocus: boolean;
+  rescanTrigger?: number;
   onEdit: (editedSurveyData: EditedSurveyDataRow[], editedDCPData: EditedDCPDataRow[]) => void
 }
 
@@ -106,6 +107,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   editedSurvey,
   surveyFileName,
   shouldFocus,
+  rescanTrigger,
   onEdit
 }) => {
   const [isInfoModalOpen, setInfoModalOpen] = useState(false);
@@ -123,6 +125,17 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const tableGridRef = React.useRef<Grid>(null);
 
   const syncing = useRef(false);
+  const lastScanConfigRef = useRef<{ type: ErrorScanType, threshold?: number } | null>(null);
+
+  const errorRows = useMemo(
+    () => [...new Set(errorCells.map(e => e.rowIndex))].sort((a, b) => a - b),
+    [errorCells]
+  );
+
+  const handleNavigateToError = useCallback((rowIndex: number) => {
+    setSelectedRow(rowIndex);
+    tableGridRef.current?.scrollToItem({ rowIndex, align: 'center' });
+  }, []);
 
   const onBodyScroll = ({ scrollLeft }: GridOnScrollProps) => {
     if (syncing.current) return;
@@ -206,6 +219,30 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     setErrorCells(errors);
   }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
 
+  const runScanOnOff = useCallback((threshold: number) => {
+    lastScanConfigRef.current = { type: 'onoff', threshold };
+    handleScanOnOffMeasurementErrors(threshold);
+  }, [handleScanOnOffMeasurementErrors]);
+
+  const runScanDCVG = useCallback((threshold: number) => {
+    lastScanConfigRef.current = { type: 'dcvg', threshold };
+    handleScanDSVGMeasurementErrors(threshold);
+  }, [handleScanDSVGMeasurementErrors]);
+
+  const runScanStation = useCallback(() => {
+    lastScanConfigRef.current = { type: 'station' };
+    handleScanStationGapErrors();
+  }, [handleScanStationGapErrors]);
+
+  useEffect(() => {
+    if (!rescanTrigger || !lastScanConfigRef.current) return;
+    const { type, threshold } = lastScanConfigRef.current;
+    if (type === 'onoff') handleScanOnOffMeasurementErrors(threshold!);
+    else if (type === 'dcvg') handleScanDSVGMeasurementErrors(threshold!);
+    else handleScanStationGapErrors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rescanTrigger]);
+
   const handleCellClick = useCallback((
     e: React.MouseEvent<HTMLDivElement>,
     rowIndex: number,
@@ -237,10 +274,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       [editPopover.columnName]: newValue,
     };
     onEdit(updatedData, editedSurvey.DCPData);
-
-    // Optional: Re-scan to see if the error is resolved
-    // handleScan(currentThreshold); 
-
     setEditPopover(null);
   }, [editPopover, editedSurvey.surveyData, editedSurvey.DCPData, onEdit, setEditPopover]);
 
@@ -498,9 +531,11 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
         </button>
       </div>
       <ErrorPanel
-        onScanMeasurementErrors={handleScanOnOffMeasurementErrors}
-        onScanDCVGErrors={handleScanDSVGMeasurementErrors}
-        onScanStationGapErrors={handleScanStationGapErrors}
+        errorRows={errorRows}
+        onScanMeasurementErrors={runScanOnOff}
+        onScanDCVGErrors={runScanDCVG}
+        onScanStationGapErrors={runScanStation}
+        onNavigate={handleNavigateToError}
       />
       <div className={styles.sheetContainer}>
         <div className={styles.headerRow} ref={tableHeaderRef} onScroll={onHeaderScroll}>
