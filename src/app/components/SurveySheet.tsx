@@ -145,10 +145,14 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
+    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
 
     for (let i = 1; i < editedSurvey.surveyData.length; i++) {
       const prevRow = editedSurvey.surveyData[i - 1];
       const currentRow = editedSurvey.surveyData[i];
+
+      const stationGap = Math.abs((Number(currentRow[SurveyDistanceKey]) || 0) - (Number(prevRow[SurveyDistanceKey]) || 0));
+      if (stationGap > stationDiff) continue;
 
       for (const key of SurveyOnOffVoltageKeys) {
         const voltageDiff = Math.abs((Number(currentRow[key]) || 0) - (Number(prevRow[key]) || 0));
@@ -160,24 +164,30 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData]);
+  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
 
   const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
+    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
 
     for (let i = 0; i < editedSurvey.surveyData.length; i++) {
       const currentRow = editedSurvey.surveyData[i];
 
-      for (const key of SurveyDSVGVoltageKeys) {
+      if (i > 0) {
+        const prevRow = editedSurvey.surveyData[i - 1];
+        const stationGap = Math.abs((Number(currentRow[SurveyDistanceKey]) || 0) - (Number(prevRow[SurveyDistanceKey]) || 0));
+        if (stationGap > stationDiff) continue;
+      }
 
-        if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) { // Convert mV to V for comparison
+      for (const key of SurveyDSVGVoltageKeys) {
+        if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) {
           errors.push({rowIndex: i, columnName: key});
           errors.push({rowIndex: i, columnName: SurveyAnomalyKey});
         }
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData]);
+  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
@@ -188,9 +198,9 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyStationKeys) {
-        const voltageDiff = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+        const stationGap = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
 
-        if (voltageDiff > stationDiff) { // Convert mV to V for comparison
+        if (stationGap > stationDiff) { // Convert mV to V for comparison
           errors.push({rowIndex: i - 1, columnName: key});
           errors.push({rowIndex: i - 1, columnName: SurveyCommentKey});
           errors.push({rowIndex: i - 1, columnName: SurveyAnomalyKey});
