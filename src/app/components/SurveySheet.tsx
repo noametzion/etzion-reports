@@ -168,16 +168,9 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
   const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
-    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
 
     for (let i = 0; i < editedSurvey.surveyData.length; i++) {
       const currentRow = editedSurvey.surveyData[i];
-
-      if (i > 0) {
-        const prevRow = editedSurvey.surveyData[i - 1];
-        const stationGap = Math.abs((Number(currentRow[SurveyDistanceKey]) || 0) - (Number(prevRow[SurveyDistanceKey]) || 0));
-        if (stationGap > stationDiff) continue;
-      }
 
       for (const key of SurveyDSVGVoltageKeys) {
         if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) {
@@ -187,7 +180,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
+  }, [editedSurvey.surveyData]);
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
