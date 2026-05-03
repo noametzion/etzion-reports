@@ -120,7 +120,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
-  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey);
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey, Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]));
   const tableHeaderRef = React.useRef<HTMLDivElement>(null);
   const tableGridRef = React.useRef<Grid>(null);
 
