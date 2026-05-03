@@ -133,11 +133,6 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
           </div>
         ))}
       </div>
-      <ReportModal
-          isOpen={isReportMode}
-          onClose={() => setIsReportMode(false)}
-          surveyName={surveyName}
-      />
       <ExportReportModal
           isOpen={isExportMode}
           onClose={() => setIsExportMode(false)}
@@ -146,6 +141,12 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
           maps={maps}
           includeDCVG={includeDCVG}
           includeMap={includeMap}
+      />
+      <ReportModal
+        isOpen={isReportMode}
+        onClose={() => setIsReportMode(false)}
+        surveyName={surveyName}
+        editedSurvey={editedSurvey}
       />
     </div>
   );

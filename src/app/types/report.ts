@@ -1,3 +1,34 @@
+export interface Coordinate {
+  latitude?: number;
+  longitude?: number;
+  altitude?: number;
+}
+
+export interface StrengthPoint {
+  station: number;
+  vOn: number;
+  vOff: number;
+}
+
+export type DCVGValueSource = 'SideDrain' | 'Calculated' ;
+
+export interface DCVGValue {
+  value: number;
+  source: DCVGValueSource;
+}
+
+export interface Anomaly {
+  station: number;
+  dcvgValue: DCVGValue;
+  coordinate?: Coordinate;
+  strengthPoint1?: StrengthPoint;
+  strengthPoint2?: StrengthPoint;
+}
+
+export interface AnomalyReport {
+  anomalies: Anomaly[];
+}
+
 export interface DataPoint {
   distance: number; // X-axis: 'Dist From Start'
 }
@@ -10,11 +41,7 @@ export interface GraphDataPoint extends DataPoint {
 }
 
 export interface MapDataPoint extends DataPoint {
-  location?: {
-    latitude?: number;
-    longitude?: number;
-    altitude?: number;
-  } | "break";
+  location?: Coordinate | "break";
 }
 
 export interface SegmentInfo {

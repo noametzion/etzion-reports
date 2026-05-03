@@ -2,14 +2,22 @@
 
 import React from 'react';
 import styles from './ReportModal.module.css';
+import {EditedSurvey} from '@/app/types/survey';
+import {useAnomalyReport} from '@/app/hooks/useAnomalyReport';
 
 interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   surveyName: string;
+  editedSurvey: EditedSurvey | null;
 }
 
-const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName }) => {
+const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey }) => {
+  const anomalies = useAnomalyReport(
+    editedSurvey?.surveyData ?? [],
+    editedSurvey?.DCPData ?? []
+  );
+
   if (!isOpen) return null;
 
   return (
