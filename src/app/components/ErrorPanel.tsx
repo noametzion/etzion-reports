@@ -4,6 +4,9 @@ import React, { useState } from 'react';
 import styles from './ErrorPanel.module.css';
 import ErrorNavPanel from './ErrorNavPanel';
 
+const DEFAULT_CIPS_THRESHOLD = 300;
+const DEFAULT_DCVG_THRESHOLD = 30;
+
 export type ErrorScanType = 'onoff' | 'dcvg' | 'station';
 
 interface ErrorPanelProps {
@@ -21,8 +24,8 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({
   onScanDCVGErrors,
   onNavigate,
 }) => {
-  const [onOffVoltageThreshold, setOnOffVoltageThreshold] = useState(300);
-  const [DCVGThreshold, setDCVGThreshold] = useState(5);
+  const [onOffVoltageThreshold, setOnOffVoltageThreshold] = useState(DEFAULT_CIPS_THRESHOLD);
+  const [DCVGThreshold, setDCVGThreshold] = useState(DEFAULT_DCVG_THRESHOLD);
   const [lastScanType, setLastScanType] = useState<ErrorScanType | null>(null);
 
   const handleScanMeasurementErrorsClick = () => {

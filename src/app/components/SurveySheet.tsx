@@ -120,7 +120,11 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
   const surveyName = originalSurvey.surveyInfo[SurveyInfoNameKey]?.toString() || surveyFileName; // ??
   const { focusDistance, setFocusDistance } = useFocusDistance(shouldFocus);
   const [ selectedRow, setSelectedRow ] = useState<number | null>(null);
-  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey, Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]));
+  const stationDiff = useMemo(
+    () => Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]),
+    [originalSurvey.surveyInfo]
+  );
+  const { suggest, suggestedCommentsStations, suggestedAnomaliesStations } = useSuggester(editedSurvey, stationDiff);
   const tableHeaderRef = React.useRef<HTMLDivElement>(null);
   const tableGridRef = React.useRef<Grid>(null);
 
@@ -158,8 +162,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
   const handleScanOnOffMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
-    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
-
     for (let i = 1; i < editedSurvey.surveyData.length; i++) {
       const prevRow = editedSurvey.surveyData[i - 1];
       const currentRow = editedSurvey.surveyData[i];
@@ -177,7 +179,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
+  }, [editedSurvey.surveyData, stationDiff]);
 
   const handleScanDSVGMeasurementErrors = useCallback((threshold: number) => {
     const errors: ErrorCell[] = [];
@@ -197,7 +199,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
 
   const handleScanStationGapErrors = useCallback(() => {
     const errors: ErrorCell[] = [];
-    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
 
     for (let i = 1; i < editedSurvey.surveyData.length; i++) {
       const prevRow = editedSurvey.surveyData[i - 1];
@@ -217,7 +218,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       }
     }
     setErrorCells(errors);
-  }, [editedSurvey.surveyData, originalSurvey.surveyInfo]);
+  }, [editedSurvey.surveyData, stationDiff]);
 
   const runScanOnOff = useCallback((threshold: number) => {
     lastScanConfigRef.current = { type: 'onoff', threshold };
@@ -313,7 +314,6 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     const stationOnTop = Number(editedSurvey.surveyData[plusRow.rowUpIndex][SurveyStationKey]);
     const stationUnder = Number(editedSurvey.surveyData[plusRow.rowBottomIndex][SurveyStationKey]);
-    const stationDiff = Number(originalSurvey.surveyInfo[SurveyInfoStationDiffKey]);
     setSkipPopover({
       rowUpIndex: plusRow.rowUpIndex,
       rowBottomIndex: plusRow.rowBottomIndex,
@@ -324,7 +324,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
     });
-  },[plusRow, editedSurvey.surveyData, originalSurvey.surveyInfo]);
+  },[plusRow, editedSurvey.surveyData, stationDiff]);
 
   const handleDeleteRowClicked = useCallback((e: React.MouseEvent<SVGElement>, rowIndex: number) => {
     const rect = e.currentTarget.getBoundingClientRect();
