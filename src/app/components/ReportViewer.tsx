@@ -67,14 +67,14 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
               className={styles.splitDistanceInput}
             />
           </div>
-          <div style={{display: 'block', alignItems: 'center'}}>
+          <div className={styles.checkboxRow}>
               <input
                   type={"checkbox"}
                   onChange={(e) => setIncludeDCVG(e.target.checked)}
                   checked={includeDCVG}/>
               {" Include DCVG Graph"}
           </div>
-          <div style={{display: 'block', alignItems: 'center'}}>
+          <div className={styles.checkboxRow}>
                 <input
                     type={"checkbox"}
                     onChange={(e) => setIncludeMap(e.target.checked)}
@@ -82,10 +82,15 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
                 {" Include map"}
           </div>
         </div>
-        <button
-            onClick={() => setIsExportMode(true)}
-            className={styles.exportButton}
-        >EXPORT</button>
+        <div className={styles.buttonsColumn}>
+          <button
+              onClick={() => setIsExportMode(true)}
+              className={styles.exportButton}
+          >EXPORT</button>
+          <button
+              className={styles.reportButton}
+          >REPORT</button>
+        </div>
       </div>
       {originalSurvey && editedSurvey &&
         <div className={styles.titleEditor}>
