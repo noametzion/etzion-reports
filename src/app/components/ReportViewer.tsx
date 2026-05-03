@@ -14,6 +14,7 @@ import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
+import ReportModal from "@/app/components/ReportModal";
 import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
 
 // Dynamically import MapView only on the client (because using leaflet)
@@ -37,6 +38,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
   const [includeDCVG, setIncludeDCVG] = useState<boolean>(true);
   const [includeMap, setIncludeMap] = useState<boolean>(true);
   const [isExportMode, setIsExportMode] = useState<boolean>(false);
+  const [isReportMode, setIsReportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
   const distPerReading = Number(originalSurvey?.surveyInfo[SurveyInfoStationDiffKey]) || DEFAULT_DIST_PER_READING;
@@ -88,6 +90,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
               className={styles.exportButton}
           >EXPORT</button>
           <button
+              onClick={() => setIsReportMode(true)}
               className={styles.reportButton}
           >REPORT</button>
         </div>
@@ -130,6 +133,11 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
           </div>
         ))}
       </div>
+      <ReportModal
+          isOpen={isReportMode}
+          onClose={() => setIsReportMode(false)}
+          surveyName={surveyName}
+      />
       <ExportReportModal
           isOpen={isExportMode}
           onClose={() => setIsExportMode(false)}
