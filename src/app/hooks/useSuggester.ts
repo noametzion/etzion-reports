@@ -48,15 +48,15 @@ const getAnomalyColumnSuggestions = (survey: EditedSurvey, rowIndex: number) => 
     return [...new Set(suggestions)]; // remove duplicates
 };
 
-const getAverageSuggestion = (eSurvey: EditedSurvey | Survey, rowIndex: number, columnName: keyof SurveyDataRow)=> {
+const getAverageSuggestion = (eSurvey: EditedSurvey | Survey, rowIndex: number, columnName: keyof SurveyDataRow, stationDiff: number)=> {
     const previousRow = rowIndex - 1 >= 0 ? eSurvey.surveyData[rowIndex - 1] : undefined;
     const row = eSurvey.surveyData[rowIndex];
     const nextRow = rowIndex + 1 < eSurvey.surveyData.length ? eSurvey.surveyData[rowIndex + 1] : undefined;
     const previousStation = previousRow ? Number(previousRow[SurveyStationKey]) : undefined;
     const station = Number(row[SurveyStationKey]);
     const nextStation = nextRow ? Number(nextRow[SurveyStationKey]) : undefined;
-    if (previousStation !== undefined && previousStation === station-1
-        && nextStation !== undefined && nextStation === station+1) {
+    if (previousStation !== undefined && previousStation === station - stationDiff
+        && nextStation !== undefined && nextStation === station + stationDiff) {
         const previousValue = previousRow ? Number(previousRow[columnName]) : undefined;
         const nextValue = nextRow ? Number(nextRow[columnName]) : undefined;
         if (previousValue !== undefined && !Number.isNaN(previousValue)
@@ -67,7 +67,7 @@ const getAverageSuggestion = (eSurvey: EditedSurvey | Survey, rowIndex: number, 
     return [];
 }
 
-export const useSuggester = (editedSurvey: EditedSurvey) => {
+export const useSuggester = (editedSurvey: EditedSurvey, stationDiff: number) => {
 
     const [suggestedCommentsStations, setSuggestedCommentsStations] = useState<number[]>([]);
     const [suggestedAnomaliesStations, setSuggestedAnomaliesStations] = useState<number[]>([]);
@@ -91,7 +91,7 @@ export const useSuggester = (editedSurvey: EditedSurvey) => {
                 return getAnomalyColumnSuggestions(editedSurvey, rowIndex);
             default: {
                 if (SurveyDSVGVoltageKeys.includes(columnName) || SurveyOnOffVoltageKeys.includes(columnName)) {
-                    return getAverageSuggestion(editedSurvey, rowIndex, columnName);
+                    return getAverageSuggestion(editedSurvey, rowIndex, columnName, stationDiff);
                 }
                 return [];
             }

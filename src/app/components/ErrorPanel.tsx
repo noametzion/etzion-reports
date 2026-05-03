@@ -2,26 +2,44 @@
 
 import React, { useState } from 'react';
 import styles from './ErrorPanel.module.css';
+import ErrorNavPanel from './ErrorNavPanel';
+
+const DEFAULT_CIPS_THRESHOLD = 300;
+const DEFAULT_DCVG_THRESHOLD = 30;
+
+export type ErrorScanType = 'onoff' | 'dcvg' | 'station';
 
 interface ErrorPanelProps {
+  errorRows: number[];
   onScanMeasurementErrors: (threshold: number) => void;
   onScanDCVGErrors: (threshold: number) => void;
   onScanStationGapErrors: () => void;
+  onNavigate: (rowIndex: number) => void;
 }
 
-const ErrorPanel: React.FC<ErrorPanelProps> = ({ onScanMeasurementErrors, onScanStationGapErrors, onScanDCVGErrors}) => {
-  const [onOffVoltageThreshold, setOnOffVoltageThreshold] = useState(300);
-  const [DCVGThreshold, setDCVGThreshold] = useState(5);
+const ErrorPanel: React.FC<ErrorPanelProps> = ({
+  errorRows,
+  onScanMeasurementErrors,
+  onScanStationGapErrors,
+  onScanDCVGErrors,
+  onNavigate,
+}) => {
+  const [onOffVoltageThreshold, setOnOffVoltageThreshold] = useState(DEFAULT_CIPS_THRESHOLD);
+  const [DCVGThreshold, setDCVGThreshold] = useState(DEFAULT_DCVG_THRESHOLD);
+  const [lastScanType, setLastScanType] = useState<ErrorScanType | null>(null);
 
   const handleScanMeasurementErrorsClick = () => {
+    setLastScanType('onoff');
     onScanMeasurementErrors(onOffVoltageThreshold);
   };
 
   const handleScanDCVGErrorsClick = () => {
+    setLastScanType('dcvg');
     onScanDCVGErrors(DCVGThreshold);
   };
 
   const handleScanStationGapErrorsClick = () => {
+    setLastScanType('station');
     onScanStationGapErrors();
   };
 
@@ -43,6 +61,9 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({ onScanMeasurementErrors, onScan
           />
           <span> mV</span>
           <button onClick={handleScanMeasurementErrorsClick} className={styles.scanButton}>Scan</button>
+          {lastScanType === 'onoff' && (
+            <ErrorNavPanel errorRows={errorRows} onNavigate={onNavigate} />
+          )}
         </div>
 
         <div className={styles.section}>
@@ -56,12 +77,18 @@ const ErrorPanel: React.FC<ErrorPanelProps> = ({ onScanMeasurementErrors, onScan
           />
           <span> mV</span>
           <button onClick={handleScanDCVGErrorsClick} className={styles.scanButton}>Scan</button>
+          {lastScanType === 'dcvg' && (
+            <ErrorNavPanel errorRows={errorRows} onNavigate={onNavigate} />
+          )}
         </div>
 
         <div className={styles.section}>
           <h4>Stations Gap Errors</h4>
           <span> - Find missing stations </span>
           <button onClick={handleScanStationGapErrorsClick} className={styles.scanButton}>Scan</button>
+          {lastScanType === 'station' && (
+            <ErrorNavPanel errorRows={errorRows} onNavigate={onNavigate} />
+          )}
         </div>
       </div>
     </div>
