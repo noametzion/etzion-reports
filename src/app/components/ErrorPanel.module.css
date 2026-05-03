@@ -1,44 +1,64 @@
 .panelContainer {
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   background-color: #f9f9f9;
   border: 1px solid #ddd;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .header {
   width: 100%;
-  padding: 12px 16px;
+  padding: 5px 12px;
   background-color: #f1f1f1;
   text-align: center;
-  font-size: 1rem;
+  font-size: 0.75rem;
   font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #666;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 8px 8px 0 0;
+  border-radius: 6px 6px 0 0;
 }
 
 .content {
-  padding: 16px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 0.8rem;
 }
 
 .section {
-  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .section h4 {
-  margin-top: 0;
-  padding-bottom: 0.5rem;
-  display: inline-block;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline;
+}
+
+.input {
+  width: 52px;
+  padding: 2px 4px;
+  font-size: 0.8rem;
+  border: 1px solid #ccc;
+  border-radius: 3px;
 }
 
 .scanButton {
-  padding: 8px 16px;
-  margin-left: 8px;
+  padding: 3px 10px;
+  margin-left: 2px;
   border: none;
   background-color: #a85e5e;
   color: white;
+  font-size: 0.8rem;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;

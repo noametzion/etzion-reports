@@ -54,6 +54,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
+  const [rescanTrigger, setRescanTrigger] = useState(0);
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
 
@@ -142,7 +143,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             unsavedChangesExists={isChanged}
             isUpdating={isUpdating}
             isExporting={isExporting}
-            onSave={() => saveEditedSurvey()}
+            onSave={() => { saveEditedSurvey(); setRescanTrigger(t => t + 1); }}
             onExportToExcel={() => exportToExcel(
                 editedSurvey,
                 originalSurvey.surveyInfo,
@@ -155,6 +156,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             editedSurvey={editedSurvey}
             surveyFileName={selectedOriginalFile?.name || ''}
             shouldFocus={shouldFocus}
+            rescanTrigger={rescanTrigger}
             onEdit={editLocally}
         />
       </div>

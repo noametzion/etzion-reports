@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "emu": "firebase emulators:start --import=./.firebase-data --export-on-exit",
+    "emu:kill": "kill $(lsof -ti :8080) 2>/dev/null || true",
     "dev": "concurrently -k \"npm:emu\" \"next dev\"",
     "build": "next build",
     "start": "next start",
