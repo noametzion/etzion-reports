@@ -188,7 +188,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyDSVGVoltageKeys) {
-        if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) {
+        if (Math.abs(Number(currentRow[key]) || 0) > (threshold / 1000)) { // Convert mV to V for comparison
           errors.push({rowIndex: i, columnName: key});
           errors.push({rowIndex: i, columnName: SurveyAnomalyKey});
         }
