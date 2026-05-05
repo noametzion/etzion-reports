@@ -4,6 +4,8 @@ import React from 'react';
 import styles from './AnomalyTable.module.css';
 import { Anomaly } from '@/app/types/report';
 
+// ── Column config types ───────────────────────────────────────────────────────
+
 type SubColumnConfig = {
   key: string;
   label?: string;
@@ -27,17 +29,45 @@ type GroupColumnConfig = {
   subColumns: SubColumnConfig[];
 };
 
-type ColumnConfig = SerialColumnConfig | FlatColumnConfig | GroupColumnConfig;
+type CalculatedColumnConfig = {
+  type: 'calculated';
+  key: string;
+  label: string;
+  tooltip: string;
+  getValue: (anomaly: Anomaly) => number | undefined;
+  format?: (value: number) => string;
+};
 
-const toLabel = (key: string): string =>
-  key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/(\d+)/g, ' $1')
-    .replace(/^\s+/, '')
-    .replace(/\s+/g, ' ')
-    .replace(/^(.)/, s => s.toUpperCase());
+type ColumnConfig = SerialColumnConfig | FlatColumnConfig | GroupColumnConfig | CalculatedColumnConfig;
 
+// ── Calculation helpers ───────────────────────────────────────────────────────
+
+const getS1 = (a: Anomaly): number | undefined =>
+  a.strengthPoint1 !== undefined ? a.strengthPoint1.vOn - a.strengthPoint1.vOff : undefined;
+
+const getS2 = (a: Anomaly): number | undefined =>
+  a.strengthPoint2 !== undefined ? a.strengthPoint2.vOn - a.strengthPoint2.vOff : undefined;
+
+const getD1 = (a: Anomaly): number | undefined => a.strengthPoint1?.station;
+const getD2 = (a: Anomaly): number | undefined => a.strengthPoint2?.station;
+
+const getPRE = (a: Anomaly): number | undefined => {
+  const s1 = getS1(a), s2 = getS2(a), d1 = getD1(a), d2 = getD2(a);
+  if (s1 === undefined || s2 === undefined || d1 === undefined || d2 === undefined || d2 === d1) return undefined;
+  const dx = a.station - d1;
+  return s1 + dx * (s2 - s1) / (d2 - d1);
+};
+
+const getIRPct = (a: Anomaly): number | undefined => {
+  const pre = getPRE(a);
+  if (pre === undefined || pre === 0) return undefined;
+  // Division by 1000 accounts for unit conversion (DCVG value in mV, P/RE in mV → ratio × 100 for %)
+  return Math.abs(a.dcvgValue.value / pre / 1000);
+};
+
+// ── Column config ─────────────────────────────────────────────────────────────
 // Edit order and labels here to customize the table
+
 const COLUMN_CONFIG: ColumnConfig[] = [
   { type: 'serial', label: 'Serial No.' },
   { type: 'flat', key: 'station' },
@@ -61,13 +91,67 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     key: 'strengthPoint2',
     subColumns: [{ key: 'station' }, { key: 'vOn' }, { key: 'vOff' }],
   },
+  {
+    type: 'calculated',
+    key: 's1',
+    label: 'S1',
+    tooltip: 'vOn − vOff of Strength Point 1',
+    getValue: getS1,
+    format: v => v.toFixed(3),
+  },
+  {
+    type: 'calculated',
+    key: 's2',
+    label: 'S2',
+    tooltip: 'vOn − vOff of Strength Point 2',
+    getValue: getS2,
+    format: v => v.toFixed(3),
+  },
+  {
+    type: 'calculated',
+    key: 'd1',
+    label: 'D1',
+    tooltip: 'Station of Strength Point 1',
+    getValue: getD1,
+  },
+  {
+    type: 'calculated',
+    key: 'd2',
+    label: 'D2',
+    tooltip: 'Station of Strength Point 2',
+    getValue: getD2,
+  },
+  {
+    type: 'calculated',
+    key: 'dx',
+    label: 'Dx',
+    tooltip: 'Station of Anomaly − Station of Strength Point 1',
+    getValue: a => a.strengthPoint1 !== undefined ? a.station - a.strengthPoint1.station : undefined,
+  },
+  {
+    type: 'calculated',
+    key: 'pre',
+    label: 'P/RE',
+    tooltip: 'S1 + Dx × (S2 − S1) / (D2 − D1) — interpolated pipe-to-soil potential at anomaly station',
+    getValue: getPRE,
+    format: v => v.toFixed(3),
+  },
+  {
+    type: 'calculated',
+    key: 'ir',
+    label: '%IR',
+    tooltip: 'ABS(DCVG value / P/RE / 1000) — ÷1000 for unit conversion, verify expected range',
+    getValue: getIRPct,
+    format: v => `${(v * 100).toFixed(2)}%`,
+  },
 ];
 
-// Precompute which sub-columns are the first/last of their group (for side borders)
+// ── Border / leaf metadata ────────────────────────────────────────────────────
+
 type LeafMeta = { isGroupFirst: boolean; isGroupLast: boolean };
 
 const LEAF_META: LeafMeta[] = COLUMN_CONFIG.flatMap(col => {
-  if (col.type === 'serial' || col.type === 'flat') {
+  if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated') {
     return [{ isGroupFirst: false, isGroupLast: false }];
   }
   return col.subColumns.map((_, i) => ({
@@ -84,6 +168,8 @@ function leafClass(meta: LeafMeta, base: string): string {
   return extra ? `${base} ${extra}` : base;
 }
 
+// ── Value helpers ─────────────────────────────────────────────────────────────
+
 function getFlatValue(anomaly: Anomaly, key: keyof Anomaly): string {
   const val = anomaly[key];
   return val !== null && val !== undefined ? String(val) : '';
@@ -95,6 +181,14 @@ function getSubValue(anomaly: Anomaly, colKey: keyof Anomaly, subKey: string): s
   const val = (obj as Record<string, unknown>)[subKey];
   return val !== null && val !== undefined ? String(val) : '';
 }
+
+function formatCalc(col: CalculatedColumnConfig, anomaly: Anomaly): string {
+  const val = col.getValue(anomaly);
+  if (val === undefined) return '';
+  return col.format ? col.format(val) : String(val);
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 interface AnomalyTableProps {
   anomalies: Anomaly[];
@@ -120,17 +214,23 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
             if (col.type === 'flat') {
               return (
                 <th key={col.key} rowSpan={2} className={styles.flatHeader}>
-                  {col.label ?? toLabel(col.key)}
+                  {col.label ?? col.key}
+                </th>
+              );
+            }
+            if (col.type === 'calculated') {
+              return (
+                <th key={col.key} rowSpan={2} className={styles.calculatedHeader}>
+                  <span className={styles.headerWithInfo}>
+                    {col.label}
+                    <span className={styles.infoIcon} data-tooltip={col.tooltip}>ⓘ</span>
+                  </span>
                 </th>
               );
             }
             return (
-              <th
-                key={col.key}
-                colSpan={col.subColumns.length}
-                className={styles.groupHeader}
-              >
-                {col.label ?? toLabel(col.key)}
+              <th key={col.key} colSpan={col.subColumns.length} className={styles.groupHeader}>
+                {col.label ?? col.key}
               </th>
             );
           })}
@@ -139,7 +239,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
           {(() => {
             let leafIdx = 0;
             return COLUMN_CONFIG.flatMap(col => {
-              if (col.type === 'serial' || col.type === 'flat') {
+              if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated') {
                 leafIdx++;
                 return [];
               }
@@ -147,7 +247,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
                 const meta = LEAF_META[leafIdx++];
                 return (
                   <th key={`${col.key}-${sub.key}`} className={leafClass(meta, styles.subHeader)}>
-                    {sub.label ?? toLabel(sub.key)}
+                    {sub.label ?? sub.key}
                   </th>
                 );
               });
@@ -163,17 +263,21 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
               {COLUMN_CONFIG.flatMap(col => {
                 if (col.type === 'serial') {
                   leafIdx++;
-                  return [
-                    <td key="__serial__" className={styles.cell}>
-                      {rowIdx + 1}
-                    </td>,
-                  ];
+                  return [<td key="__serial__" className={styles.cell}>{rowIdx + 1}</td>];
                 }
                 if (col.type === 'flat') {
                   leafIdx++;
                   return [
                     <td key={col.key} className={styles.cell}>
                       {getFlatValue(anomaly, col.key)}
+                    </td>,
+                  ];
+                }
+                if (col.type === 'calculated') {
+                  leafIdx++;
+                  return [
+                    <td key={col.key} className={styles.calculatedCell}>
+                      {formatCalc(col, anomaly)}
                     </td>,
                   ];
                 }
