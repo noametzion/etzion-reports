@@ -174,6 +174,13 @@ export const useAnomalyReport = (
       .sort((a, b) => a.tpNumber - b.tpNumber)
       .map(({ station, vOn, vOff }) => ({ station, vOn, vOff }));
 
+    // Sorted by station for flanking lookup
+    const tpsByStation = [...tpMap.values()].sort((a, b) => a.station - b.station);
+
+    function toStrengthPoint(tp: TpMeta): StrengthPoint {
+      return { station: tp.station, vOn: tp.vOn, vOff: tp.vOff };
+    }
+
     // ── Build anomalies ───────────────────────────────────────────────────────
     const anomalies: Anomaly[] = [];
 
@@ -238,7 +245,17 @@ export const useAnomalyReport = (
         }
       }
 
-      anomalies.push({ station, dcvgValue, coordinate });
+      // Flanking strength points: closest TP with station < anomaly (left) and > anomaly (right)
+      const leftTp = [...tpsByStation].reverse().find(tp => tp.station <= station);
+      const rightTp = tpsByStation.find(tp => tp.station > station);
+
+      anomalies.push({
+        station,
+        dcvgValue,
+        coordinate,
+        strengthPoint1: leftTp ? toStrengthPoint(leftTp) : undefined,
+        strengthPoint2: rightTp ? toStrengthPoint(rightTp) : undefined,
+      });
     }
 
     return { anomalies, strengthPoints };
