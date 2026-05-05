@@ -13,15 +13,18 @@ import {
   SurveyCommentKey,
 } from '@/app/types/survey';
 
-const ANOMALY_MARKERS = ['Mark DCVG', 'DCVG Anomaly'] as const;
+// Matches any DCP anomaly value that starts with "Mark DCVG" or equals "DCVG Anomaly"
+function isDCVGAnomalyMarker(marker: string): boolean {
+  const s = marker.trim();
+  return s.startsWith('Mark DCVG') || s === 'DCVG Anomaly';
+}
 
-const ANOMALY_SOURCE_MAP: Record<string, DCVGValueSource> = {
-  'Mark DCVG': 'SideDrain',
-  'DCVG Anomaly': 'Calculated',
-};
+// Specific DCP row type that carries the actual measured Side Drain value in Value1
+const MARK_DCVG_SIDE_DRAIN = 'Mark DCVG: DCVG Side Drain';
 
-// Matches "tp8: Pipe To Soil", "tp12: Pipe to Soil", etc.
-const DCP_TP_REGEX = /^tp\s*(\d+).*pipe\s+to\s+soil/i;
+// Matches any DCP anomaly value starting with "tp" (number is optional — may be in survey comments)
+const DCP_TP_PREFIX_REGEX = /^tp/i;
+const DCP_TP_NUMBER_REGEX = /^tp\s*(\d+)/i;
 // Matches "tp6", "tp 6", "TP6" anywhere in a comment string
 const COMMENT_TP_REGEX = /\btp\s*(\d+)/i;
 
@@ -50,6 +53,29 @@ function getVoltages(
   return { vOn, vOff };
 }
 
+// Search for TP number in survey comment at centerIdx, then ±TP_SEARCH_RADIUS rows
+function findTpNumberFromSurvey(
+  surveyData: EditedSurveyDataRow[],
+  centerIdx: number
+): { tpNumber: number; nameSource: TpNameSource } | null {
+  const ownMatch = surveyData[centerIdx][SurveyCommentKey]?.toString().match(COMMENT_TP_REGEX);
+  if (ownMatch) {
+    return { tpNumber: parseInt(ownMatch[1]), nameSource: 'survey data' };
+  }
+  for (let dist = 1; dist <= TP_SEARCH_RADIUS; dist++) {
+    for (const dir of [-1, 1]) {
+      const idx = centerIdx + dist * dir;
+      if (idx < 0 || idx >= surveyData.length) continue;
+      if (surveyData[idx][SurveyAnomalyKey] === SURVEY_TP_MARKER) continue;
+      const nearMatch = surveyData[idx][SurveyCommentKey]?.toString().match(COMMENT_TP_REGEX);
+      if (nearMatch) {
+        return { tpNumber: parseInt(nearMatch[1]), nameSource: 'survey data +-4' };
+      }
+    }
+  }
+  return null;
+}
+
 export const useAnomalyReport = (
   surveyData: EditedSurveyDataRow[],
   dcpData: EditedDCPDataRow[]
@@ -63,33 +89,38 @@ export const useAnomalyReport = (
       dcpByStation.get(station)!.push(row);
     }
 
-    // Group survey rows by station
+    // Group survey rows by station, also tracking array indices for ±4 searches
     const surveyByStation = new Map<number, EditedSurveyDataRow[]>();
-    for (const row of surveyData) {
-      const station = Number(row[SurveyStationKey]);
-      if (!surveyByStation.has(station)) surveyByStation.set(station, []);
-      surveyByStation.get(station)!.push(row);
+    const surveyIndexByStation = new Map<number, number[]>();
+    for (let i = 0; i < surveyData.length; i++) {
+      const station = Number(surveyData[i][SurveyStationKey]);
+      if (!surveyByStation.has(station)) {
+        surveyByStation.set(station, []);
+        surveyIndexByStation.set(station, []);
+      }
+      surveyByStation.get(station)!.push(surveyData[i]);
+      surveyIndexByStation.get(station)!.push(i);
     }
 
     // ── DCVG anomaly stations ─────────────────────────────────────────────────
-    const anomalyStations = new Map<number, { source: DCVGValueSource; marker: string }>();
+    const anomalyStations = new Map<number, { marker: string }>();
 
     for (const row of dcpData) {
-      const marker = row[DCPDataAnomalyKey];
-      if (marker && (ANOMALY_MARKERS as readonly string[]).includes(marker.toString())) {
+      const marker = row[DCPDataAnomalyKey]?.toString() ?? '';
+      if (marker && isDCVGAnomalyMarker(marker)) {
         const station = Number(row[DCPDataStationKey]);
         if (!anomalyStations.has(station)) {
-          anomalyStations.set(station, { source: ANOMALY_SOURCE_MAP[marker] ?? 'Calculated', marker: marker.toString() });
+          anomalyStations.set(station, { marker });
         }
       }
     }
 
     for (const row of surveyData) {
-      const marker = row[SurveyAnomalyKey];
-      if (marker && (ANOMALY_MARKERS as readonly string[]).includes(marker.toString())) {
+      const marker = row[SurveyAnomalyKey]?.toString() ?? '';
+      if (marker && isDCVGAnomalyMarker(marker)) {
         const station = Number(row[SurveyStationKey]);
         if (!anomalyStations.has(station)) {
-          anomalyStations.set(station, { source: ANOMALY_SOURCE_MAP[marker] ?? 'Calculated', marker: marker.toString() });
+          anomalyStations.set(station, { marker });
         }
       }
     }
@@ -103,18 +134,38 @@ export const useAnomalyReport = (
     // Key: TP number. DCP entries take precedence over survey entries.
     const tpMap = new Map<number, TpMeta>();
 
-    // Step 1 – DCPData: tp<N>: Pipe To Soil
+    // Step 1 – DCPData: any row whose DCP/Feature/Anomaly starts with "tp"
     for (const row of dcpData) {
-      const anomaly = row[DCPDataAnomalyKey];
-      if (!anomaly) continue;
-      const match = anomaly.toString().match(DCP_TP_REGEX);
-      if (!match) continue;
-      const tpNumber = parseInt(match[1]);
+      const anomaly = row[DCPDataAnomalyKey]?.toString() ?? '';
+      if (!DCP_TP_PREFIX_REGEX.test(anomaly)) continue;
+
       const station = Number(row[DCPDataStationKey]);
-      const { vOn, vOff } = getVoltages(station, surveyByStation);
-      if (!tpMap.has(tpNumber)) {
-        tpMap.set(tpNumber, { tpNumber, station, stationSource: 'dcp data', nameSource: 'dcp data', vOn, vOff });
+
+      // Try to get TP number from the DCP anomaly value itself
+      const numberMatch = anomaly.match(DCP_TP_NUMBER_REGEX);
+      let tpNumber: number | null = null;
+      let nameSource: TpNameSource = 'dcp data';
+
+      if (numberMatch) {
+        tpNumber = parseInt(numberMatch[1]);
+      } else {
+        // No number in DCP value → search survey comments for this station
+        const indices = surveyIndexByStation.get(station) ?? [];
+        for (const idx of indices) {
+          const result = findTpNumberFromSurvey(surveyData, idx);
+          if (result) {
+            tpNumber = result.tpNumber;
+            nameSource = result.nameSource;
+            break;
+          }
+        }
       }
+
+      if (tpNumber === null) continue;
+      if (tpMap.has(tpNumber)) continue;
+
+      const { vOn, vOff } = getVoltages(station, surveyByStation);
+      tpMap.set(tpNumber, { tpNumber, station, stationSource: 'dcp data', nameSource, vOn, vOff });
     }
 
     // Step 2 – SurveyData: Single Test St rows, TP number from comment (±4 rows)
@@ -123,33 +174,10 @@ export const useAnomalyReport = (
       if (row[SurveyAnomalyKey] !== SURVEY_TP_MARKER) continue;
 
       const station = Number(row[SurveyStationKey]);
+      const result = findTpNumberFromSurvey(surveyData, i);
+      if (!result) continue;
 
-      // Try own comment first
-      let tpNumber: number | null = null;
-      let nameSource: TpNameSource = 'survey data';
-
-      const ownMatch = row[SurveyCommentKey]?.toString().match(COMMENT_TP_REGEX);
-      if (ownMatch) {
-        tpNumber = parseInt(ownMatch[1]);
-      } else {
-        // Search ±radius rows by ascending distance; skip rows that are themselves marked as TP
-        outer: for (let dist = 1; dist <= TP_SEARCH_RADIUS; dist++) {
-          for (const dir of [-1, 1]) {
-            const idx = i + dist * dir;
-            if (idx < 0 || idx >= surveyData.length) continue;
-            const nearRow = surveyData[idx];
-            if (nearRow[SurveyAnomalyKey] === SURVEY_TP_MARKER) continue;
-            const nearMatch = nearRow[SurveyCommentKey]?.toString().match(COMMENT_TP_REGEX);
-            if (nearMatch) {
-              tpNumber = parseInt(nearMatch[1]);
-              nameSource = 'survey data +-4';
-              break outer;
-            }
-          }
-        }
-      }
-
-      if (tpNumber === null) continue;
+      const { tpNumber, nameSource } = result;
       if (tpMap.has(tpNumber)) continue; // DCP takes precedence
 
       const { vOn, vOff } = getVoltages(station, surveyByStation);
@@ -184,10 +212,14 @@ export const useAnomalyReport = (
     // ── Build anomalies ───────────────────────────────────────────────────────
     const anomalies: Anomaly[] = [];
 
-    for (const [station, { source }] of anomalyStations) {
+    for (const [station, { marker }] of anomalyStations) {
       const dcpRows = dcpByStation.get(station) ?? [];
 
-      // Collect all non-zero DCVG values from Value1/2/3 across all DCP rows for this station
+      // Priority: Value1 from the specific 'Mark DCVG: DCVG Side Drain' row
+      const sideDrainRow = dcpRows.find(r => r[DCPDataAnomalyKey]?.toString() === MARK_DCVG_SIDE_DRAIN);
+      const priorityValue = sideDrainRow?.['Value1'] as number | undefined;
+
+      // Collect all non-zero DCVG candidates from Value1/2/3 across all rows (for fallback + logging)
       const dcvgCandidates: number[] = [];
       for (const row of dcpRows) {
         for (const key of DCPDCVGValueKeys) {
@@ -203,8 +235,8 @@ export const useAnomalyReport = (
       }
 
       const dcvgValue: DCVGValue = {
-        value: dcvgCandidates[0] ?? 0,
-        source,
+        value: (priorityValue !== undefined && priorityValue !== 0) ? priorityValue : (dcvgCandidates[0] ?? 0),
+        source: 'Side Drain' as DCVGValueSource,
       };
 
       // Collect coordinates from all DCP and survey rows for this station
@@ -245,7 +277,7 @@ export const useAnomalyReport = (
         }
       }
 
-      // Flanking strength points: closest TP with station < anomaly (left) and > anomaly (right)
+      // Flanking strength points: closest TP with station ≤ anomaly (left) and > anomaly (right)
       const leftTp = [...tpsByStation].reverse().find(tp => tp.station <= station);
       const rightTp = tpsByStation.find(tp => tp.station > station);
 

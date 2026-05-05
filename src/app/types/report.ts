@@ -10,7 +10,7 @@ export interface StrengthPoint {
   vOff: number;
 }
 
-export type DCVGValueSource = 'SideDrain' | 'Calculated' ;
+export type DCVGValueSource = 'Side Drain' | 'Calculated' ;
 
 export interface DCVGValue {
   value: number;
