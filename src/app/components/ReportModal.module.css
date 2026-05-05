@@ -41,3 +41,44 @@
   font-size: 1.5rem;
   cursor: pointer;
 }
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.toolbarLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.inputWithSuffix {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.thresholdInput {
+  width: 52px;
+  padding: 3px 6px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  text-align: right;
+}
+
+.inputSuffix {
+  padding: 3px 6px;
+  background: #f0f0f0;
+  font-size: 13px;
+  color: #555;
+  border-left: 1px solid #ccc;
+  user-select: none;
+}

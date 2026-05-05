@@ -107,6 +107,16 @@
   opacity: 1;
 }
 
+/* %IR cell above threshold — bright marker highlight */
+.irHighlight {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #ffff00;
+  font-weight: 600;
+}
+
 .emptyState {
   padding: 20px;
   text-align: center;

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './ReportModal.module.css';
 import {EditedSurvey} from '@/app/types/survey';
 import {useAnomalyReport} from '@/app/hooks/useAnomalyReport';
@@ -15,6 +15,7 @@ interface ReportModalProps {
 }
 
 const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey, stationDiff }) => {
+  const [irThreshold, setIrThreshold] = useState(35);
   const anomalies = useAnomalyReport(
     editedSurvey?.surveyData ?? [],
     editedSurvey?.DCPData ?? [],
@@ -30,7 +31,23 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           <h2>Anomaly Report for {surveyName}</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-        <AnomalyTable anomalies={anomalies.anomalies} />
+        <div className={styles.toolbar}>
+          <label className={styles.toolbarLabel}>
+            %IR Threshold
+            <span className={styles.inputWithSuffix}>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={irThreshold}
+                onChange={e => setIrThreshold(Number(e.target.value))}
+                className={styles.thresholdInput}
+              />
+              <span className={styles.inputSuffix}>%</span>
+            </span>
+          </label>
+        </div>
+        <AnomalyTable anomalies={anomalies.anomalies} irThreshold={irThreshold} />
       </div>
     </div>
   );

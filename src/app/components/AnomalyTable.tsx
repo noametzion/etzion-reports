@@ -192,9 +192,10 @@ function formatCalc(col: CalculatedColumnConfig, anomaly: Anomaly): string {
 
 interface AnomalyTableProps {
   anomalies: Anomaly[];
+  irThreshold?: number;
 }
 
-const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
+const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies, irThreshold }) => {
   if (anomalies.length === 0) {
     return <p className={styles.emptyState}>No anomalies found.</p>;
   }
@@ -275,8 +276,15 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies }) => {
                 }
                 if (col.type === 'calculated') {
                   leafIdx++;
+                  const isIrAboveThreshold =
+                    col.key === 'ir' &&
+                    irThreshold !== undefined &&
+                    (col.getValue(anomaly) ?? 0) * 100 > irThreshold;
                   return [
-                    <td key={col.key} className={styles.calculatedCell}>
+                    <td
+                      key={col.key}
+                      className={isIrAboveThreshold ? styles.irHighlight : styles.calculatedCell}
+                    >
                       {formatCalc(col, anomaly)}
                     </td>,
                   ];
