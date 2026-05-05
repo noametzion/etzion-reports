@@ -55,7 +55,7 @@ function getVoltages(
 
 const SURVEY_DCVG_VOLTAGE_KEY = 'DCVG Voltage' as keyof EditedSurveyDataRow;
 
-type DCVGDirectionResult = { sum: number; from: number; to: number; stoppedBySkip: boolean };
+type DCVGCalcResult = { sum: number; from: number; to: number; stoppedBySkip: boolean };
 
 // Returns most common positive gap between consecutive unique station numbers
 function computeStationDiff(uniqueStations: number[]): number {
@@ -72,44 +72,63 @@ function computeStationDiff(uniqueStations: number[]): number {
   return best;
 }
 
-// Walk forward (direction=1) or backward (direction=-1) from startStation by stationDiff steps,
-// summing |DCVG Voltage| values as long as they share the sign of the first encountered value.
+function getDCVGVoltageMv(
+  station: number,
+  surveyByStation: Map<number, EditedSurveyDataRow[]>
+): number | null {
+  const raw = surveyByStation.get(station)
+    ?.find(r => r[SURVEY_DCVG_VOLTAGE_KEY] !== undefined)
+    ?.[SURVEY_DCVG_VOLTAGE_KEY] as number | undefined;
+  return (raw !== undefined && raw !== null && raw !== 0) ? raw * 1000 : null; // V → mV
+}
+
+// Walk forward (direction=1) or backward (direction=-1) from anomalyStation by stationDiff steps,
+// summing |DCVG Voltage| (mV) while values share the sign of the first encountered station.
 // Stops when the next expected station is missing (skip) or on a sign change.
-function calcDCVGDirection(
-  startStation: number,
+// Also includes the anomaly station itself if its voltage matches the established sign.
+function calcDCVGValue(
+  anomalyStation: number,
   surveyByStation: Map<number, EditedSurveyDataRow[]>,
   stationDiff: number,
   direction: 1 | -1
-): DCVGDirectionResult | null {
+): DCVGCalcResult | null {
   let sum = 0;
   let firstSign: 1 | -1 | null = null;
-  let firstStation: number | null = null;
-  let lastStation: number | null = null;
+  let fromStation: number | null = null;
+  let toStation: number | null = null;
   let stoppedBySkip = false;
 
-  for (let cur = startStation + direction * stationDiff; ; cur += direction * stationDiff) {
+  for (let cur = anomalyStation + direction * stationDiff; ; cur += direction * stationDiff) {
     if (!surveyByStation.has(cur)) {
-      if (lastStation !== null) stoppedBySkip = true;
+      stoppedBySkip = toStation !== null;
       break;
     }
 
-    const voltage = surveyByStation.get(cur)?.find(r => r[SURVEY_DCVG_VOLTAGE_KEY] !== undefined)?.[SURVEY_DCVG_VOLTAGE_KEY] as number | undefined;
+    const voltageMv = getDCVGVoltageMv(cur, surveyByStation);
+    if (voltageMv === null) continue;
 
-    if (voltage === undefined || voltage === null || voltage === 0) continue;
-
-    const voltageMv = voltage * 1000; // convert V → mV
     const sign: 1 | -1 = voltageMv > 0 ? 1 : -1;
     if (firstSign === null) {
-      firstSign = sign; firstStation = cur; sum += Math.abs(voltageMv); lastStation = cur;
-    } else if (sign === firstSign) {
-      sum += Math.abs(voltageMv); lastStation = cur;
-    } else {
+      firstSign = sign;
+      fromStation = cur;
+    } else if (sign !== firstSign) {
       break;
     }
+
+    sum += Math.abs(voltageMv);
+    toStation = cur;
   }
 
-  if (firstStation === null) return null;
-  return { sum, from: firstStation, to: lastStation!, stoppedBySkip };
+  if (firstSign === null) return null;
+
+  // Include the anomaly station itself if its voltage matches the established sign
+  const anomalyVoltageMv = getDCVGVoltageMv(anomalyStation, surveyByStation);
+  if (anomalyVoltageMv !== null && (anomalyVoltageMv > 0 ? 1 : -1) === firstSign) {
+    sum += Math.abs(anomalyVoltageMv);
+    fromStation = anomalyStation;
+  }
+
+  return { sum, from: fromStation!, to: toStation!, stoppedBySkip };
 }
 
 // Search for TP number in survey comment at centerIdx, then ±TP_SEARCH_RADIUS rows
@@ -293,8 +312,8 @@ export const useAnomalyReport = (
       }
 
       // Calculated DCVG from survey DCVG Voltage (forward and backward from anomaly station)
-      const fwd = calcDCVGDirection(station, surveyByStation, stationDiff, 1);
-      const bwd = calcDCVGDirection(station, surveyByStation, stationDiff, -1);
+      const fwd = calcDCVGValue(station, surveyByStation, stationDiff, 1);
+      const bwd = calcDCVGValue(station, surveyByStation, stationDiff, -1);
 
       if (fwd !== null) {
         const toLabel = fwd.stoppedBySkip ? `${fwd.to} (before skip)` : `${fwd.to}`;
