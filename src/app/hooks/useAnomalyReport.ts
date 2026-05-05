@@ -21,6 +21,7 @@ function isDCVGAnomalyMarker(marker: string): boolean {
 
 // Specific DCP row type that carries the actual measured Side Drain value in Value1
 const MARK_DCVG_SIDE_DRAIN = 'Mark DCVG: DCVG Side Drain';
+const DCVG_ANOMALY_TOTAL = 'DCVG Anomaly: DCVG Max/Total';
 
 // Matches any DCP anomaly value starting with "tp" (number is optional — may be in survey comments)
 const DCP_TP_PREFIX_REGEX = /^tp/i;
@@ -290,25 +291,27 @@ export const useAnomalyReport = (
 
     // ── Build anomalies ───────────────────────────────────────────────────────
     type DCVGCandidate = { value: number; source: string };
+    const isCalcSource = (source: string) => source.startsWith('calculated');
+    const isValid = (c: DCVGCandidate) => !String(c.value).includes('e');
 
     const anomalies: Anomaly[] = [];
 
     for (const [station] of anomalyStations) {
       const dcpRows = dcpByStation.get(station) ?? [];
-
-      // Priority: Value1 from the specific 'Mark DCVG: DCVG Side Drain' row
-      const sideDrainRow = dcpRows.find(r => r[DCPDataAnomalyKey]?.toString() === MARK_DCVG_SIDE_DRAIN);
-      const priorityValue = sideDrainRow?.['Value1'] as number | undefined;
-
-      // Collect all non-zero DCVG candidates from Value1/2/3 across all rows (for fallback + logging)
       const dcvgCandidates: DCVGCandidate[] = [];
-      for (const row of dcpRows) {
-        for (const key of DCPDCVGValueKeys) {
-          const val = row[key] as number;
-          if (val !== null && val !== undefined && val !== 0) {
-            dcvgCandidates.push({ value: val, source: `file (${key})` });
-          }
-        }
+
+      // Mark DCVG: DCVG Side Drain (highest priority)
+      const markDrainRow = dcpRows.find(r => r[DCPDataAnomalyKey]?.toString() === MARK_DCVG_SIDE_DRAIN);
+      const markDrainValue = markDrainRow?.['Value1'] as number | undefined;
+      if (markDrainValue !== undefined && markDrainValue !== 0) {
+        dcvgCandidates.push({ value: markDrainValue, source: MARK_DCVG_SIDE_DRAIN });
+      }
+
+      // DCVG Anomaly: DCVG Side Drain (second priority)
+      const anomalyDrainRow = dcpRows.find(r => r[DCPDataAnomalyKey]?.toString() === DCVG_ANOMALY_TOTAL);
+      const anomalyDrainValue = anomalyDrainRow?.['Value1'] as number | undefined;
+      if (anomalyDrainValue !== undefined && anomalyDrainValue !== 0) {
+        dcvgCandidates.push({ value: anomalyDrainValue, source: DCVG_ANOMALY_TOTAL });
       }
 
       // Calculated DCVG from survey DCVG Voltage (forward and backward from anomaly station)
@@ -326,10 +329,17 @@ export const useAnomalyReport = (
 
       console.log(`Station ${station}: DCVG candidates:`, dcvgCandidates);
 
-      const firstFileValue = dcvgCandidates.find(c => c.source.startsWith('file'))?.value;
+      // Selection: prefer side drain sources in order; fall back to max of calculated if invalid
+      const markSideDrain = dcvgCandidates.find(c => c.source === MARK_DCVG_SIDE_DRAIN && isValid(c));
+      const anomalyTotal = dcvgCandidates.find(c => c.source === DCVG_ANOMALY_TOTAL && isValid(c));
+      const calcCandidates = dcvgCandidates.filter(c => isCalcSource(c.source) && isValid(c));
+      const maxCalc = calcCandidates.length > 0 ? calcCandidates.reduce((a, b) => a.value >= b.value ? a : b) : undefined;
+
+      const selectedCandidate = markSideDrain ?? anomalyTotal ?? maxCalc;
+
       const dcvgValue: DCVGValue = {
-        value: (priorityValue !== undefined && priorityValue !== 0) ? priorityValue : (firstFileValue ?? 0),
-        source: 'Side Drain' as DCVGValueSource,
+        value: selectedCandidate?.value ?? 0,
+        source: (selectedCandidate && !isCalcSource(selectedCandidate.source) ? 'Side Drain' : 'Calculated') as DCVGValueSource,
       };
 
       // Collect coordinates from all DCP and survey rows for this station
