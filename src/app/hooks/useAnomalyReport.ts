@@ -53,6 +53,65 @@ function getVoltages(
   return { vOn, vOff };
 }
 
+const SURVEY_DCVG_VOLTAGE_KEY = 'DCVG Voltage' as keyof EditedSurveyDataRow;
+
+type DCVGDirectionResult = { sum: number; from: number; to: number; stoppedBySkip: boolean };
+
+// Returns most common positive gap between consecutive unique station numbers
+function computeStationDiff(uniqueStations: number[]): number {
+  if (uniqueStations.length < 2) return 1;
+  const counts = new Map<number, number>();
+  for (let i = 1; i < uniqueStations.length; i++) {
+    const d = Math.round(uniqueStations[i] - uniqueStations[i - 1]);
+    if (d > 0) counts.set(d, (counts.get(d) ?? 0) + 1);
+  }
+  let best = 1, bestCount = 0;
+  for (const [d, c] of counts) {
+    if (c > bestCount || (c === bestCount && d < best)) { bestCount = c; best = d; }
+  }
+  return best;
+}
+
+// Walk forward (direction=1) or backward (direction=-1) from startStation by stationDiff steps,
+// summing |DCVG Voltage| values as long as they share the sign of the first encountered value.
+// Stops when the next expected station is missing (skip) or on a sign change.
+function calcDCVGDirection(
+  startStation: number,
+  surveyByStation: Map<number, EditedSurveyDataRow[]>,
+  stationDiff: number,
+  direction: 1 | -1
+): DCVGDirectionResult | null {
+  let sum = 0;
+  let firstSign: 1 | -1 | null = null;
+  let firstStation: number | null = null;
+  let lastStation: number | null = null;
+  let stoppedBySkip = false;
+
+  for (let cur = startStation + direction * stationDiff; ; cur += direction * stationDiff) {
+    if (!surveyByStation.has(cur)) {
+      if (lastStation !== null) stoppedBySkip = true;
+      break;
+    }
+
+    const voltage = surveyByStation.get(cur)?.find(r => r[SURVEY_DCVG_VOLTAGE_KEY] !== undefined)?.[SURVEY_DCVG_VOLTAGE_KEY] as number | undefined;
+
+    if (voltage === undefined || voltage === null || voltage === 0) continue;
+
+    const voltageMv = voltage * 1000; // convert V → mV
+    const sign: 1 | -1 = voltageMv > 0 ? 1 : -1;
+    if (firstSign === null) {
+      firstSign = sign; firstStation = cur; sum += Math.abs(voltageMv); lastStation = cur;
+    } else if (sign === firstSign) {
+      sum += Math.abs(voltageMv); lastStation = cur;
+    } else {
+      break;
+    }
+  }
+
+  if (firstStation === null) return null;
+  return { sum, from: firstStation, to: lastStation!, stoppedBySkip };
+}
+
 // Search for TP number in survey comment at centerIdx, then ±TP_SEARCH_RADIUS rows
 function findTpNumberFromSurvey(
   surveyData: EditedSurveyDataRow[],
@@ -78,7 +137,8 @@ function findTpNumberFromSurvey(
 
 export const useAnomalyReport = (
   surveyData: EditedSurveyDataRow[],
-  dcpData: EditedDCPDataRow[]
+  dcpData: EditedDCPDataRow[],
+  stationDiff: number
 ): AnomalyReport => {
   return useMemo(() => {
     // Group DCP rows by station
@@ -210,9 +270,11 @@ export const useAnomalyReport = (
     }
 
     // ── Build anomalies ───────────────────────────────────────────────────────
+    type DCVGCandidate = { value: number; source: string };
+
     const anomalies: Anomaly[] = [];
 
-    for (const [station, { marker }] of anomalyStations) {
+    for (const [station] of anomalyStations) {
       const dcpRows = dcpByStation.get(station) ?? [];
 
       // Priority: Value1 from the specific 'Mark DCVG: DCVG Side Drain' row
@@ -220,22 +282,34 @@ export const useAnomalyReport = (
       const priorityValue = sideDrainRow?.['Value1'] as number | undefined;
 
       // Collect all non-zero DCVG candidates from Value1/2/3 across all rows (for fallback + logging)
-      const dcvgCandidates: number[] = [];
+      const dcvgCandidates: DCVGCandidate[] = [];
       for (const row of dcpRows) {
         for (const key of DCPDCVGValueKeys) {
           const val = row[key] as number;
           if (val !== null && val !== undefined && val !== 0) {
-            dcvgCandidates.push(val);
+            dcvgCandidates.push({ value: val, source: `file (${key})` });
           }
         }
       }
 
-      if (dcvgCandidates.length > 1) {
-        console.log(`Station ${station}: multiple DCVG values found:`, dcvgCandidates);
+      // Calculated DCVG from survey DCVG Voltage (forward and backward from anomaly station)
+      const fwd = calcDCVGDirection(station, surveyByStation, stationDiff, 1);
+      const bwd = calcDCVGDirection(station, surveyByStation, stationDiff, -1);
+
+      if (fwd !== null) {
+        const toLabel = fwd.stoppedBySkip ? `${fwd.to} (before skip)` : `${fwd.to}`;
+        dcvgCandidates.push({ value: fwd.sum, source: `calculated after (sum from station ${fwd.from} to ${toLabel})` });
+      }
+      if (bwd !== null) {
+        const toLabel = bwd.stoppedBySkip ? `${bwd.to} (before skip)` : `${bwd.to}`;
+        dcvgCandidates.push({ value: bwd.sum, source: `calculated before (sum from station ${bwd.from} to ${toLabel})` });
       }
 
+      console.log(`Station ${station}: DCVG candidates:`, dcvgCandidates);
+
+      const firstFileValue = dcvgCandidates.find(c => c.source.startsWith('file'))?.value;
       const dcvgValue: DCVGValue = {
-        value: (priorityValue !== undefined && priorityValue !== 0) ? priorityValue : (dcvgCandidates[0] ?? 0),
+        value: (priorityValue !== undefined && priorityValue !== 0) ? priorityValue : (firstFileValue ?? 0),
         source: 'Side Drain' as DCVGValueSource,
       };
 
@@ -291,5 +365,5 @@ export const useAnomalyReport = (
     }
 
     return { anomalies, strengthPoints };
-  }, [surveyData, dcpData]);
+  }, [surveyData, dcpData, stationDiff]);
 };

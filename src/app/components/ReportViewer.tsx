@@ -147,6 +147,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
         onClose={() => setIsReportMode(false)}
         surveyName={surveyName}
         editedSurvey={editedSurvey}
+        stationDiff={distPerReading}
       />
     </div>
   );

@@ -11,12 +11,14 @@ interface ReportModalProps {
   onClose: () => void;
   surveyName: string;
   editedSurvey: EditedSurvey | null;
+  stationDiff: number;
 }
 
-const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey }) => {
+const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey, stationDiff }) => {
   const anomalies = useAnomalyReport(
     editedSurvey?.surveyData ?? [],
-    editedSurvey?.DCPData ?? []
+    editedSurvey?.DCPData ?? [],
+    stationDiff
   );
 
   if (!isOpen) return null;
