@@ -1,0 +1,48 @@
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Flat (non-object) header: spans both header rows */
+.flatHeader {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  background-color: #f0f0f0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Object group header: bolder bottom border to separate from sub-headers */
+.groupHeader {
+  border: 1px solid #ccc;
+  border-bottom: 2px solid #888;
+  padding: 8px 12px;
+  background-color: #e0e0e0;
+  text-align: center;
+}
+
+/* Sub-column headers (under group headers) */
+.subHeader {
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  background-color: #f0f0f0;
+  text-align: center;
+}
+
+.cell {
+  border: 1px solid #ccc;
+  padding: 6px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.row:hover {
+  background-color: #f9f9f9;
+}
+
+.emptyState {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+}

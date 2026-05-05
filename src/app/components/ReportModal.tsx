@@ -4,6 +4,7 @@ import React from 'react';
 import styles from './ReportModal.module.css';
 import {EditedSurvey} from '@/app/types/survey';
 import {useAnomalyReport} from '@/app/hooks/useAnomalyReport';
+import AnomalyTable from './AnomalyTable';
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           <h2>Anomaly Report for {surveyName}</h2>
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
+        <AnomalyTable anomalies={anomalies.anomalies} />
       </div>
     </div>
   );
