@@ -157,6 +157,7 @@ export const DCPDataStationKey = "Station No" as keyof DCPDataRow;
 export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;
 export const DCPDataCommentKey = "Comments" as keyof DCPDataRow;
 export const DCPDateTimeKeys= ['On Time', 'Off Time', 'Fix Time'] as (keyof DCPDataRow)[];
+export const DCPDCVGValueKeys = ['Value1', 'Value2', 'Value3'] as (keyof DCPDataRow)[];
 
 
 export const SurveyCommentKey = 'Comment' as keyof SurveyDataRow;

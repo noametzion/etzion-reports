@@ -13,13 +13,22 @@
   vertical-align: middle;
 }
 
-/* Object group header: bolder bottom border to separate from sub-headers */
+/* Object group header: bolder side borders to delineate the group */
 .groupHeader {
   border: 1px solid #ccc;
-  border-bottom: 2px solid #888;
+  border-left: 2px solid #888;
+  border-right: 2px solid #888;
   padding: 8px 12px;
   background-color: #e0e0e0;
   text-align: center;
+}
+
+.groupBorderLeft {
+  border-left: 2px solid #888 !important;
+}
+
+.groupBorderRight {
+  border-right: 2px solid #888 !important;
 }
 
 /* Sub-column headers (under group headers) */
