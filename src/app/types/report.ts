@@ -37,6 +37,7 @@ export interface GraphDataPoint extends DataPoint {
   offVoltage?: number; // Y-axis: 'Off Voltage' (mV)
   constantVoltage: number; // Y-axis: Constant -850mV
   dcvg?: number; // Y-axis: 'DCVG Voltage' (mV)
+  constantDCVGDiff: number;
   comment?: string;
 }
 
