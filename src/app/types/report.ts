@@ -29,6 +29,11 @@ export interface AnomalyReport {
   anomalies: Anomaly[];
 }
 
+// export interface ProjectAnomalyReport {
+//   projectName: string;
+//   anomalyReports: Map<string, AnomalyReport>; // file name, anomaly report
+// }
+
 export interface DataPoint {
   distance: number; // X-axis: 'Dist From Start'
 }
