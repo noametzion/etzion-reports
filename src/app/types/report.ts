@@ -27,7 +27,6 @@ export interface Anomaly {
 
 export interface AnomalyReport {
   anomalies: Anomaly[];
-  strengthPoints: StrengthPoint[];
 }
 
 export interface DataPoint {

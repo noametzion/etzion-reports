@@ -7,11 +7,28 @@ import {
   EditedDCPDataRow,
   DCPDataStationKey,
   DCPDataAnomalyKey,
-  DCPDCVGValueKeys,
   SurveyStationKey,
   SurveyAnomalyKey,
   SurveyCommentKey,
 } from '@/app/types/survey';
+
+export interface DCVGCandidate {
+  value: number;
+  source: string;
+}
+
+export interface StrengthPointCandidate {
+  value: number;   // station number
+  source: string;  // e.g., "TP 5", "first station", "last station"
+  vOn: number;
+  vOff: number;
+}
+
+export interface UseAnomalyReportResult {
+  report: AnomalyReport;
+  dcvgCandidates: Map<number, DCVGCandidate[]>;
+  strengthPointsCandidates: StrengthPointCandidate[];
+}
 
 // Matches any DCP anomaly value that starts with "Mark DCVG" or equals "DCVG Anomaly"
 function isDCVGAnomalyMarker(marker: string): boolean {
@@ -159,7 +176,7 @@ export const useAnomalyReport = (
   surveyData: EditedSurveyDataRow[],
   dcpData: EditedDCPDataRow[],
   stationDiff: number
-): AnomalyReport => {
+): UseAnomalyReportResult => {
   return useMemo(() => {
     // Group DCP rows by station
     const dcpByStation = new Map<number, EditedDCPDataRow[]>();
@@ -290,11 +307,12 @@ export const useAnomalyReport = (
     }
 
     // ── Build anomalies ───────────────────────────────────────────────────────
-    type DCVGCandidate = { value: number; source: string };
+    const allStations = [...surveyByStation.keys()].sort((a, b) => a - b);
     const isCalcSource = (source: string) => source.startsWith('calculated');
     const isValidDCVGValue = (c: DCVGCandidate) => c.value !== 0 && !String(c.value).includes('e');
 
     const anomalies: Anomaly[] = [];
+    const dcvgCandidatesMap = new Map<number, DCVGCandidate[]>();
 
     for (const [station] of anomalyStations) {
       const dcpRows = dcpByStation.get(station) ?? [];
@@ -328,6 +346,7 @@ export const useAnomalyReport = (
       }
 
       console.log(`Station ${station}: DCVG candidates:`, dcvgCandidates);
+      dcvgCandidatesMap.set(station, dcvgCandidates);
 
       // Selection: prefer side drain sources in order; fall back to max of calculated if invalid
       const markSideDrain = dcvgCandidates.find(c => c.source === MARK_DCVG_SIDE_DRAIN &&  isValidDCVGValue(c));
@@ -393,6 +412,30 @@ export const useAnomalyReport = (
       });
     }
 
-    return { anomalies, strengthPoints };
+    const firstStation = allStations[0];
+    const lastStation = allStations[allStations.length - 1];
+
+    // Build strengthPointsCandidates: TPs with "TP N" label, plus first/last station only if not already a TP.
+    const candidateLabels = new Map<number, string>();
+    strengthPoints.forEach((sp, i) => candidateLabels.set(sp.station, `TP ${i + 1}`));
+    if (firstStation !== undefined && !candidateLabels.has(firstStation)) {
+      candidateLabels.set(firstStation, 'first station');
+    }
+    if (lastStation !== undefined && lastStation !== firstStation && !candidateLabels.has(lastStation)) {
+      candidateLabels.set(lastStation, 'last station');
+    }
+
+    const strengthPointsCandidates: StrengthPointCandidate[] = [...candidateLabels.entries()]
+      .sort(([a], [b]) => a - b)
+      .map(([station, source]) => {
+        const v = getVoltages(station, surveyByStation);
+        return { value: station, source, vOn: v.vOn, vOff: v.vOff };
+      });
+
+    return {
+      report: { anomalies },
+      dcvgCandidates: dcvgCandidatesMap,
+      strengthPointsCandidates,
+    };
   }, [surveyData, dcpData, stationDiff]);
 };

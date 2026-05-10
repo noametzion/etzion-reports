@@ -1,8 +1,12 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './AnomalyTable.module.css';
-import { Anomaly } from '@/app/types/report';
+import { Anomaly, DCVGValue, StrengthPoint } from '@/app/types/report';
+import { DCVGCandidate, StrengthPointCandidate } from '@/app/hooks/useAnomalyReport';
+import { FaPencilAlt } from 'react-icons/fa';
+import DCVGCellEditor from './DCVGCellEditor';
+import StrengthPointCellEditor from './StrengthPointCellEditor';
 
 // ── Column config types ───────────────────────────────────────────────────────
 
@@ -193,12 +197,41 @@ function formatCalc(col: CalculatedColumnConfig, anomaly: Anomaly): string {
 interface AnomalyTableProps {
   anomalies: Anomaly[];
   irThreshold?: number;
+  strengthPointsCandidates?: StrengthPointCandidate[];
+  allMeasuredStations?: Map<number, { vOn: number; vOff: number }>;
+  stationDiff?: number;
+  dcvgCandidates?: Map<number, DCVGCandidate[]>;
+  onEditDcvg?: (rowIdx: number, value: DCVGValue) => void;
+  onEditStrengthPoint1?: (rowIdx: number, sp: StrengthPoint) => void;
+  onEditStrengthPoint2?: (rowIdx: number, sp: StrengthPoint) => void;
 }
 
-const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies, irThreshold }) => {
+type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' };
+
+const AnomalyTable: React.FC<AnomalyTableProps> = ({
+  anomalies, irThreshold, strengthPointsCandidates, allMeasuredStations, stationDiff, dcvgCandidates,
+  onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2,
+}) => {
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const editCellRef = useRef<HTMLTableCellElement | null>(null);
+
+  useEffect(() => {
+    if (!editState) return;
+    const close = (e: MouseEvent) => {
+      if (editCellRef.current?.contains(e.target as Node)) return;
+      setEditState(null);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [editState]);
+
   if (anomalies.length === 0) {
     return <p className={styles.emptyState}>No anomalies found.</p>;
   }
+
+  const openEdit = (rowIdx: number, field: EditState['field']) => {
+    setEditState({ rowIdx, field });
+  };
 
   return (
     <table className={styles.table}>
@@ -291,9 +324,53 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({ anomalies, irThreshold }) =
                 }
                 return col.subColumns.map(sub => {
                   const meta = LEAF_META[leafIdx++];
+
+                  const isEditableDcvg = col.key === 'dcvgValue' && sub.key === 'value' && !!onEditDcvg;
+                  const isEditableSp1 = col.key === 'strengthPoint1' && sub.key === 'station' && !!onEditStrengthPoint1 && !!strengthPointsCandidates?.length;
+                  const isEditableSp2 = col.key === 'strengthPoint2' && sub.key === 'station' && !!onEditStrengthPoint2 && !!strengthPointsCandidates?.length;
+                  const isEditable = isEditableDcvg || isEditableSp1 || isEditableSp2;
+
+                  const isEditing = isEditable && editState?.rowIdx === rowIdx && (
+                    (isEditableDcvg && editState.field === 'dcvg') ||
+                    (isEditableSp1 && editState.field === 'strengthPoint1') ||
+                    (isEditableSp2 && editState.field === 'strengthPoint2')
+                  );
+
+                  const openField: EditState['field'] = isEditableDcvg ? 'dcvg' : isEditableSp1 ? 'strengthPoint1' : 'strengthPoint2';
+
                   return (
-                    <td key={`${col.key}-${sub.key}`} className={leafClass(meta, styles.cell)}>
-                      {getSubValue(anomaly, col.key, sub.key)}
+                    <td
+                      key={`${col.key}-${sub.key}`}
+                      ref={isEditing ? editCellRef : undefined}
+                      className={leafClass(meta, isEditing ? `${styles.cell} ${styles.editingCell}` : isEditable ? `${styles.cell} ${styles.editableCell}` : styles.cell)}
+                      onClick={isEditable && !isEditing ? () => openEdit(rowIdx, openField) : undefined}
+                    >
+                      {isEditing && isEditableDcvg ? (
+                        <DCVGCellEditor
+                          candidates={dcvgCandidates?.get(anomaly.station) ?? []}
+                          currentValue={anomaly.dcvgValue}
+                          onSave={v => { onEditDcvg!(rowIdx, v); setEditState(null); }}
+                          onCancel={() => setEditState(null)}
+                        />
+                      ) : isEditing && (isEditableSp1 || isEditableSp2) ? (
+                        <StrengthPointCellEditor
+                          candidates={strengthPointsCandidates!}
+                          allMeasuredStations={allMeasuredStations}
+                          stationDiff={stationDiff}
+                          currentSp={isEditableSp1 ? anomaly.strengthPoint1 : anomaly.strengthPoint2}
+                          onSave={sp => {
+                            if (isEditableSp1) onEditStrengthPoint1!(rowIdx, sp);
+                            else onEditStrengthPoint2!(rowIdx, sp);
+                            setEditState(null);
+                          }}
+                          onCancel={() => setEditState(null)}
+                        />
+                      ) : (
+                        <>
+                          {getSubValue(anomaly, col.key, sub.key)}
+                          {isEditable && <FaPencilAlt className={styles.editIcon} />}
+                        </>
+                      )}
                     </td>
                   );
                 });

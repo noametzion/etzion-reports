@@ -1,0 +1,25 @@
+.cellEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.cellEditorSelect {
+  width: 100%;
+  min-width: 200px;
+  padding: 2px 4px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  font-size: 11px;
+  background: white;
+}
+
+.cellEditorInput {
+  width: 100%;
+  padding: 3px 5px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  font-size: 11px;
+  box-sizing: border-box;
+}

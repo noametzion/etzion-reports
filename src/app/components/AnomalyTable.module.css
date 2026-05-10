@@ -107,6 +107,28 @@
   opacity: 1;
 }
 
+.editableCell {
+  cursor: pointer;
+  display: table-cell;
+}
+
+.editIcon {
+  font-size: 0.7em;
+  color: #007bff;
+  opacity: 0;
+  margin-left: 3px;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.editableCell:hover .editIcon {
+  opacity: 1;
+}
+
+.editingCell {
+  background-color: #e8f1ff;
+  padding: 2px 4px !important;
+}
+
 /* %IR cell above threshold — bright marker highlight */
 .irHighlight {
   border: 1px solid #ccc;
