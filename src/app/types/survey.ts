@@ -149,23 +149,36 @@ export const SURVEY_DATE_TIME_FORMAT = 'dd/mm/yyyy hh:mm:ss.000';
 export const SURVEY_SHORT_DATE_TIME_FORMAT = 'dd/mm/yyyy';
 
 
+// ------ Survey Information Keys
 export const SurveyInfoNameKey = 'SurveyName' as keyof SurveyInfo;
 export const SurveyInfoDateTimeKeys = ['date / time'] as (keyof SurveyInfo)[];
 export const SurveyInfoStationDiffKey = 'Dist per reading' as keyof SurveyInfo;
 
+
+// ------ DCP Data Keys & Constant Values
 export const DCPDataStationKey = "Station No" as keyof DCPDataRow;
-export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;
 export const DCPDataCommentKey = "Comments" as keyof DCPDataRow;
 export const DCPDateTimeKeys= ['On Time', 'Off Time', 'Fix Time'] as (keyof DCPDataRow)[];
-export const DCPDCVGValueKeys = ['Value1', 'Value2', 'Value3'] as (keyof DCPDataRow)[];
+// at "Mark DCVG: DCVG On/Off" & at "DCVG Anomaly: DCVG Max On/Off" - Value1 = dcvg on value
+// at "Mark DCVG: DCVG On/Off" & at "DCVG Anomaly: DCVG Max On/Off" - Value2 = dcvg off value
+// at "Mark DCVG: DCVG Side Drain" & at "DCVG Anomaly: DCVG Max/Total" - Value1 = Value2 = Sum IR Drop = DCVG Value = sum of (dcvg on - dcvg Off) until ~0, in mV ?????
+// at "Mark DCVG: DCVG Side Drain" & at "DCVG Anomaly: DCVG Max/Total" - Value3 = %IR [Total mv/IR drop] ?????
+export const DCPDataDCVGValueKey = 'Value1' as keyof DCPDataRow;
 
+export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;
+export const DCPDataAnomaly_MARK_DCVG_SIDE_DRAIN = 'Mark DCVG: DCVG Side Drain';
+export const DCPDataAnomaly_DCVG_ANOMALY_TOTAL = 'DCVG Anomaly: DCVG Max/Total';
 
+// ------ Survey Data Keys & Constant Values
 export const SurveyCommentKey = 'Comment' as keyof SurveyDataRow;
 export const SurveyAnomalyKey = 'DCP/Feature/DCVG Anomaly' as keyof SurveyDataRow;
+export const SurveyAnomaly_SURVEY_TP_MARKER = 'Single Test St';
 export const SurveyDistanceKey = 'Dist From Start' as keyof SurveyDataRow;
 export const SurveyStationKey = 'Station No' as keyof SurveyDataRow;
-export const SurveyStationKeys = ['Dist From Start', 'Station No'] as const;
-export const SurveyOnOffVoltageKeys= ['On Voltage', 'Off Voltage'] as (keyof SurveyDataRow)[];
+export const SurveyStationKeys = ['Dist From Start', 'Station No'] as (keyof SurveyDataRow)[];
+export const SurveyOnVoltageKey = 'On Voltage' as keyof SurveyDataRow;
+export const SurveyOffVoltageKey = 'Off Voltage' as keyof SurveyDataRow;
+export const SurveyOnOffVoltageKeys= [SurveyOnVoltageKey, SurveyOffVoltageKey] as (keyof SurveyDataRow)[];
 export const SurveyDSVGVoltageKeys = ['DCVG Voltage'] as (keyof SurveyDataRow)[]; //['DCVG Voltage On', 'DCVG Voltage Off']
 export const SurveyDateTimeKeys= ['On Time', 'Off Time', 'Fix Time'] as (keyof SurveyDataRow)[];
 export const SwitchableSurveyKeys = [['On Voltage','Off Voltage']] as (SurveySwitchablePair)[];
