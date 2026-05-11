@@ -7,32 +7,47 @@ import {
   groupDcpByStation,
   groupSurveyByStation,
   findAnomalyStations,
+  findAdditionalSuggestedAnomalies,
   buildTpMap,
   toStrengthPoint,
   buildAnomalies,
   buildStrengthPointsCandidates,
   type DCVGCandidate,
   type StrengthPointCandidate,
+  type SuggestedAnomaly,
 } from './anomalyReport';
 
-export type { DCVGCandidate, StrengthPointCandidate };
+export type { DCVGCandidate, StrengthPointCandidate, SuggestedAnomaly };
 
 export interface UseAnomalyReportResult {
   report: AnomalyReport;
   dcvgCandidates: Map<number, DCVGCandidate[]>;
   /** All selectable strength point candidates: TPs + first/last station (only if not already a TP), sorted by station */
   strengthPointsCandidates: StrengthPointCandidate[];
+  /** Stations found in surveyData with DCVG markers that are NOT already in the main anomaly list */
+  suggestedAnomalies: SuggestedAnomaly[];
 }
 
 export const useAnomalyReport = (
   surveyData: EditedSurveyDataRow[],
   dcpData: EditedDCPDataRow[],
-  stationDiff: number
+  stationDiff: number,
+  userAddedAnomalyStations?: number[]
 ): UseAnomalyReportResult => {
   return useMemo(() => {
     const dcpByStation = groupDcpByStation(dcpData);
     const { surveyByStation, surveyIndexByStation } = groupSurveyByStation(surveyData);
-    const anomalyStations = findAnomalyStations(dcpData, surveyData);
+    const dcpDataAnomalyStations = findAnomalyStations(dcpData, surveyData);
+
+    // Merge user-added stations so they're built as full anomalies
+    const allAnomalyStations = new Map(dcpDataAnomalyStations);
+    for (const station of userAddedAnomalyStations ?? []) {
+      if (!allAnomalyStations.has(station)) {
+        allAnomalyStations.set(station, { marker: 'user added' });
+      }
+    }
+
+    const suggestedAnomalies = findAdditionalSuggestedAnomalies(surveyData, allAnomalyStations);
     const tpMap = buildTpMap(dcpData, surveyData, surveyByStation, surveyIndexByStation);
 
     const strengthPoints = [...tpMap.values()]
@@ -42,10 +57,10 @@ export const useAnomalyReport = (
     const allStations = [...surveyByStation.keys()].sort((a, b) => a - b);
 
     const { anomalies, dcvgCandidates } = buildAnomalies(
-      anomalyStations, dcpByStation, surveyByStation, tpsByStation, stationDiff
+      allAnomalyStations, dcpByStation, surveyByStation, tpsByStation, stationDiff
     );
     const strengthPointsCandidates = buildStrengthPointsCandidates(strengthPoints, allStations, surveyByStation);
 
-    return { report: { anomalies }, dcvgCandidates, strengthPointsCandidates };
-  }, [surveyData, dcpData, stationDiff]);
+    return { report: { anomalies }, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies };
+  }, [surveyData, dcpData, stationDiff, userAddedAnomalyStations]);
 };

@@ -24,6 +24,12 @@ export interface StrengthPointCandidate {
   vOff: number;
 }
 
+export interface SuggestedAnomaly {
+  station: number;
+  anomalyCol: string;  // value from DCP/Feature/DCVG Anomaly column
+  comment: string;     // value from Comment column
+}
+
 // ── Internal types ────────────────────────────────────────────────────────────
 
 export type TpNameSource = 'dcp data' | 'survey data' | 'survey data +-4';
@@ -209,6 +215,36 @@ export function findAnomalyStations(
   console.log('[useAnomalyReport] anomaly stations found:', [...anomalyStations.entries()].map(([s, v]) => `${s}: ${v.marker}`));
 
   return anomalyStations;
+}
+
+// Stations in surveyData that mention "Mark DCVG" or "DCVG Anomaly" in either the
+// anomaly column or the comment column, but are NOT already in anomalyStations.
+export function findAdditionalSuggestedAnomalies(
+  surveyData: EditedSurveyDataRow[],
+  anomalyStations: Map<number, { marker: string }>
+): SuggestedAnomaly[] {
+  const seen = new Set<number>();
+  const additional: SuggestedAnomaly[] = [];
+
+  for (const row of surveyData) {
+    const station = Number(row[SurveyStationKey]);
+    if (anomalyStations.has(station) || seen.has(station)) continue;
+
+    const anomalyCol = row[SurveyAnomalyKey]?.toString() ?? '';
+    const comment = row[SurveyCommentKey]?.toString() ?? '';
+
+    const matchedInAnomalyCol = anomalyCol && isDCVGAnomalyMarker(anomalyCol);
+    const matchedInComment = comment.includes('Mark DCVG') || comment.includes('DCVG Anomaly');
+
+    if (matchedInAnomalyCol || matchedInComment) {
+      seen.add(station);
+      additional.push({ station, anomalyCol, comment });
+    }
+  }
+
+  additional.sort((a, b) => a.station - b.station);
+  console.log('[useAnomalyReport] additional suggested anomaly stations:', additional.map(a => `${a.station}: ${a.anomalyCol} / ${a.comment}`));
+  return additional;
 }
 
 // ── Test points (strength points) ─────────────────────────────────────────────

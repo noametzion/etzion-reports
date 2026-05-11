@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import styles from './ReportModal.module.css';
 import { EditedSurvey, SurveyStationKey } from '@/app/types/survey';
 import { DCVGValue, StrengthPoint } from '@/app/types/report';
-import { useAnomalyReport } from '@/app/hooks/useAnomalyReport';
+import { useAnomalyReport, SuggestedAnomaly } from '@/app/hooks/useAnomalyReport';
 import AnomalyTable from './AnomalyTable';
+import StationSelectorEditor from './StationSelectorEditor';
 
 interface ReportModalProps {
   isOpen: boolean;
@@ -20,10 +21,24 @@ type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; 
 const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
   const [overrides, setOverrides] = useState<Map<number, AnomalyOverride>>(new Map());
+  const [userAddedAnomalyStations, setUserAddedAnomalyStations] = useState<number[]>([]);
+  const [showAddSelector, setShowAddSelector] = useState(false);
+  const addBtnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setOverrides(new Map());
+    setUserAddedAnomalyStations([]);
   }, [editedSurvey]);
+
+  useEffect(() => {
+    if (!showAddSelector) return;
+    const close = (e: MouseEvent) => {
+      if (addBtnRef.current?.contains(e.target as Node)) return;
+      setShowAddSelector(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showAddSelector]);
 
   const allMeasuredStations = useMemo(() => {
     const map = new Map<number, { vOn: number; vOff: number }>();
@@ -38,10 +53,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     return map;
   }, [editedSurvey]);
 
-  const { report, dcvgCandidates, strengthPointsCandidates } = useAnomalyReport(
+  const { report, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies } = useAnomalyReport(
     editedSurvey?.surveyData ?? [],
     editedSurvey?.DCPData ?? [],
-    stationDiff
+    stationDiff,
+    userAddedAnomalyStations
   );
 
   const editedAnomalies = useMemo(() => {
@@ -81,6 +97,16 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     });
   }, []);
 
+  const handleAddAnomaly = useCallback((station: number) => {
+    setUserAddedAnomalyStations(prev => [...prev, station]);
+    setShowAddSelector(false);
+  }, []);
+
+  const addSelectorOptions = suggestedAnomalies.map((s: SuggestedAnomaly) => ({
+    station: s.station,
+    label: [String(s.station), s.anomalyCol, s.comment].filter(Boolean).join(' - '),
+  }));
+
   if (!isOpen) return null;
 
   return (
@@ -105,6 +131,26 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
               <span className={styles.inputSuffix}>%</span>
             </span>
           </label>
+          {addSelectorOptions.length > 0 && (
+            <div ref={addBtnRef} className={styles.addAnomalyWrapper}>
+              <button
+                className={styles.addAnomalyBtn}
+                onClick={() => setShowAddSelector(s => !s)}
+                title="Add suggested anomaly"
+              >
+                +
+              </button>
+              {showAddSelector && (
+                <div className={styles.addAnomalyDropdown}>
+                  <StationSelectorEditor
+                    options={addSelectorOptions}
+                    onSelect={handleAddAnomaly}
+                    onCancel={() => setShowAddSelector(false)}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <AnomalyTable
           anomalies={editedAnomalies}
