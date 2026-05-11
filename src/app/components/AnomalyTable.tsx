@@ -201,16 +201,18 @@ interface AnomalyTableProps {
   allMeasuredStations?: Map<number, { vOn: number; vOff: number }>;
   stationDiff?: number;
   dcvgCandidates?: Map<number, DCVGCandidate[]>;
+  userAddedStations?: Set<number>;
   onEditDcvg?: (rowIdx: number, value: DCVGValue) => void;
   onEditStrengthPoint1?: (rowIdx: number, sp: StrengthPoint) => void;
   onEditStrengthPoint2?: (rowIdx: number, sp: StrengthPoint) => void;
+  onRemoveAnomaly?: (rowIdx: number) => void;
 }
 
 type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' };
 
 const AnomalyTable: React.FC<AnomalyTableProps> = ({
   anomalies, irThreshold, strengthPointsCandidates, allMeasuredStations, stationDiff, dcvgCandidates,
-  onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2,
+  userAddedStations, onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2, onRemoveAnomaly,
 }) => {
   const [editState, setEditState] = useState<EditState | null>(null);
   const editCellRef = useRef<HTMLTableCellElement | null>(null);
@@ -301,9 +303,14 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                 }
                 if (col.type === 'flat') {
                   leafIdx++;
+                  const isStationColumn = col.key === 'station';
+                  const showRemove = isStationColumn && onRemoveAnomaly && userAddedStations?.has(anomaly.station);
                   return [
                     <td key={col.key} className={styles.cell}>
                       {getFlatValue(anomaly, col.key)}
+                      {showRemove && (
+                        <button className={styles.removeBtn} onClick={() => onRemoveAnomaly!(rowIdx)}>−</button>
+                      )}
                     </td>,
                   ];
                 }

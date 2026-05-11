@@ -144,3 +144,26 @@
   text-align: center;
   color: #888;
 }
+
+.removeBtn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 4px;
+  border: 1px solid #d32f2f;
+  background: #d32f2f;
+  color: white;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.removeBtn:hover {
+  background: #b71c1c;
+  border-color: #b71c1c;
+}

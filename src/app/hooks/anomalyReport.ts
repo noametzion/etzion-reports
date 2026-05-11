@@ -340,7 +340,7 @@ export function buildAnomalies(
   const anomalies: Anomaly[] = [];
   const dcvgCandidates = new Map<number, DCVGCandidate[]>();
 
-  for (const [station] of anomalyStations) {
+  for (const station of [...anomalyStations.keys()].sort((a, b) => a - b)) {
     const dcpRows = dcpByStation.get(station) ?? [];
     const candidates: DCVGCandidate[] = [];
 

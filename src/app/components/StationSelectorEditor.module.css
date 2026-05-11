@@ -5,14 +5,38 @@
   min-width: 120px;
 }
 
-.select {
-  width: 100%;
+.list {
+  display: flex;
+  flex-direction: column;
   min-width: 200px;
-  padding: 2px 4px;
+  max-height: 160px;
+  overflow-y: auto;
   border: 1px solid #90b8f8;
   border-radius: 3px;
-  font-size: 11px;
   background: white;
+  outline: none;
+}
+
+.listItem {
+  padding: 4px 8px;
+  font-size: 11px;
+  text-align: left;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #e8e8e8;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.listItem:last-child {
+  border-bottom: none;
+}
+
+.listItem:hover {
+  background: #e8f1ff;
 }
 
 .input {

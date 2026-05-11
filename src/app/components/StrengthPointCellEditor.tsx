@@ -32,7 +32,6 @@ const StrengthPointCellEditor: React.FC<StrengthPointCellEditorProps> = ({
   return (
     <StationSelectorEditor
       options={options}
-      currentStation={currentSp?.station}
       onSelect={handleSelect}
       onCancel={onCancel}
       allMeasuredStations={allMeasuredStations}

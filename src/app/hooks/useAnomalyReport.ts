@@ -32,7 +32,7 @@ export const useAnomalyReport = (
   surveyData: EditedSurveyDataRow[],
   dcpData: EditedDCPDataRow[],
   stationDiff: number,
-  userAddedAnomalyStations?: number[]
+  userAddedAnomalyStations?: Set<number>
 ): UseAnomalyReportResult => {
   return useMemo(() => {
     const dcpByStation = groupDcpByStation(dcpData);

@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import styles from './StationSelectorEditor.module.css';
 
-const MANUAL_KEY = '__manual__';
-
 export interface StationOption {
   station: number;
   label: string;
@@ -12,7 +10,6 @@ export interface StationOption {
 
 export interface StationSelectorEditorProps {
   options: StationOption[];
-  currentStation?: number;
   onSelect: (station: number) => void;
   onCancel: () => void;
   // Optional: enables manual entry validated against all measured stations
@@ -21,11 +18,9 @@ export interface StationSelectorEditorProps {
 }
 
 const StationSelectorEditor: React.FC<StationSelectorEditorProps> = ({
-  options, currentStation, onSelect, onCancel, allMeasuredStations, stationDiff,
+  options, onSelect, onCancel, allMeasuredStations, stationDiff,
 }) => {
-  const [selectedKey, setSelectedKey] = useState<string>(
-    currentStation !== undefined ? String(currentStation) : ''
-  );
+  const [showManualInput, setShowManualInput] = useState(false);
   const [manualVal, setManualVal] = useState('');
 
   const allStationKeys = allMeasuredStations ? [...allMeasuredStations.keys()] : [];
@@ -37,14 +32,6 @@ const StationSelectorEditor: React.FC<StationSelectorEditorProps> = ({
     (allMeasuredStations ? allMeasuredStations.has(manualNum) : false);
 
   const showManual = !!allMeasuredStations;
-  const selectSize = Math.min(options.length + (showManual ? 1 : 0), 8);
-
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSelectedKey(val);
-    if (val === MANUAL_KEY) return;
-    onSelect(Number(val));
-  };
 
   const handleManualSave = () => {
     if (!isValidManual) return;
@@ -53,20 +40,37 @@ const StationSelectorEditor: React.FC<StationSelectorEditorProps> = ({
 
   return (
     <div className={styles.editor}>
-      <select
-        className={styles.select}
-        size={Math.max(selectSize, 1)}
-        value={selectedKey}
+      <div
+        className={styles.list}
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+        tabIndex={0}
         autoFocus
-        onChange={handleSelectChange}
         onKeyDown={e => e.key === 'Escape' && onCancel()}
       >
         {options.map(o => (
-          <option key={o.station} value={String(o.station)} title={o.label}>{o.label}</option>
+          <button
+            key={o.station}
+            type="button"
+            className={styles.listItem}
+            title={o.label}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => onSelect(o.station)}
+          >
+            {o.label}
+          </button>
         ))}
-        {showManual && <option value={MANUAL_KEY}>Manual…</option>}
-      </select>
-      {showManual && selectedKey === MANUAL_KEY && (
+        {showManual && (
+          <button
+            type="button"
+            className={styles.listItem}
+            onMouseDown={e => e.preventDefault()}
+            onClick={() => setShowManualInput(s => !s)}
+          >
+            Manual…
+          </button>
+        )}
+      </div>
+      {showManualInput && (
         <div className={styles.row}>
           <input
             type="number"
@@ -92,6 +96,7 @@ const StationSelectorEditor: React.FC<StationSelectorEditorProps> = ({
             }}
           />
           <button
+            type="button"
             className={styles.saveBtn}
             disabled={!isValidManual}
             onClick={handleManualSave}

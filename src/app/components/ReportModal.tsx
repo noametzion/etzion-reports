@@ -21,13 +21,13 @@ type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; 
 const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
   const [overrides, setOverrides] = useState<Map<number, AnomalyOverride>>(new Map());
-  const [userAddedAnomalyStations, setUserAddedAnomalyStations] = useState<number[]>([]);
+  const [userAddedAnomalyStations, setUserAddedAnomalyStations] = useState<Set<number>>(new Set());
   const [showAddSelector, setShowAddSelector] = useState(false);
   const addBtnRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setOverrides(new Map());
-    setUserAddedAnomalyStations([]);
+    setUserAddedAnomalyStations(new Set());
   }, [editedSurvey]);
 
   useEffect(() => {
@@ -98,9 +98,20 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
   }, []);
 
   const handleAddAnomaly = useCallback((station: number) => {
-    setUserAddedAnomalyStations(prev => [...prev, station]);
+    setUserAddedAnomalyStations(prev => new Set([...prev, station]));
     setShowAddSelector(false);
   }, []);
+
+  const handleRemoveAnomaly = useCallback((rowIdx: number) => {
+    const station = report.anomalies[rowIdx]?.station;
+    if (station === undefined) return;
+    setUserAddedAnomalyStations(prev => { const next = new Set(prev); next.delete(station); return next; });
+    setOverrides(prev => {
+      const next = new Map(prev);
+      next.delete(rowIdx);
+      return next;
+    });
+  }, [report.anomalies]);
 
   const addSelectorOptions = suggestedAnomalies.map((s: SuggestedAnomaly) => ({
     station: s.station,
@@ -159,9 +170,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           strengthPointsCandidates={strengthPointsCandidates}
           allMeasuredStations={allMeasuredStations}
           dcvgCandidates={dcvgCandidates}
+          userAddedStations={userAddedAnomalyStations}
           onEditDcvg={handleEditDcvg}
           onEditStrengthPoint1={handleEditStrengthPoint1}
           onEditStrengthPoint2={handleEditStrengthPoint2}
+          onRemoveAnomaly={handleRemoveAnomaly}
         />
       </div>
     </div>
