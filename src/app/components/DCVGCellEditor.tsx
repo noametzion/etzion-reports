@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import styles from './DCVGCellEditor.module.css';
 import { DCVGValue, DCVGValueSource } from '@/app/types/report';
-import { DCVGCandidate } from '@/app/hooks/useAnomalyReport';
+import { DCVGCandidate } from '@/app/hooks/useAnomalyReportCreator';
 
 const MANUAL_KEY = '__manual__';
 

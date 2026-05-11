@@ -2,9 +2,10 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import styles from './ReportModal.module.css';
-import { EditedSurvey, SurveyStationKey } from '@/app/types/survey';
+import { EditedSurvey, SurveyFile, SurveyStationKey } from '@/app/types/survey';
 import { DCVGValue, StrengthPoint } from '@/app/types/report';
-import { useAnomalyReport, SuggestedAnomaly } from '@/app/hooks/useAnomalyReport';
+import { useAnomalyReportCreator, SuggestedAnomaly } from '@/app/hooks/useAnomalyReportCreator';
+import { useAnomalyReport } from '@/app/hooks/useAnomalyReport';
 import AnomalyTable from './AnomalyTable';
 import StationSelectorEditor from './StationSelectorEditor';
 
@@ -12,13 +13,14 @@ interface ReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   surveyName: string;
+  originalSurveyFile?: SurveyFile | null;
   editedSurvey: EditedSurvey | null;
   stationDiff: number;
 }
 
 type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint };
 
-const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, editedSurvey, stationDiff }) => {
+const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, originalSurveyFile, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
   const [overrides, setOverrides] = useState<Map<number, AnomalyOverride>>(new Map());
   const [userAddedAnomalyStations, setUserAddedAnomalyStations] = useState<Set<number>>(new Set());
@@ -53,12 +55,13 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     return map;
   }, [editedSurvey]);
 
-  const { report, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies } = useAnomalyReport(
+  const { report, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies } = useAnomalyReportCreator(
     editedSurvey?.surveyData ?? [],
     editedSurvey?.DCPData ?? [],
     stationDiff,
     userAddedAnomalyStations
   );
+  const { saveAnomalyReport } = useAnomalyReport(originalSurveyFile);
 
   const editedAnomalies = useMemo(() => {
     return report.anomalies.map((a, idx) => {
@@ -112,6 +115,10 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
       return next;
     });
   }, [report.anomalies]);
+
+  const handleApprove = useCallback(() => {
+    saveAnomalyReport({ anomalies: editedAnomalies });
+  }, [saveAnomalyReport, editedAnomalies]);
 
   const addSelectorOptions = suggestedAnomalies.map((s: SuggestedAnomaly) => ({
     station: s.station,
@@ -176,6 +183,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           onEditStrengthPoint2={handleEditStrengthPoint2}
           onRemoveAnomaly={handleRemoveAnomaly}
         />
+        <div className={styles.footer}>
+          <button className={styles.approveBtn} onClick={handleApprove}>
+            Approve Report
+          </button>
+        </div>
       </div>
     </div>
   );

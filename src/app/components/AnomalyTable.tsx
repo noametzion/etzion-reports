@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AnomalyTable.module.css';
 import { Anomaly, DCVGValue, StrengthPoint } from '@/app/types/report';
-import { DCVGCandidate, StrengthPointCandidate } from '@/app/hooks/useAnomalyReport';
+import { DCVGCandidate, StrengthPointCandidate } from '@/app/hooks/useAnomalyReportCreator';
 import { FaPencilAlt } from 'react-icons/fa';
 import DCVGCellEditor from './DCVGCellEditor';
 import StrengthPointCellEditor from './StrengthPointCellEditor';

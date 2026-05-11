@@ -44,10 +44,10 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
   const distPerReading = Number(originalSurvey?.surveyInfo[SurveyInfoStationDiffKey]) || DEFAULT_DIST_PER_READING;
   const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, distPerReading, titles);
   const maps = useMaps(editedSurvey?.surveyData || null, splitDistance, distPerReading);
+  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
-
-  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
+  const surveyNameForReports = reportInfo?.projectName || originalSurveyFile?.name?.replace(/\.[^.]+$/, '') || surveyName;
 
   const handleTitleInfoChange = useCallback((info: TitleInfo, title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle });
@@ -92,7 +92,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
           <button
               onClick={() => setIsReportMode(true)}
               className={styles.reportButton}
-          >REPORT</button>
+          >ANOMALY REPORT</button>
         </div>
       </div>
       {originalSurvey && editedSurvey &&
@@ -136,7 +136,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
       <ExportReportModal
           isOpen={isExportMode}
           onClose={() => setIsExportMode(false)}
-          surveyName={surveyName}
+          surveyName={surveyNameForReports}
           graphs={graphs}
           maps={maps}
           includeDCVG={includeDCVG}
@@ -145,7 +145,8 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
       <ReportModal
         isOpen={isReportMode}
         onClose={() => setIsReportMode(false)}
-        surveyName={surveyName}
+        surveyName={surveyNameForReports}
+        originalSurveyFile={originalSurveyFile}
         editedSurvey={editedSurvey}
         stationDiff={distPerReading}
       />

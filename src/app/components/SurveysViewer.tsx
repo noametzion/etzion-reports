@@ -12,6 +12,7 @@ import { SurveyFile } from '@/app/types/survey';
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import EditorStatusBar from "@/app/components/EditorStatusBar";
 import {useExcelExporter} from "@/app/hooks/useExcelExporter";
+import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
 import ProjectsArranger from "@/app/components/ProjectsArranger";
 import {useProjects} from "@/app/hooks/useProjects";
 import {FaFolderTree} from "react-icons/fa6";
@@ -54,6 +55,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
+  const { reportInfo: selectedFileReportInfo } = useSurveyReportInformation(selectedOriginalFile?.name);
   const [rescanTrigger, setRescanTrigger] = useState(0);
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
@@ -148,7 +150,8 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                 editedSurvey,
                 originalSurvey.surveyInfo,
                 originalSurvey.surveyDataHeaders,
-                originalSurvey.dcpDataHeaders
+                originalSurvey.dcpDataHeaders,
+                selectedFileReportInfo?.projectName || selectedOriginalFile?.name?.replace(/\.[^.]+$/, '') || "survey"
             )}
         />
         <SurveySheet

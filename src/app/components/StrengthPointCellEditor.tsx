@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { StrengthPoint } from '@/app/types/report';
-import { StrengthPointCandidate } from '@/app/hooks/useAnomalyReport';
+import { StrengthPointCandidate } from '@/app/hooks/useAnomalyReportCreator';
 import StationSelectorEditor from './StationSelectorEditor';
 
 export interface StrengthPointCellEditorProps {

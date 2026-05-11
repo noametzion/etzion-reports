@@ -119,3 +119,33 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   padding: 4px;
 }
+
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.approveBtn {
+  padding: 10px 48px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  min-width: 220px;
+}
+
+.approveBtn:hover {
+  background: #b71c1c;
+}
+
+.approveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
