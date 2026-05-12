@@ -13,6 +13,7 @@ import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import EditorStatusBar from "@/app/components/EditorStatusBar";
 import {useExcelExporter} from "@/app/hooks/useExcelExporter";
 import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
+import {useAnomalyReport} from "@/app/hooks/useAnomalyReport";
 import ProjectsArranger from "@/app/components/ProjectsArranger";
 import {useProjects} from "@/app/hooks/useProjects";
 import {FaFolderTree} from "react-icons/fa6";
@@ -56,6 +57,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
   const { reportInfo: selectedFileReportInfo } = useSurveyReportInformation(selectedOriginalFile?.name);
+  const { anomalyReport } = useAnomalyReport(selectedOriginalFile);
   const [rescanTrigger, setRescanTrigger] = useState(0);
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
@@ -145,6 +147,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             unsavedChangesExists={isChanged}
             isUpdating={isUpdating}
             isExporting={isExporting}
+            isAnomalyReportExist={anomalyReport != null}
             onSave={() => { saveEditedSurvey(); setRescanTrigger(t => t + 1); }}
             onExportToExcel={() => exportToExcel(
                 editedSurvey,

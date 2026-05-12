@@ -61,10 +61,12 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     stationDiff,
     userAddedAnomalyStations
   );
-  const { saveAnomalyReport } = useAnomalyReport(originalSurveyFile);
+  const { anomalyReport, saveAnomalyReport, isSaving } = useAnomalyReport(originalSurveyFile);
+
+  const baseAnomalies = anomalyReport?.anomalyReport.anomalies ?? report.anomalies;
 
   const editedAnomalies = useMemo(() => {
-    return report.anomalies.map((a, idx) => {
+    return baseAnomalies.map((a, idx) => {
       const override = overrides.get(idx);
       if (!override) return a;
       return {
@@ -74,7 +76,16 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
         strengthPoint2: override.strengthPoint2 ?? a.strengthPoint2,
       };
     });
-  }, [report.anomalies, overrides]);
+  }, [baseAnomalies, overrides]);
+
+  const hasOrphanedStations = useMemo(() => {
+    if (!anomalyReport) return false;
+    const knownStations = new Set([
+      ...report.anomalies.map(a => a.station),
+      ...suggestedAnomalies.map(s => s.station),
+    ]);
+    return anomalyReport.anomalyReport.anomalies.some(a => !knownStations.has(a.station));
+  }, [anomalyReport, report.anomalies, suggestedAnomalies]);
 
   const isValid = useMemo(
     () => editedAnomalies.every(a => a.strengthPoint1 != null && a.strengthPoint2 != null),
@@ -111,7 +122,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
   }, []);
 
   const handleRemoveAnomaly = useCallback((rowIdx: number) => {
-    const station = report.anomalies[rowIdx]?.station;
+    const station = baseAnomalies[rowIdx]?.station;
     if (station === undefined) return;
     setUserAddedAnomalyStations(prev => { const next = new Set(prev); next.delete(station); return next; });
     setOverrides(prev => {
@@ -119,7 +130,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
       next.delete(rowIdx);
       return next;
     });
-  }, [report.anomalies]);
+  }, [baseAnomalies]);
 
   const handleApprove = useCallback(() => {
     saveAnomalyReport({ anomalies: editedAnomalies });
@@ -137,6 +148,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>Anomaly Report for {surveyName}</h2>
+          {anomalyReport && <span className={styles.approvedBadge}>✓ Report Approved</span>}
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
         <div className={styles.toolbar}>
@@ -175,6 +187,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
             </div>
           )}
         </div>
+        {hasOrphanedStations && (
+          <div className={styles.stationWarning}>
+            ⚠ The approved report contains stations that no longer appear in the survey data. The survey may have changed since the report was approved.
+          </div>
+        )}
         <AnomalyTable
           anomalies={editedAnomalies}
           stationDiff={stationDiff}
@@ -189,8 +206,9 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           onRemoveAnomaly={handleRemoveAnomaly}
         />
         <div className={styles.footer}>
-          <button className={styles.approveBtn} onClick={handleApprove} disabled={!isValid}>
-            Approve Report
+          {isSaving && <span className={styles.savingIndicator}>Saving…</span>}
+          <button className={styles.approveBtn} onClick={handleApprove} disabled={!isValid || isSaving}>
+            {anomalyReport ? 'Update Report' : 'Approve Report'}
           </button>
         </div>
       </div>
