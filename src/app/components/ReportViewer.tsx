@@ -16,6 +16,7 @@ import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
 import ReportModal from "@/app/components/ReportModal";
 import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
+import {getSurveyDisplayName} from "@/app/utils/surveyNameUtils";
 
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
@@ -47,7 +48,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
   const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
-  const surveyNameForReports = reportInfo?.projectName || originalSurveyFile?.name?.replace(/\.[^.]+$/, '') || surveyName;
+  const surveyNameForReports = getSurveyDisplayName(reportInfo?.projectName, originalSurveyFile?.name) || surveyName;
 
   const handleTitleInfoChange = useCallback((info: TitleInfo, title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle });
