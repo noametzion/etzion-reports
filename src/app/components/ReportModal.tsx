@@ -76,6 +76,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     });
   }, [report.anomalies, overrides]);
 
+  const isValid = useMemo(
+    () => editedAnomalies.every(a => a.strengthPoint1 != null && a.strengthPoint2 != null),
+    [editedAnomalies]
+  );
+
   const handleEditDcvg = useCallback((rowIdx: number, value: DCVGValue) => {
     setOverrides(prev => {
       const next = new Map(prev);
@@ -184,7 +189,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
           onRemoveAnomaly={handleRemoveAnomaly}
         />
         <div className={styles.footer}>
-          <button className={styles.approveBtn} onClick={handleApprove}>
+          <button className={styles.approveBtn} onClick={handleApprove} disabled={!isValid}>
             Approve Report
           </button>
         </div>
