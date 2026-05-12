@@ -148,7 +148,11 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             isUpdating={isUpdating}
             isExporting={isExporting}
             isAnomalyReportExist={anomalyReport != null}
-            onSave={() => { saveEditedSurvey(); setRescanTrigger(t => t + 1); }}
+            onSave={() => {
+                if (anomalyReport && !window.confirm('This survey has an approved anomaly report. Saving changes may invalidate it. Continue?')) return;
+                saveEditedSurvey();
+                setRescanTrigger(t => t + 1);
+            }}
             onExportToExcel={() => exportToExcel(
                 editedSurvey,
                 originalSurvey.surveyInfo,

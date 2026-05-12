@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { FaTrash } from 'react-icons/fa';
 import styles from './ReportModal.module.css';
 import { EditedSurvey, SurveyFile, SurveyStationKey } from '@/app/types/survey';
 import { DCVGValue, StrengthPoint } from '@/app/types/report';
@@ -61,7 +62,7 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     stationDiff,
     userAddedAnomalyStations
   );
-  const { anomalyReport, saveAnomalyReport, isSaving } = useAnomalyReport(originalSurveyFile);
+  const { anomalyReport, saveAnomalyReport, deleteAnomalyReport, isSaving } = useAnomalyReport(originalSurveyFile);
 
   const baseAnomalies = anomalyReport?.anomalyReport.anomalies ?? report.anomalies;
 
@@ -148,7 +149,16 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>Anomaly Report for {surveyName}</h2>
-          {anomalyReport && <span className={styles.approvedBadge}>✓ Report Approved</span>}
+          {anomalyReport && (
+            <span className={styles.approvedBadge}>
+              ✓ Report Approved
+              <FaTrash
+                className={styles.deleteReportIcon}
+                title="Delete Report"
+                onClick={() => { if (window.confirm('Delete the approved report? This cannot be undone.')) deleteAnomalyReport(); }}
+              />
+            </span>
+          )}
           <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
         <div className={styles.toolbar}>
@@ -189,7 +199,13 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
         </div>
         {hasOrphanedStations && (
           <div className={styles.stationWarning}>
-            ⚠ The approved report contains stations that no longer appear in the survey data. The survey may have changed since the report was approved.
+            <span>⚠ The approved report contains stations that no longer appear in the survey data. The survey may have changed — we recommend deleting this report and re-creating it.</span>
+            <button
+              className={styles.deleteReportBtn}
+              onClick={() => { if (window.confirm('Delete the approved report? This cannot be undone.')) deleteAnomalyReport(); }}
+            >
+              Delete Report
+            </button>
           </div>
         )}
         <AnomalyTable

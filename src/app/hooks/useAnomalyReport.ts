@@ -6,7 +6,7 @@ import { AnomalyReport } from "@/app/types/report";
 import { SurveyFile } from "@/app/types/survey";
 
 export function useAnomalyReport(originalSurveyFile: SurveyFile | null | undefined) {
-    const { anomalyReports, add, upsert, loaded, status } = useAnomalyReports();
+    const { anomalyReports, add, upsert, remove, loaded, status } = useAnomalyReports();
     const anomalyReport = anomalyReports.find(r => r.originalSurveyFile?.name === originalSurveyFile?.name) ?? null;
 
     const saveAnomalyReport = useCallback((report: AnomalyReport) => {
@@ -18,5 +18,10 @@ export function useAnomalyReport(originalSurveyFile: SurveyFile | null | undefin
         }
     }, [originalSurveyFile, anomalyReport, add, upsert]);
 
-    return { anomalyReport, saveAnomalyReport, loaded, isSaving: status === 'loading' };
+    const deleteAnomalyReport = useCallback(() => {
+        if (!anomalyReport) return;
+        remove(anomalyReport.id);
+    }, [anomalyReport, remove]);
+
+    return { anomalyReport, saveAnomalyReport, deleteAnomalyReport, loaded, isSaving: status === 'loading' };
 }
