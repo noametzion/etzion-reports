@@ -15,7 +15,7 @@ import {
   type DCVGCandidate,
   type StrengthPointCandidate,
   type SuggestedAnomaly,
-} from './anomalyReport';
+} from './anomalyReportCreator';
 
 export type { DCVGCandidate, StrengthPointCandidate, SuggestedAnomaly };
 

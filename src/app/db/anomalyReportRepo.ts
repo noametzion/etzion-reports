@@ -18,7 +18,6 @@ const collectionPath = "anomaly_reports";
 export const anomalyReportsCol = collection(db, collectionPath);
 
 export async function createAnomalyReport(data: AnomalyReportData) {
-    console.log("Creating anomaly report", data);
     const ref = await addDoc(anomalyReportsCol, {
         ...data,
         createdAt: serverTimestamp(),
