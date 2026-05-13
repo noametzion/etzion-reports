@@ -13,6 +13,7 @@ import StrengthPointCellEditor from './StrengthPointCellEditor';
 type SubColumnConfig = {
   key: string;
   label?: string;
+  format?: (val: number) => string;
 };
 
 type SerialColumnConfig = {
@@ -72,14 +73,16 @@ const getIRPct = (a: Anomaly): number | undefined => {
 // ── Column config ─────────────────────────────────────────────────────────────
 // Edit order and labels here to customize the table
 
+const fmt4 = (v: number) => String(parseFloat(v.toFixed(4)));
+
 const COLUMN_CONFIG: ColumnConfig[] = [
   { type: 'serial', label: 'Serial No.' },
   { type: 'flat', key: 'station' },
   {
     type: 'group',
     key: 'dcvgValue',
-    label: 'DCVG Value (mV)',
-    subColumns: [{ key: 'value' }, { key: 'source' }],
+    label: 'DCVG Value',
+    subColumns: [{ key: 'value', label: 'value (mV)', format: fmt4 }, { key: 'source' }],
   },
   {
     type: 'group',
@@ -89,12 +92,12 @@ const COLUMN_CONFIG: ColumnConfig[] = [
   {
     type: 'group',
     key: 'strengthPoint1',
-    subColumns: [{ key: 'station' }, { key: 'vOn' }, { key: 'vOff' }],
+    subColumns: [{ key: 'station' }, { key: 'vOn', format: fmt4 }, { key: 'vOff', format: fmt4 }],
   },
   {
     type: 'group',
     key: 'strengthPoint2',
-    subColumns: [{ key: 'station' }, { key: 'vOn' }, { key: 'vOff' }],
+    subColumns: [{ key: 'station' }, { key: 'vOn', format: fmt4 }, { key: 'vOff', format: fmt4 }],
   },
   {
     type: 'calculated',
@@ -102,7 +105,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'S1',
     tooltip: 'vOn − vOff of Strength Point 1',
     getValue: getS1,
-    format: v => v.toFixed(3),
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -110,7 +113,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'S2',
     tooltip: 'vOn − vOff of Strength Point 2',
     getValue: getS2,
-    format: v => v.toFixed(3),
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -118,6 +121,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'D1',
     tooltip: 'Station of Strength Point 1',
     getValue: getD1,
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -125,6 +129,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'D2',
     tooltip: 'Station of Strength Point 2',
     getValue: getD2,
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -132,6 +137,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'Dx',
     tooltip: 'Station of Anomaly − Station of Strength Point 1',
     getValue: a => a.strengthPoint1 !== undefined ? a.station - a.strengthPoint1.station : undefined,
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -139,7 +145,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: 'P/RE',
     tooltip: 'S1 + Dx × (S2 − S1) / (D2 − D1) — interpolated pipe-to-soil potential at anomaly station',
     getValue: getPRE,
-    format: v => v.toFixed(3),
+    format: fmt4,
   },
   {
     type: 'calculated',
@@ -147,7 +153,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
     label: '%IR',
     tooltip: 'ABS(DCVG value / P/RE / 1000) — ÷1000 for unit conversion, verify expected range',
     getValue: getIRPct,
-    format: v => `${(v * 100).toFixed(2)}%`,
+    format: v => `${parseFloat((v * 100).toFixed(2))}%`,
   },
 ];
 
@@ -180,11 +186,13 @@ function getFlatValue(anomaly: Anomaly, key: keyof Anomaly): string {
   return val !== null && val !== undefined ? String(val) : '';
 }
 
-function getSubValue(anomaly: Anomaly, colKey: keyof Anomaly, subKey: string): string {
+function getSubValue(anomaly: Anomaly, colKey: keyof Anomaly, sub: SubColumnConfig): string {
   const obj = anomaly[colKey];
   if (obj === null || obj === undefined) return '';
-  const val = (obj as Record<string, unknown>)[subKey];
-  return val !== null && val !== undefined ? String(val) : '';
+  const val = (obj as Record<string, unknown>)[sub.key];
+  if (val === null || val === undefined) return '';
+  if (sub.format && typeof val === 'number') return sub.format(val);
+  return String(val);
 }
 
 function formatCalc(col: CalculatedColumnConfig, anomaly: Anomaly): string {
@@ -379,7 +387,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                         />
                       ) : (
                         <>
-                          {getSubValue(anomaly, col.key, sub.key)}
+                          {getSubValue(anomaly, col.key, sub)}
                           {isEditable && <FaPencilAlt className={styles.editIcon} />}
                         </>
                       )}

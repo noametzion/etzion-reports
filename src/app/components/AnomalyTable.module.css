@@ -11,6 +11,7 @@
   background-color: #f0f0f0;
   text-align: center;
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* Object group header: bolder side borders to delineate the group */
@@ -37,6 +38,7 @@
   padding: 4px 6px;
   background-color: #f0f0f0;
   text-align: center;
+  white-space: nowrap;
 }
 
 .cell {

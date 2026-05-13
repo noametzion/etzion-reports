@@ -84,6 +84,9 @@ const mkIr     = (border: Border, hi: boolean): Style =>
   hi ? { fill: { fgColor: { rgb: 'FFFF00' } }, border } : { border };
 const mkFile   = (rgb: string, border: Border): Style => ({ fill: { fgColor: { rgb } }, border });
 
+const r4 = (v: number | undefined): number | undefined =>
+  v !== undefined ? Math.round(v * 10000) / 10000 : undefined;
+
 function makeCell(v: string | number | undefined | null, style: Style, numFmt?: string): XLSX.CellObject {
   const val = v ?? '';
   const t = typeof val === 'number' ? 'n' : 's';
@@ -140,10 +143,10 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
       set(ws, 1, row, `${displayName}.xlsx`,       mkFile(fc, B));
       set(ws, 2, row, '',                          mkData(B));
       set(ws, 3, row, a.station,                   mkData(B));
-      set(ws, 4, row, a.dcvgValue.value,           mkData(B));
+      set(ws, 4, row, r4(a.dcvgValue.value),       mkData(B));
       set(ws, 5, row, a.coordinate?.latitude,      mkData(BGL));
       set(ws, 6, row, a.coordinate?.longitude,     mkData(BGR));
-      set(ws, 7, row, ir,                          mkIr(B, hi), '0.00%');
+      set(ws, 7, row, ir,                          mkIr(B, hi), '0.##%');
       row++;
     }
   });
@@ -219,26 +222,26 @@ function buildDetailedSheet(files: SortedFile[], irThreshold: number): XLSX.Work
     for (const a of [...report.anomalyReport.anomalies].sort((x, y) => x.station - y.station)) {
       const ir = getIRRatio(a);
       const hi = ir !== undefined && ir * 100 >= irThreshold;
-      set(ws, 0,  row, serial++,                  mkData(B));
-      set(ws, 1,  row, `${displayName}.xlsx`,     mkFile(fc, B));
-      set(ws, 2,  row, '',                        mkData(B));
-      set(ws, 3,  row, a.station,                 mkData(B));
-      set(ws, 4,  row, a.dcvgValue.value,         mkData(B));
-      set(ws, 5,  row, a.coordinate?.latitude,    mkData(BGL));
-      set(ws, 6,  row, a.coordinate?.longitude,   mkData(BGR));
-      set(ws, 7,  row, a.strengthPoint1?.station, mkData(BGL));
-      set(ws, 8,  row, a.strengthPoint1?.vOn,     mkData(B));
-      set(ws, 9,  row, a.strengthPoint1?.vOff,    mkData(BGR));
-      set(ws, 10, row, a.strengthPoint2?.station, mkData(BGL));
-      set(ws, 11, row, a.strengthPoint2?.vOn,     mkData(B));
-      set(ws, 12, row, a.strengthPoint2?.vOff,    mkData(BGR));
-      set(ws, 13, row, getS1(a),                  mkCalc(B));
-      set(ws, 14, row, getS2(a),                  mkCalc(B));
-      set(ws, 15, row, getD1(a),                  mkCalc(B));
-      set(ws, 16, row, getD2(a),                  mkCalc(B));
-      set(ws, 17, row, getDx(a),                  mkCalc(B));
-      set(ws, 18, row, getPRE(a),                 mkCalc(B));
-      set(ws, 19, row, ir,                        mkIr(B, hi), '0.00%');
+      set(ws, 0,  row, serial++,                       mkData(B));
+      set(ws, 1,  row, `${displayName}.xlsx`,          mkFile(fc, B));
+      set(ws, 2,  row, '',                             mkData(B));
+      set(ws, 3,  row, a.station,                      mkData(B));
+      set(ws, 4,  row, r4(a.dcvgValue.value),          mkData(B));
+      set(ws, 5,  row, a.coordinate?.latitude,         mkData(BGL));
+      set(ws, 6,  row, a.coordinate?.longitude,        mkData(BGR));
+      set(ws, 7,  row, a.strengthPoint1?.station,      mkData(BGL));
+      set(ws, 8,  row, r4(a.strengthPoint1?.vOn),      mkData(B));
+      set(ws, 9,  row, r4(a.strengthPoint1?.vOff),     mkData(BGR));
+      set(ws, 10, row, a.strengthPoint2?.station,      mkData(BGL));
+      set(ws, 11, row, r4(a.strengthPoint2?.vOn),      mkData(B));
+      set(ws, 12, row, r4(a.strengthPoint2?.vOff),     mkData(BGR));
+      set(ws, 13, row, r4(getS1(a)),                   mkCalc(B));
+      set(ws, 14, row, r4(getS2(a)),                   mkCalc(B));
+      set(ws, 15, row, r4(getD1(a)),                   mkCalc(B));
+      set(ws, 16, row, r4(getD2(a)),                   mkCalc(B));
+      set(ws, 17, row, r4(getDx(a)),                   mkCalc(B));
+      set(ws, 18, row, r4(getPRE(a)),                  mkCalc(B));
+      set(ws, 19, row, ir,                             mkIr(B, hi), '0.##%');
       row++;
     }
   });

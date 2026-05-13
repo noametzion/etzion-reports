@@ -41,7 +41,7 @@ const ProjectReportPopover: React.FC<ProjectReportPopoverProps> = ({ onClose, to
         <thead>
           <tr>
             <th>Original File</th>
-            <th>Edited File</th>
+            <th>Edited File Name</th>
             <th>Anomaly Report</th>
           </tr>
         </thead>
@@ -49,7 +49,7 @@ const ProjectReportPopover: React.FC<ProjectReportPopoverProps> = ({ onClose, to
           {sortedFiles.map(({ file, displayName, hasAnomalyReport }) => (
             <tr key={file.name}>
               <td>{file.name}</td>
-              <td>{displayName}.xlsx</td>
+              <td>{displayName}</td>
               <td>
                   { hasAnomalyReport && <span className={styles.approvedTag}>✓ Approved</span> }
               </td>
