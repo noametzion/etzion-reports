@@ -14,7 +14,7 @@ import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
-import ReportModal from "@/app/components/ReportModal";
+import AnomalyReportModal from "@/app/components/AnomalyReportModal";
 import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
 import {getSurveyDisplayName} from "@/app/utils/surveyNameUtils";
 
@@ -143,7 +143,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
           includeDCVG={includeDCVG}
           includeMap={includeMap}
       />
-      <ReportModal
+      <AnomalyReportModal
         isOpen={isReportMode}
         onClose={() => setIsReportMode(false)}
         surveyName={surveyNameForReports}

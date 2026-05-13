@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { FaTrash } from 'react-icons/fa';
-import styles from './ReportModal.module.css';
+import styles from './AnomalyReportModal.module.css';
 import { EditedSurvey, SurveyFile, SurveyStationKey } from '@/app/types/survey';
 import { DCVGValue, StrengthPoint } from '@/app/types/report';
 import { useAnomalyReportCreator, SuggestedAnomaly } from '@/app/hooks/useAnomalyReportCreator';
@@ -10,7 +10,7 @@ import { useAnomalyReport } from '@/app/hooks/useAnomalyReport';
 import AnomalyTable from './AnomalyTable';
 import StationSelectorEditor from './StationSelectorEditor';
 
-interface ReportModalProps {
+interface AnomalyReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   surveyName: string;
@@ -21,7 +21,7 @@ interface ReportModalProps {
 
 type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint };
 
-const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, originalSurveyFile, editedSurvey, stationDiff }) => {
+const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose, surveyName, originalSurveyFile, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
   const [overrides, setOverrides] = useState<Map<number, AnomalyOverride>>(new Map());
   const [userAddedAnomalyStations, setUserAddedAnomalyStations] = useState<Set<number>>(new Set());
@@ -242,4 +242,4 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
   );
 };
 
-export default ReportModal;
+export default AnomalyReportModal;
