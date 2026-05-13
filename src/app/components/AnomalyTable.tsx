@@ -78,12 +78,13 @@ const COLUMN_CONFIG: ColumnConfig[] = [
   {
     type: 'group',
     key: 'dcvgValue',
+    label: 'DCVG Value (mV)',
     subColumns: [{ key: 'value' }, { key: 'source' }],
   },
   {
     type: 'group',
     key: 'coordinate',
-    subColumns: [{ key: 'latitude' }, { key: 'longitude' }, { key: 'altitude' }],
+    subColumns: [{ key: 'latitude' }, { key: 'longitude' }],
   },
   {
     type: 'group',
@@ -319,11 +320,16 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                   const isIrAboveThreshold =
                     col.key === 'ir' &&
                     irThreshold !== undefined &&
-                    (col.getValue(anomaly) ?? 0) * 100 > irThreshold;
+                    (col.getValue(anomaly) ?? 0) * 100 >= irThreshold;
+                  const cellClass = isIrAboveThreshold
+                    ? styles.irHighlight
+                    : col.key === 'ir'
+                      ? styles.cell
+                      : styles.calculatedCell;
                   return [
                     <td
                       key={col.key}
-                      className={isIrAboveThreshold ? styles.irHighlight : styles.calculatedCell}
+                      className={cellClass}
                     >
                       {formatCalc(col, anomaly)}
                     </td>,
@@ -364,7 +370,6 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                           candidates={strengthPointsCandidates!}
                           allMeasuredStations={allMeasuredStations}
                           stationDiff={stationDiff}
-                          currentSp={isEditableSp1 ? anomaly.strengthPoint1 : anomaly.strengthPoint2}
                           onSave={sp => {
                             if (isEditableSp1) onEditStrengthPoint1!(rowIdx, sp);
                             else onEditStrengthPoint2!(rowIdx, sp);

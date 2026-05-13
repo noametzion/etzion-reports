@@ -42,7 +42,6 @@ const StationSelectorEditor: React.FC<StationSelectorEditorProps> = ({
     <div className={styles.editor}>
       <div
         className={styles.list}
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
         tabIndex={0}
         autoFocus
         onKeyDown={e => e.key === 'Escape' && onCancel()}

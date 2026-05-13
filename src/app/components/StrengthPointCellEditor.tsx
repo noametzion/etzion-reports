@@ -9,13 +9,12 @@ export interface StrengthPointCellEditorProps {
   candidates: StrengthPointCandidate[];
   allMeasuredStations?: Map<number, { vOn: number; vOff: number }>;
   stationDiff?: number;
-  currentSp: StrengthPoint | undefined;
   onSave: (sp: StrengthPoint) => void;
   onCancel: () => void;
 }
 
 const StrengthPointCellEditor: React.FC<StrengthPointCellEditorProps> = ({
-  candidates, allMeasuredStations, stationDiff, currentSp, onSave, onCancel,
+  candidates, allMeasuredStations, stationDiff, onSave, onCancel,
 }) => {
   const options = candidates.map(c => ({ station: c.value, label: `${c.value} - ${c.source}` }));
 

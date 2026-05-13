@@ -284,7 +284,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                           title={`View report for ${projectWithFiles.project.projectName}`}
                         >
                           <FaClipboardList className={styles.summaryIcon} />
-                          <span>Report</span>
+                          <span>Anomaly Report</span>
                         </button>
                       </div>
                     </td>
