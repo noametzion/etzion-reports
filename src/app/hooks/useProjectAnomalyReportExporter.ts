@@ -78,11 +78,12 @@ const mkHeader = (border: Border): Style => ({
   border,
   alignment: { horizontal: 'center', wrapText: true },
 });
-const mkData   = (border: Border): Style => ({ border });
-const mkCalc   = (border: Border): Style => ({ fill: { fgColor: { rgb: 'FFFDE7' } }, border });
+const CENTER = { horizontal: 'center' };
+const mkData   = (border: Border): Style => ({ border, alignment: CENTER });
+const mkCalc   = (border: Border): Style => ({ fill: { fgColor: { rgb: 'FFFDE7' } }, border, alignment: CENTER });
 const mkIr     = (border: Border, hi: boolean): Style =>
-  hi ? { fill: { fgColor: { rgb: 'FFFF00' } }, border } : { border };
-const mkFile   = (rgb: string, border: Border): Style => ({ fill: { fgColor: { rgb } }, border });
+  hi ? { fill: { fgColor: { rgb: 'FFFF00' } }, border, alignment: CENTER } : { border, alignment: CENTER };
+const mkFile   = (rgb: string, border: Border): Style => ({ fill: { fgColor: { rgb } }, border, alignment: CENTER });
 
 const r4 = (v: number | undefined): number | undefined =>
   v !== undefined ? Math.round(v * 10000) / 10000 : undefined;
@@ -130,8 +131,8 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
   for (let c = 5; c <= 6; c++) set(ws, c, 0, c === 5 ? 'Coordinate' : '', mkHeader(BGLR));
   merge(merges, 0, 5, 0, 6);
 
-  set(ws, 5, 1, 'latitude',  mkHeader(BGL));
-  set(ws, 6, 1, 'longitude', mkHeader(BGR));
+  set(ws, 5, 1, 'Latitude',  mkHeader(BGL));
+  set(ws, 6, 1, 'Longitude', mkHeader(BGR));
 
   let serial = 1, row = 2;
   files.forEach(({ displayName, report }, fi) => {
@@ -209,9 +210,9 @@ function buildDetailedSheet(files: SortedFile[], irThreshold: number): XLSX.Work
   }
 
   for (const [col, label] of [
-    [5, 'latitude'], [6, 'longitude'],
-    [7, 'station'], [8, 'vOn'], [9, 'vOff'],
-    [10, 'station'], [11, 'vOn'], [12, 'vOff'],
+    [5, 'Latitude'], [6, 'Longitude'],
+    [7, 'Station'], [8, 'vOn'], [9, 'vOff'],
+    [10, 'Station'], [11, 'vOn'], [12, 'vOff'],
   ] as [number, string][]) {
     set(ws, col, 1, label, mkHeader(db(col)));
   }
