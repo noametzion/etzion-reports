@@ -140,7 +140,7 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
       const ir = getIRRatio(a);
       const hi = ir !== undefined && ir * 100 >= irThreshold;
       set(ws, 0, row, serial++,                    mkData(B));
-      set(ws, 1, row, `${displayName}.xlsx`,       mkFile(fc, B));
+      set(ws, 1, row, displayName,       mkFile(fc, B));
       set(ws, 2, row, '',                          mkData(B));
       set(ws, 3, row, a.station,                   mkData(B));
       set(ws, 4, row, r4(a.dcvgValue.value),       mkData(B));
@@ -223,7 +223,7 @@ function buildDetailedSheet(files: SortedFile[], irThreshold: number): XLSX.Work
       const ir = getIRRatio(a);
       const hi = ir !== undefined && ir * 100 >= irThreshold;
       set(ws, 0,  row, serial++,                       mkData(B));
-      set(ws, 1,  row, `${displayName}.xlsx`,          mkFile(fc, B));
+      set(ws, 1,  row, displayName,          mkFile(fc, B));
       set(ws, 2,  row, '',                             mkData(B));
       set(ws, 3,  row, a.station,                      mkData(B));
       set(ws, 4,  row, r4(a.dcvgValue.value),          mkData(B));
