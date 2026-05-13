@@ -211,10 +211,10 @@ interface AnomalyTableProps {
   stationDiff?: number;
   dcvgCandidates?: Map<number, DCVGCandidate[]>;
   userAddedStations?: Set<number>;
-  onEditDcvg?: (rowIdx: number, value: DCVGValue) => void;
-  onEditStrengthPoint1?: (rowIdx: number, sp: StrengthPoint) => void;
-  onEditStrengthPoint2?: (rowIdx: number, sp: StrengthPoint) => void;
-  onRemoveAnomaly?: (rowIdx: number) => void;
+  onEditDcvg?: (station: number, value: DCVGValue) => void;
+  onEditStrengthPoint1?: (station: number, sp: StrengthPoint) => void;
+  onEditStrengthPoint2?: (station: number, sp: StrengthPoint) => void;
+  onRemoveAnomaly?: (station: number) => void;
 }
 
 type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' };
@@ -318,7 +318,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                     <td key={col.key} className={styles.cell}>
                       {getFlatValue(anomaly, col.key)}
                       {showRemove && (
-                        <button className={styles.removeBtn} onClick={() => onRemoveAnomaly!(rowIdx)}>−</button>
+                        <button className={styles.removeBtn} onClick={() => onRemoveAnomaly!(anomaly.station)}>−</button>
                       )}
                     </td>,
                   ];
@@ -370,7 +370,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                         <DCVGCellEditor
                           candidates={dcvgCandidates?.get(anomaly.station) ?? []}
                           currentValue={anomaly.dcvgValue}
-                          onSave={v => { onEditDcvg!(rowIdx, v); setEditState(null); }}
+                          onSave={v => { onEditDcvg!(anomaly.station, v); setEditState(null); }}
                           onCancel={() => setEditState(null)}
                         />
                       ) : isEditing && (isEditableSp1 || isEditableSp2) ? (
@@ -379,8 +379,8 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                           allMeasuredStations={allMeasuredStations}
                           stationDiff={stationDiff}
                           onSave={sp => {
-                            if (isEditableSp1) onEditStrengthPoint1!(rowIdx, sp);
-                            else onEditStrengthPoint2!(rowIdx, sp);
+                            if (isEditableSp1) onEditStrengthPoint1!(anomaly.station, sp);
+                            else onEditStrengthPoint2!(anomaly.station, sp);
                             setEditState(null);
                           }}
                           onCancel={() => setEditState(null)}

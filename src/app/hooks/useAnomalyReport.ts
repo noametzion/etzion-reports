@@ -12,9 +12,9 @@ export function useAnomalyReport(originalSurveyFile: SurveyFile | null | undefin
     const saveAnomalyReport = useCallback((report: AnomalyReport) => {
         if (!originalSurveyFile) return;
         if (anomalyReport) {
-            upsert(anomalyReport.id, { originalSurveyFile, anomalyReport: report });
+            return upsert(anomalyReport.id, { originalSurveyFile, anomalyReport: report });
         } else {
-            add({ originalSurveyFile, anomalyReport: report });
+            return add({ originalSurveyFile, anomalyReport: report });
         }
     }, [originalSurveyFile, anomalyReport, add, upsert]);
 

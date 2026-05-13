@@ -121,7 +121,7 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
   const ws: XLSX.WorkSheet = {};
   const merges: XLSX.Range[] = [];
 
-  for (const [col, label] of [[0, 'Serial No.'], [1, 'File Name'], [2, 'Section'], [3, 'Station'], [4, 'DCVG Value (mV)'], [7, '%IR']] as [number, string][]) {
+  for (const [col, label] of [[0, 'Serial No.'], [1, 'File'], [2, 'Section'], [3, 'Station'], [4, 'DCVG Value (mV)'], [7, '%IR']] as [number, string][]) {
     set(ws, col, 0, label, mkHeader(B));
     set(ws, col, 1, '', mkHeader(B));
     merge(merges, 0, col, 1, col);
@@ -196,7 +196,7 @@ function buildDetailedSheet(files: SortedFile[], irThreshold: number): XLSX.Work
   const merges: XLSX.Range[] = [];
 
   for (const [col, label] of [
-    [0, 'Serial No.'], [1, 'File Name'], [2, 'Section'], [3, 'Station'], [4, 'DCVG Value (mV)'],
+    [0, 'Serial No.'], [1, 'File'], [2, 'Section'], [3, 'Station'], [4, 'DCVG Value (mV)'],
     [13, 'S1'], [14, 'S2'], [15, 'D1'], [16, 'D2'], [17, 'Dx'], [18, 'P/RE'], [19, '%IR'],
   ] as [number, string][]) {
     set(ws, col, 0, label, mkHeader(B));

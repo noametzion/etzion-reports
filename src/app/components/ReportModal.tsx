@@ -67,8 +67,8 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
   const baseAnomalies = anomalyReport?.anomalyReport.anomalies ?? report.anomalies;
 
   const editedAnomalies = useMemo(() => {
-    return baseAnomalies.map((a, idx) => {
-      const override = overrides.get(idx);
+    return baseAnomalies.map((a) => {
+      const override = overrides.get(a.station);
       if (!override) return a;
       return {
         ...a,
@@ -93,26 +93,26 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     [editedAnomalies]
   );
 
-  const handleEditDcvg = useCallback((rowIdx: number, value: DCVGValue) => {
+  const handleEditDcvg = useCallback((station: number, value: DCVGValue) => {
     setOverrides(prev => {
       const next = new Map(prev);
-      next.set(rowIdx, { ...prev.get(rowIdx), dcvgValue: value });
+      next.set(station, { ...prev.get(station), dcvgValue: value });
       return next;
     });
   }, []);
 
-  const handleEditStrengthPoint1 = useCallback((rowIdx: number, sp: StrengthPoint) => {
+  const handleEditStrengthPoint1 = useCallback((station: number, sp: StrengthPoint) => {
     setOverrides(prev => {
       const next = new Map(prev);
-      next.set(rowIdx, { ...prev.get(rowIdx), strengthPoint1: sp });
+      next.set(station, { ...prev.get(station), strengthPoint1: sp });
       return next;
     });
   }, []);
 
-  const handleEditStrengthPoint2 = useCallback((rowIdx: number, sp: StrengthPoint) => {
+  const handleEditStrengthPoint2 = useCallback((station: number, sp: StrengthPoint) => {
     setOverrides(prev => {
       const next = new Map(prev);
-      next.set(rowIdx, { ...prev.get(rowIdx), strengthPoint2: sp });
+      next.set(station, { ...prev.get(station), strengthPoint2: sp });
       return next;
     });
   }, []);
@@ -122,20 +122,27 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
     setShowAddSelector(false);
   }, []);
 
-  const handleRemoveAnomaly = useCallback((rowIdx: number) => {
-    const station = baseAnomalies[rowIdx]?.station;
-    if (station === undefined) return;
+  const handleRemoveAnomaly = useCallback((station: number) => {
     setUserAddedAnomalyStations(prev => { const next = new Set(prev); next.delete(station); return next; });
     setOverrides(prev => {
       const next = new Map(prev);
-      next.delete(rowIdx);
+      next.delete(station);
       return next;
     });
-  }, [baseAnomalies]);
+  }, []);
 
   const handleApprove = useCallback(() => {
-    saveAnomalyReport({ anomalies: editedAnomalies });
-  }, [saveAnomalyReport, editedAnomalies]);
+    if (!anomalyReport) {
+      const ok = window.confirm('Once approved, anomalies cannot be added or removed — only values can be edited. Proceed?');
+      if (!ok) return;
+    }
+    saveAnomalyReport({ anomalies: editedAnomalies })?.then((result) => {
+      if (result) {
+        setOverrides(new Map());
+        setUserAddedAnomalyStations(new Set());
+      }
+    });
+  }, [saveAnomalyReport, editedAnomalies, anomalyReport]);
 
   const addSelectorOptions = suggestedAnomalies.map((s: SuggestedAnomaly) => ({
     station: s.station,
@@ -180,8 +187,11 @@ const ReportModal: React.FC<ReportModalProps> = ({ isOpen, onClose, surveyName, 
             <div ref={addBtnRef} className={styles.addAnomalyWrapper}>
               <button
                 className={styles.addAnomalyBtn}
-                onClick={() => setShowAddSelector(s => !s)}
-                title="Add suggested anomaly"
+                disabled={!!anomalyReport}
+                onClick={anomalyReport ? undefined : () => setShowAddSelector(s => !s)}
+                title={anomalyReport
+                  ? 'Anomaly report already approved — anomalies cannot be added, just edited'
+                  : 'Add suggested anomaly'}
               >
                 +
               </button>
