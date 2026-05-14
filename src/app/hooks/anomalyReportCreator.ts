@@ -1,4 +1,4 @@
-import { Anomaly, Coordinate, DCVGValue, DCVGValueSource, StrengthPoint } from '@/app/types/report';
+import { Anomaly, Coordinate, DCVGValue, DCVGValueSource, Landmark, Section, StrengthPoint } from '@/app/types/report';
 import {
   EditedSurveyDataRow,
   EditedDCPDataRow,
@@ -8,6 +8,7 @@ import {
   SurveyAnomalyKey,
   SurveyCommentKey, DCPDataAnomaly_MARK_DCVG_SIDE_DRAIN, DCPDataAnomaly_DCVG_ANOMALY_TOTAL, SurveyDSVGVoltageKeys,
   SurveyAnomaly_SURVEY_TP_MARKER, DCPDataDCVGValueKey, SurveyOnVoltageKey, SurveyOffVoltageKey,
+  LANDMARK_PATTERNS, DCPDataCommentKey,
 } from '@/app/types/survey';
 
 // ── Exported types ────────────────────────────────────────────────────────────
@@ -321,6 +322,113 @@ export function buildTpMap(
   return tpMap;
 }
 
+// Search the survey comment at centerIdx, then ±TP_SEARCH_RADIUS rows, for a regex match.
+// Returns the first capture group (the identifier) or null.
+function findLandmarkNumber(
+  surveyData: EditedSurveyDataRow[],
+  centerIdx: number,
+  numberRegex: RegExp,
+): string | null {
+  const ownMatch = surveyData[centerIdx][SurveyCommentKey]?.toString().match(numberRegex);
+  if (ownMatch) return ownMatch[1];
+  for (let dist = 1; dist <= TP_SEARCH_RADIUS; dist++) {
+    for (const dir of [-1, 1]) {
+      const idx = centerIdx + dist * dir;
+      if (idx < 0 || idx >= surveyData.length) continue;
+      const nearMatch = surveyData[idx][SurveyCommentKey]?.toString().match(numberRegex);
+      if (nearMatch) return nearMatch[1];
+    }
+  }
+  return null;
+}
+
+// Mirrors buildTpMap: DCP data is authoritative for station; survey comments preferred for
+// the identifier (±TP_SEARCH_RADIUS rows), falling back to DCP fields.
+// Only includes a landmark if an identifier is found.
+function buildPatternLandmarksMap(
+  dcpData: EditedDCPDataRow[],
+  surveyData: EditedSurveyDataRow[],
+  surveyIndexByStation: Map<number, number[]>,
+  regex: RegExp,
+  baseLabel: string,
+  numberRegex: RegExp,
+): Map<number, Landmark> {
+  const byStation = new Map<number, Landmark>();
+
+  // Step 1 – DCP data: station is authoritative; identifier from survey comments, then DCP fields
+  for (const row of dcpData) {
+    const dcpVal = row[DCPDataAnomalyKey]?.toString() ?? '';
+    const dcpComment = row[DCPDataCommentKey]?.toString() ?? '';
+    if (!regex.test(dcpVal) && !regex.test(dcpComment)) continue;
+
+    const station = Number(row[DCPDataStationKey]);
+    if (byStation.has(station)) continue;
+
+    let num: string | null = null;
+    for (const idx of surveyIndexByStation.get(station) ?? []) {
+      num = findLandmarkNumber(surveyData, idx, numberRegex);
+      if (num) break;
+    }
+    if (!num) num = dcpVal.match(numberRegex)?.[1] ?? dcpComment.match(numberRegex)?.[1] ?? null;
+
+    if (num) byStation.set(station, { station, label: `${baseLabel} ${num}` });
+  }
+
+  // Step 2 – Survey data: landmarks not found via DCP
+  for (let i = 0; i < surveyData.length; i++) {
+    const row = surveyData[i];
+    const surveyVal = row[SurveyAnomalyKey]?.toString() ?? '';
+    const surveyComment = row[SurveyCommentKey]?.toString() ?? '';
+    if (!regex.test(surveyVal) && !regex.test(surveyComment)) continue;
+
+    const station = Number(row[SurveyStationKey]);
+    if (byStation.has(station)) continue;
+
+    const num = findLandmarkNumber(surveyData, i, numberRegex)
+      ?? surveyVal.match(numberRegex)?.[1]
+      ?? surveyComment.match(numberRegex)?.[1]
+      ?? null;
+
+    if (num) byStation.set(station, { station, label: `${baseLabel} ${num}` });
+  }
+
+  return byStation;
+}
+
+export function buildLandmarks(
+  tpMap: Map<number, TpMeta>,
+  dcpData: EditedDCPDataRow[],
+  surveyData: EditedSurveyDataRow[],
+  surveyIndexByStation: Map<number, number[]>,
+): Landmark[] {
+  const byStation = new Map<number, Landmark>();
+
+  // TPs: keyed by station, labelled "TP N"
+  for (const tp of tpMap.values()) {
+    byStation.set(tp.station, { station: tp.station, label: `TP ${tp.tpNumber}` });
+  }
+
+  // ST stations in survey data that weren't resolved to a TP — only include if a number is found
+  const tpStations = new Set([...tpMap.values()].map(tp => tp.station));
+  for (let i = 0; i < surveyData.length; i++) {
+    const row = surveyData[i];
+    if (row[SurveyAnomalyKey] !== SurveyAnomaly_SURVEY_TP_MARKER) continue;
+    const station = Number(row[SurveyStationKey]);
+    if (tpStations.has(station) || byStation.has(station)) continue;
+    const result = findTpNumberFromSurvey(surveyData, i);
+    if (result) byStation.set(station, { station, label: `ST ${result.tpNumber}` });
+  }
+
+  // Pattern-based landmarks (e.g. Manhole) — DCP authoritative for station, survey comments for identifier
+  for (const { regex, baseLabel, numberRegex } of LANDMARK_PATTERNS) {
+    for (const [station, landmark] of buildPatternLandmarksMap(dcpData, surveyData, surveyIndexByStation, regex, baseLabel, numberRegex)) {
+      if (!byStation.has(station)) byStation.set(station, landmark);
+    }
+  }
+
+  return [...byStation.values()].sort((a, b) => a.station - b.station);
+}
+
 export function toStrengthPoint(tp: TpMeta): StrengthPoint {
   return { station: tp.station, vOn: tp.vOn, vOff: tp.vOff };
 }
@@ -335,7 +443,8 @@ export function buildAnomalies(
   dcpByStation: Map<number, EditedDCPDataRow[]>,
   surveyByStation: Map<number, EditedSurveyDataRow[]>,
   tpsByStation: TpMeta[],
-  stationDiff: number
+  stationDiff: number,
+  landmarksByStation: Landmark[],
 ): { anomalies: Anomaly[]; dcvgCandidates: Map<number, DCVGCandidate[]> } {
   const anomalies: Anomaly[] = [];
   const dcvgCandidates = new Map<number, DCVGCandidate[]>();
@@ -429,12 +538,18 @@ export function buildAnomalies(
     const leftTp = [...tpsByStation].reverse().find(tp => tp.station <= station);
     const rightTp = tpsByStation.find(tp => tp.station > station);
 
+    // Default section: closest landmarks on each side
+    const fromLandmark = [...landmarksByStation].reverse().find(lm => lm.station <= station);
+    const toLandmark = landmarksByStation.find(lm => lm.station > station);
+    const section: Section | undefined = fromLandmark && toLandmark ? { from: fromLandmark, to: toLandmark } : undefined;
+
     anomalies.push({
       station,
       dcvgValue,
       coordinate,
       strengthPoint1: leftTp ? toStrengthPoint(leftTp) : undefined,
       strengthPoint2: rightTp ? toStrengthPoint(rightTp) : undefined,
+      section,
     });
   }
 

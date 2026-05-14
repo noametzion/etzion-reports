@@ -183,6 +183,12 @@ export const SurveyDSVGVoltageKeys = ['DCVG Voltage'] as (keyof SurveyDataRow)[]
 export const SurveyDateTimeKeys= ['On Time', 'Off Time', 'Fix Time'] as (keyof SurveyDataRow)[];
 export const SwitchableSurveyKeys = [['On Voltage','Off Voltage']] as (SurveySwitchablePair)[];
 
+// Landmark detection patterns (extend this list to add new landmark types beyond TPs and STs)
+export const LANDMARK_PATTERNS: Array<{ regex: RegExp; baseLabel: string; numberRegex: RegExp }> = [
+  { regex: /manhole/i, baseLabel: 'Manhole', numberRegex: /\bmanhole\s*([A-Za-z0-9]+)/i },
+  { regex: /st/i, baseLabel: 'Station', numberRegex: /\bst\s*([A-Za-z0-9]+)/i },
+];
+
 export type EditableType = number | string ;
 export type EditableTypeName = "string" | "number";
 

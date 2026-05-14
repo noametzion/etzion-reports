@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import { AnomalyReport } from '@/app/types/report';
+import { AnomalyReport, Landmark } from '@/app/types/report';
 import { EditedSurveyDataRow, EditedDCPDataRow } from '@/app/types/survey';
 import {
   groupDcpByStation,
@@ -9,6 +9,7 @@ import {
   findAnomalyStations,
   findAdditionalSuggestedAnomalies,
   buildTpMap,
+  buildLandmarks,
   toStrengthPoint,
   buildAnomalies,
   buildStrengthPointsCandidates,
@@ -22,10 +23,9 @@ export type { DCVGCandidate, StrengthPointCandidate, SuggestedAnomaly };
 export interface UseAnomalyReportCreatorResult {
   report: AnomalyReport;
   dcvgCandidates: Map<number, DCVGCandidate[]>;
-  /** All selectable strength point candidates: TPs + first/last station (only if not already a TP), sorted by station */
   strengthPointsCandidates: StrengthPointCandidate[];
-  /** Stations found in surveyData with DCVG markers that are NOT already in the main anomaly list */
   suggestedAnomalies: SuggestedAnomaly[];
+  suggestedLandmarks: Landmark[];
 }
 
 export const useAnomalyReportCreator = (
@@ -56,11 +56,12 @@ export const useAnomalyReportCreator = (
     const tpsByStation = [...tpMap.values()].sort((a, b) => a.station - b.station);
     const allStations = [...surveyByStation.keys()].sort((a, b) => a - b);
 
+    const suggestedLandmarks = buildLandmarks(tpMap, dcpData, surveyData, surveyIndexByStation);
     const { anomalies, dcvgCandidates } = buildAnomalies(
-      allAnomalyStations, dcpByStation, surveyByStation, tpsByStation, stationDiff
+      allAnomalyStations, dcpByStation, surveyByStation, tpsByStation, stationDiff, suggestedLandmarks
     );
     const strengthPointsCandidates = buildStrengthPointsCandidates(strengthPoints, allStations, surveyByStation);
 
-    return { report: { anomalies }, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies };
+    return { report: { anomalies }, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies, suggestedLandmarks };
   }, [surveyData, dcpData, stationDiff, userAddedAnomalyStations]);
 };

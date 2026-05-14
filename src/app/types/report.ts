@@ -17,22 +17,28 @@ export interface DCVGValue {
   source: DCVGValueSource;
 }
 
+export interface Landmark {
+  label: string;
+  station: number;
+}
+
+export interface Section {
+  from: Landmark;
+  to: Landmark;
+}
+
 export interface Anomaly {
   station: number;
   dcvgValue: DCVGValue;
   coordinate?: Coordinate;
   strengthPoint1?: StrengthPoint;
   strengthPoint2?: StrengthPoint;
+  section?: Section;
 }
 
 export interface AnomalyReport {
   anomalies: Anomaly[];
 }
-
-// export interface ProjectAnomalyReport {
-//   projectName: string;
-//   anomalyReports: Map<string, AnomalyReport>; // file name, anomaly report
-// }
 
 export interface DataPoint {
   distance: number; // X-axis: 'Dist From Start'

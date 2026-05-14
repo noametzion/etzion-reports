@@ -2,11 +2,12 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AnomalyTable.module.css';
-import { Anomaly, DCVGValue, StrengthPoint } from '@/app/types/report';
+import { Anomaly, DCVGValue, Landmark, Section, StrengthPoint } from '@/app/types/report';
 import { DCVGCandidate, StrengthPointCandidate } from '@/app/hooks/useAnomalyReportCreator';
 import { FaPencilAlt } from 'react-icons/fa';
 import DCVGCellEditor from './DCVGCellEditor';
 import StrengthPointCellEditor from './StrengthPointCellEditor';
+import StationSelectorEditor from './StationSelectorEditor';
 
 // ── Column config types ───────────────────────────────────────────────────────
 
@@ -43,7 +44,12 @@ type CalculatedColumnConfig = {
   format?: (value: number) => string;
 };
 
-type ColumnConfig = SerialColumnConfig | FlatColumnConfig | GroupColumnConfig | CalculatedColumnConfig;
+type SectionColumnConfig = {
+  type: 'section';
+  label?: string;
+};
+
+type ColumnConfig = SerialColumnConfig | FlatColumnConfig | GroupColumnConfig | CalculatedColumnConfig | SectionColumnConfig;
 
 // ── Calculation helpers ───────────────────────────────────────────────────────
 
@@ -78,6 +84,7 @@ const fmt4 = (v: number) => String(parseFloat(v.toFixed(4)));
 const COLUMN_CONFIG: ColumnConfig[] = [
   { type: 'serial', label: 'Serial No.' },
   { type: 'flat', key: 'station' },
+  { type: 'section', label: 'Section' },
   {
     type: 'group',
     key: 'dcvgValue',
@@ -162,7 +169,7 @@ const COLUMN_CONFIG: ColumnConfig[] = [
 type LeafMeta = { isGroupFirst: boolean; isGroupLast: boolean };
 
 const LEAF_META: LeafMeta[] = COLUMN_CONFIG.flatMap(col => {
-  if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated') {
+  if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated' || col.type === 'section') {
     return [{ isGroupFirst: false, isGroupLast: false }];
   }
   return col.subColumns.map((_, i) => ({
@@ -211,17 +218,19 @@ interface AnomalyTableProps {
   stationDiff?: number;
   dcvgCandidates?: Map<number, DCVGCandidate[]>;
   userAddedStations?: Set<number>;
+  suggestedLandmarks?: Landmark[];
   onEditDcvg?: (station: number, value: DCVGValue) => void;
   onEditStrengthPoint1?: (station: number, sp: StrengthPoint) => void;
   onEditStrengthPoint2?: (station: number, sp: StrengthPoint) => void;
   onRemoveAnomaly?: (station: number) => void;
+  onEditSection?: (station: number, section: Section) => void;
 }
 
-type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' };
+type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' | 'sectionFrom' | 'sectionTo' };
 
 const AnomalyTable: React.FC<AnomalyTableProps> = ({
   anomalies, irThreshold, strengthPointsCandidates, allMeasuredStations, stationDiff, dcvgCandidates,
-  userAddedStations, onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2, onRemoveAnomaly,
+  userAddedStations, suggestedLandmarks, onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2, onRemoveAnomaly, onEditSection,
 }) => {
   const [editState, setEditState] = useState<EditState | null>(null);
   const editCellRef = useRef<HTMLTableCellElement | null>(null);
@@ -242,6 +251,21 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
 
   const openEdit = (rowIdx: number, field: EditState['field']) => {
     setEditState({ rowIdx, field });
+  };
+
+  const handleLandmarkSelect = (
+    selectedStation: number,
+    anomalyStation: number,
+    currentSection: Section | undefined,
+    isEditingFrom: boolean,
+  ) => {
+    const landmark = suggestedLandmarks?.find(lm => lm.station === selectedStation);
+    if (!landmark) return;
+    onEditSection!(anomalyStation, {
+      from: isEditingFrom ? landmark : (currentSection?.from ?? landmark),
+      to: !isEditingFrom ? landmark : (currentSection?.to ?? landmark),
+    });
+    setEditState(null);
   };
 
   return (
@@ -273,6 +297,13 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                 </th>
               );
             }
+            if (col.type === 'section') {
+              return (
+                <th key="__section__" rowSpan={2} className={styles.flatHeader}>
+                  {col.label ?? 'Section'}
+                </th>
+              );
+            }
             return (
               <th key={col.key} colSpan={col.subColumns.length} className={styles.groupHeader}>
                 {col.label ?? col.key}
@@ -284,7 +315,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
           {(() => {
             let leafIdx = 0;
             return COLUMN_CONFIG.flatMap(col => {
-              if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated') {
+              if (col.type === 'serial' || col.type === 'flat' || col.type === 'calculated' || col.type === 'section') {
                 leafIdx++;
                 return [];
               }
@@ -323,6 +354,49 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                     </td>,
                   ];
                 }
+                if (col.type === 'section') {
+                  leafIdx++;
+                  const section = anomaly.section;
+                  const isEditingFrom = editState?.rowIdx === rowIdx && editState.field === 'sectionFrom';
+                  const isEditingTo = editState?.rowIdx === rowIdx && editState.field === 'sectionTo';
+                  const isEditing = isEditingFrom || isEditingTo;
+                  const isEditable = !!onEditSection && !!suggestedLandmarks?.length;
+                  return [(
+                    <td
+                      key="__section__"
+                      ref={isEditing ? editCellRef : undefined}
+                      className={`${styles.cell} ${isEditing ? styles.editingCell : ''}`}
+                    >
+                      <div className={styles.sectionWrapper}>
+                        <span
+                          className={`${styles.sectionPart}${isEditable ? ` ${styles.sectionPartEditable}` : ''}${isEditingFrom ? ` ${styles.sectionPartActive}` : ''}`}
+                          onClick={isEditable ? () => openEdit(rowIdx, 'sectionFrom') : undefined}
+                        >
+                          {section?.from.label ?? '—'}
+                          {isEditable && <FaPencilAlt className={styles.editIcon} />}
+                        </span>
+                        {' → '}
+                        <span
+                          className={`${styles.sectionPart}${isEditable ? ` ${styles.sectionPartEditable}` : ''}${isEditingTo ? ` ${styles.sectionPartActive}` : ''}`}
+                          onClick={isEditable ? () => openEdit(rowIdx, 'sectionTo') : undefined}
+                        >
+                          {section?.to.label ?? '—'}
+                          {isEditable && <FaPencilAlt className={styles.editIcon} />}
+                        </span>
+                        {isEditing && suggestedLandmarks && (
+                          <div className={styles.sectionDropdown}>
+                            <StationSelectorEditor
+                              options={suggestedLandmarks.map(lm => ({ station: lm.station, label: `${lm.label} (${lm.station})` }))}
+                              onSelect={selectedStation => handleLandmarkSelect(selectedStation, anomaly.station, section, isEditingFrom)}
+                              onCancel={() => setEditState(null)}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                  )];
+                }
+
                 if (col.type === 'calculated') {
                   leafIdx++;
                   const isIrAboveThreshold =

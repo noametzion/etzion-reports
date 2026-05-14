@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { FaTrash } from 'react-icons/fa';
 import styles from './AnomalyReportModal.module.css';
 import { EditedSurvey, SurveyFile, SurveyStationKey } from '@/app/types/survey';
-import { DCVGValue, StrengthPoint } from '@/app/types/report';
+import { DCVGValue, Section, StrengthPoint } from '@/app/types/report';
 import { useAnomalyReportCreator, SuggestedAnomaly } from '@/app/hooks/useAnomalyReportCreator';
 import { useAnomalyReport } from '@/app/hooks/useAnomalyReport';
 import AnomalyTable from './AnomalyTable';
@@ -19,7 +19,7 @@ interface AnomalyReportModalProps {
   stationDiff: number;
 }
 
-type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint };
+type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint; section?: Section };
 
 const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose, surveyName, originalSurveyFile, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
@@ -56,7 +56,7 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
     return map;
   }, [editedSurvey]);
 
-  const { report, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies } = useAnomalyReportCreator(
+  const { report, dcvgCandidates, strengthPointsCandidates, suggestedAnomalies, suggestedLandmarks } = useAnomalyReportCreator(
     editedSurvey?.surveyData ?? [],
     editedSurvey?.DCPData ?? [],
     stationDiff,
@@ -75,6 +75,7 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
         dcvgValue: override.dcvgValue ?? a.dcvgValue,
         strengthPoint1: override.strengthPoint1 ?? a.strengthPoint1,
         strengthPoint2: override.strengthPoint2 ?? a.strengthPoint2,
+        section: override.section ?? a.section,
       };
     });
   }, [baseAnomalies, overrides]);
@@ -113,6 +114,14 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
     setOverrides(prev => {
       const next = new Map(prev);
       next.set(station, { ...prev.get(station), strengthPoint2: sp });
+      return next;
+    });
+  }, []);
+
+  const handleEditSection = useCallback((station: number, section: Section) => {
+    setOverrides(prev => {
+      const next = new Map(prev);
+      next.set(station, { ...prev.get(station), section });
       return next;
     });
   }, []);
@@ -226,10 +235,12 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
           allMeasuredStations={allMeasuredStations}
           dcvgCandidates={dcvgCandidates}
           userAddedStations={userAddedAnomalyStations}
+          suggestedLandmarks={suggestedLandmarks}
           onEditDcvg={handleEditDcvg}
           onEditStrengthPoint1={handleEditStrengthPoint1}
           onEditStrengthPoint2={handleEditStrengthPoint2}
           onRemoveAnomaly={handleRemoveAnomaly}
+          onEditSection={handleEditSection}
         />
         <div className={styles.footer}>
           {isSaving && <span className={styles.savingIndicator}>Saving…</span>}

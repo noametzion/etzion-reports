@@ -169,3 +169,50 @@
   background: #b71c1c;
   border-color: #b71c1c;
 }
+
+.sectionWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.sectionPart {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sectionPartEditable {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+.sectionPartEditable:hover {
+  background: #e8f1ff;
+}
+
+.sectionPartEditable:hover .editIcon {
+  opacity: 1;
+}
+
+.sectionPartActive {
+  background: #c8dcff;
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+.sectionDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  background: white;
+  border: 1px solid #90b8f8;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  min-width: 160px;
+}
