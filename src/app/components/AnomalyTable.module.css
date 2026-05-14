@@ -1,0 +1,218 @@
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 11px;
+}
+
+/* Flat (non-object) header: spans both header rows */
+.flatHeader {
+  border: 1px solid #ccc;
+  padding: 5px 8px;
+  background-color: #f0f0f0;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* Object group header: bolder side borders to delineate the group */
+.groupHeader {
+  border: 1px solid #ccc;
+  border-left: 2px solid #888;
+  border-right: 2px solid #888;
+  padding: 5px 8px;
+  background-color: #e0e0e0;
+  text-align: center;
+}
+
+.groupBorderLeft {
+  border-left: 2px solid #888 !important;
+}
+
+.groupBorderRight {
+  border-right: 2px solid #888 !important;
+}
+
+/* Sub-column headers (under group headers) */
+.subHeader {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  background-color: #f0f0f0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cell {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.row:hover {
+  background-color: #f9f9f9;
+}
+
+/* Calculated column header */
+.calculatedHeader {
+  border: 1px solid #ccc;
+  padding: 5px 8px;
+  background-color: #f0f0f0;
+  text-align: center;
+  vertical-align: middle;
+}
+
+/* Calculated data cell — yellow background to indicate derived value */
+.calculatedCell {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #fffde7;
+}
+
+/* Header label + info icon wrapper */
+.headerWithInfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Info icon with CSS tooltip */
+.infoIcon {
+  cursor: help;
+  font-size: 11px;
+  color: #666;
+  position: relative;
+  line-height: 1;
+}
+
+.infoIcon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: normal;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 100;
+  transition: opacity 0.15s;
+}
+
+.infoIcon:hover::after {
+  opacity: 1;
+}
+
+.editableCell {
+  cursor: pointer;
+  display: table-cell;
+}
+
+.editIcon {
+  font-size: 0.7em;
+  color: #007bff;
+  opacity: 0;
+  margin-left: 3px;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.editableCell:hover .editIcon {
+  opacity: 1;
+}
+
+.editingCell {
+  background-color: #e8f1ff;
+  padding: 2px 4px !important;
+}
+
+/* %IR cell above threshold — bright marker highlight */
+.irHighlight {
+  border: 1px solid #ccc;
+  padding: 4px 6px;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #ffff00;
+  font-weight: 600;
+}
+
+.emptyState {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+}
+
+.removeBtn {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin-left: 4px;
+  border: 1px solid #d32f2f;
+  background: #d32f2f;
+  color: white;
+  border-radius: 3px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+.removeBtn:hover {
+  background: #b71c1c;
+  border-color: #b71c1c;
+}
+
+.sectionWrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.sectionPart {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.sectionPartEditable {
+  cursor: pointer;
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+.sectionPartEditable:hover {
+  background: #e8f1ff;
+}
+
+.sectionPartEditable:hover .editIcon {
+  opacity: 1;
+}
+
+.sectionPartActive {
+  background: #c8dcff;
+  border-radius: 2px;
+  padding: 1px 2px;
+}
+
+.sectionDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 200;
+  background: white;
+  border: 1px solid #90b8f8;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  min-width: 160px;
+}

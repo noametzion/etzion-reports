@@ -1,7 +1,7 @@
 "use client";
 
-import React, {useMemo, useState} from 'react';
-import {FaTrash, FaFolderOpen, FaFileAlt} from 'react-icons/fa';
+import React, {useMemo, useRef, useState} from 'react';
+import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
@@ -12,12 +12,17 @@ import { SurveyFile } from '@/app/types/survey';
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import EditorStatusBar from "@/app/components/EditorStatusBar";
 import {useExcelExporter} from "@/app/hooks/useExcelExporter";
+import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
+import {useAnomalyReport} from "@/app/hooks/useAnomalyReport";
+import {getSurveyDisplayName} from "@/app/utils/surveyNameUtils";
 import ProjectsArranger from "@/app/components/ProjectsArranger";
 import {useProjects} from "@/app/hooks/useProjects";
 import {FaFolderTree} from "react-icons/fa6";
 import {DBProject} from "@/app/types/dbTypes";
 import LinkToProjectPopover from "@/app/components/LinkToProjectPopover";
 import ProjectSummaryPopover from "@/app/components/ProjectSummaryPopover";
+import ProjectReportPopover from "@/app/components/ProjectReportPopover";
+import CommentsListPopover from "@/app/components/CommentsListPopover";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -41,6 +46,12 @@ interface ProjectSummaryPopoverState {
     fileCount: number;
 }
 
+interface ProjectReportPopoverState {
+    top: number;
+    left: number;
+    project: DBProject;
+}
+
 const SurveysViewer: React.FC<SurveysViewerProps> = ({
   onSurveySelected,
   onShouldFocusDistanceChanges,
@@ -54,9 +65,14 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { survey: originalSurvey, isLoading: isReading, error: surveyReaderError } = useSurveyReader(selectedOriginalFile);
   const { editedSurvey, saveEditedSurvey , isChanged, editedFileExists, isUpdating, editLocally} = useSurveyEditor(selectedOriginalFile, originalSurvey);
   const { exportToExcel, isExporting } = useExcelExporter();
+  const { reportInfo: selectedFileReportInfo } = useSurveyReportInformation(selectedOriginalFile?.name);
+  const { anomalyReport } = useAnomalyReport(selectedOriginalFile);
   const [rescanTrigger, setRescanTrigger] = useState(0);
+  const [commentsPopover, setCommentsPopover] = useState<{ top: number; right: number } | null>(null);
+  const commentsBtnRef = useRef<HTMLButtonElement>(null);
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
+  const [projectReportPopover, setProjectReportPopover] = useState<ProjectReportPopoverState | null>(null);
 
   const filesByProjects = useMemo(() => {
       return projects.map((project) => ({
@@ -119,6 +135,15 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
     });
   };
 
+  const handleProjectReport = (e: React.MouseEvent<HTMLButtonElement>, project: DBProject) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setProjectReportPopover({
+      project,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  };
+
   if (isReading || (originalSurvey && !editedSurvey)) {
     return <div className={styles.loading}>Reading survey...</div>;
   }
@@ -143,12 +168,18 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             unsavedChangesExists={isChanged}
             isUpdating={isUpdating}
             isExporting={isExporting}
-            onSave={() => { saveEditedSurvey(); setRescanTrigger(t => t + 1); }}
+            isAnomalyReportExist={anomalyReport != null}
+            onSave={() => {
+                if (anomalyReport && !window.confirm('This survey has an approved anomaly report. Saving changes may invalidate it. Continue?')) return;
+                saveEditedSurvey();
+                setRescanTrigger(t => t + 1);
+            }}
             onExportToExcel={() => exportToExcel(
                 editedSurvey,
                 originalSurvey.surveyInfo,
                 originalSurvey.surveyDataHeaders,
-                originalSurvey.dcpDataHeaders
+                originalSurvey.dcpDataHeaders,
+                getSurveyDisplayName(selectedFileReportInfo?.projectName, selectedOriginalFile?.name) || "survey"
             )}
         />
         <SurveySheet
@@ -159,6 +190,28 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             rescanTrigger={rescanTrigger}
             onEdit={editLocally}
         />
+        <div className={styles.commentsButtonContainer}>
+          <button
+            ref={commentsBtnRef}
+            className={styles.commentsListBtn}
+            onClick={() => {
+              if (commentsPopover) { setCommentsPopover(null); return; }
+              const rect = commentsBtnRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              setCommentsPopover({ top: rect.top - 60 , right: window.innerWidth - rect.left});
+            }}
+          >
+            Comments
+          </button>
+        </div>
+        {commentsPopover && (
+          <CommentsListPopover
+            surveyData={editedSurvey.surveyData}
+            anchorTop={commentsPopover.top}
+            anchorRight={commentsPopover.right}
+            onClose={() => setCommentsPopover(null)}
+          />
+        )}
       </div>
     );
   }
@@ -250,6 +303,14 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                           <FaFileAlt className={styles.summaryIcon} />
                           <span>Summary</span>
                         </button>
+                        <button
+                          onClick={(e) => handleProjectReport(e, projectWithFiles.project)}
+                          className={styles.projectSummaryButton}
+                          title={`View report for ${projectWithFiles.project.projectName}`}
+                        >
+                          <FaClipboardList className={styles.summaryIcon} />
+                          <span>Anomaly Report</span>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -280,6 +341,12 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
         left={projectSummaryPopover.left}
         project={projectSummaryPopover.project}
         fileCount={projectSummaryPopover.fileCount}
+    />}
+    {projectReportPopover && <ProjectReportPopover
+        onClose={() => setProjectReportPopover(null)}
+        top={projectReportPopover.top}
+        left={projectReportPopover.left}
+        project={projectReportPopover.project}
     />}
   </>);
 };

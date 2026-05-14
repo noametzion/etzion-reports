@@ -1,3 +1,45 @@
+export interface Coordinate {
+  latitude?: number;
+  longitude?: number;
+  altitude?: number;
+}
+
+export interface StrengthPoint {
+  station: number;
+  vOn: number;
+  vOff: number;
+}
+
+export type DCVGValueSource = 'Side Drain' | 'Calculated' ;
+
+export interface DCVGValue {
+  value: number;
+  source: DCVGValueSource;
+}
+
+export interface Landmark {
+  label: string;
+  station: number;
+}
+
+export interface Section {
+  from: Landmark;
+  to: Landmark;
+}
+
+export interface Anomaly {
+  station: number;
+  dcvgValue: DCVGValue;
+  coordinate?: Coordinate;
+  strengthPoint1?: StrengthPoint;
+  strengthPoint2?: StrengthPoint;
+  section: Section;
+}
+
+export interface AnomalyReport {
+  anomalies: Anomaly[];
+}
+
 export interface DataPoint {
   distance: number; // X-axis: 'Dist From Start'
 }
@@ -6,15 +48,12 @@ export interface GraphDataPoint extends DataPoint {
   offVoltage?: number; // Y-axis: 'Off Voltage' (mV)
   constantVoltage: number; // Y-axis: Constant -850mV
   dcvg?: number; // Y-axis: 'DCVG Voltage' (mV)
+  constantDCVGDiff: number;
   comment?: string;
 }
 
 export interface MapDataPoint extends DataPoint {
-  location?: {
-    latitude?: number;
-    longitude?: number;
-    altitude?: number;
-  } | "break";
+  location?: Coordinate | "break";
 }
 
 export interface SegmentInfo {

@@ -6,6 +6,7 @@ import {GraphInfo, GraphDataPoint} from "@/app/types/report";
 import {createSegments, getDistanceIndexInSegment, getSegmentIndex} from "@/app/utils/reportUtils";
 
 const CONSTANT_VOLTAGE = -850;
+const CONSTANT_DCVG_DIFF = 0;
 const voltToMillyVolt= (V: number| undefined) => V!==undefined ? V * 1000 : V;
 
 export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: number, distanceDiff: number, titles: {primary: string, secondary: string}): GraphInfo[] => {
@@ -39,7 +40,8 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
           onVoltage: undefined,
           offVoltage: undefined,
           constantVoltage: CONSTANT_VOLTAGE,
-          dcvg: undefined
+          dcvg: undefined,
+          constantDCVGDiff: CONSTANT_DCVG_DIFF,
         };
       }
 
@@ -51,6 +53,7 @@ export const useGraphs = (surveyData: SurveyDataRow[] | null, splitDistance: num
         offVoltage: voltToMillyVolt(row['Off Voltage']),
         constantVoltage: CONSTANT_VOLTAGE,
         dcvg: voltToMillyVolt(row['DCVG Voltage']),
+        constantDCVGDiff: CONSTANT_DCVG_DIFF,
         comment: row['Comment'] || row['DCP/Feature/DCVG Anomaly'],
       };
     });

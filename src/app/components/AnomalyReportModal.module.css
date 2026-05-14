@@ -1,0 +1,233 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 80vw;
+  height: 70vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+
+.tableWrapper {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.header h2 {
+  margin: 0;
+}
+
+.approvedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6a9fd8;
+  font-weight: 500;
+  margin-left: auto;
+  margin-right: 12px;
+}
+
+.deleteReportIcon {
+  cursor: pointer;
+  color: #b0b0b0;
+  font-size: 12px;
+}
+
+.deleteReportIcon:hover {
+  color: #c62828;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  margin-left: 12px;
+}
+
+.toolbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.toolbarLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.inputWithSuffix {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.thresholdInput {
+  width: 52px;
+  padding: 3px 6px;
+  border: none;
+  outline: none;
+  font-size: 13px;
+  text-align: right;
+}
+
+.inputSuffix {
+  padding: 3px 6px;
+  background: #f0f0f0;
+  font-size: 13px;
+  color: #555;
+  border-left: 1px solid #ccc;
+  user-select: none;
+}
+
+.addAnomalyWrapper {
+  position: relative;
+}
+
+.addAnomalyBtn {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #4caf50;
+  background: #4caf50;
+  color: white;
+  border-radius: 4px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addAnomalyBtn:hover:not(:disabled) {
+  background: #43a047;
+  border-color: #43a047;
+}
+
+.addAnomalyBtn:disabled {
+  background: #bdbdbd;
+  border-color: #bdbdbd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.addAnomalyDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 100;
+  background: white;
+  border: 1px solid #90b8f8;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+}
+
+.stationWarning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff8e1;
+  border: 1px solid #f0c040;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #7a5800;
+}
+
+.deleteReportBtn {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid #c62828;
+  border-radius: 4px;
+  color: #c62828;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.deleteReportBtn:hover {
+  background: #c62828;
+  color: white;
+}
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+
+.savingIndicator {
+  font-size: 13px;
+  color: #6a9fd8;
+  animation: pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+
+.approveBtn {
+  padding: 6px 24px;
+  background: #c62828;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  min-width: 160px;
+}
+
+.approveBtn:hover {
+  background: #b71c1c;
+}
+
+.approveBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

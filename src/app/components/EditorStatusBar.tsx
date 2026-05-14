@@ -2,7 +2,7 @@
 
 import React from 'react';
 import styles from './EditorStatusBar.module.css';
-import {FaFile, FaFileExport, FaSave, FaSpinner} from "react-icons/fa";
+import {FaFile, FaFileExport, FaSave, FaSpinner, FaClipboardCheck} from "react-icons/fa";
 
 
 interface ErrorPanelProps {
@@ -10,6 +10,7 @@ interface ErrorPanelProps {
   unsavedChangesExists: boolean;
   isUpdating: boolean;
   isExporting: boolean;
+  isAnomalyReportExist: boolean;
   onSave: () => void;
   onExportToExcel: () => void;
 }
@@ -20,7 +21,8 @@ const EditorStatusBar: React.FC<ErrorPanelProps> = ({
   onSave,
   onExportToExcel,
   isUpdating,
-  isExporting}) => {
+  isExporting,
+  isAnomalyReportExist}) => {
 
   const spinnerClassName = [
     styles.spinner,
@@ -46,8 +48,14 @@ const EditorStatusBar: React.FC<ErrorPanelProps> = ({
     exportable && styles.exporable,
   ].filter(Boolean).join(' ');
 
+  const reportIconClassName = [
+    styles.fileIcon,
+    isAnomalyReportExist && styles.reportExists,
+  ].filter(Boolean).join(' ');
+
   return <div className={styles.statusBar}>
     <FaSpinner className={spinnerClassName} />
+    <FaClipboardCheck className={reportIconClassName} title={isAnomalyReportExist ? 'Anomaly report approved' : 'No anomaly report'}/>
     <FaFile className={fileIconClassName}/>
     <FaFileExport className={exportClassName} onClick={onExportToExcel}/>
     <FaSave className={saveClassName} onClick={onSave}/>

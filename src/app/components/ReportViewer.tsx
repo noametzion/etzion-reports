@@ -14,7 +14,9 @@ import {FaAngleDown, FaAngleUp} from "react-icons/fa";
 import {useSurveyEditor} from "@/app/hooks/useSurveyEditor";
 import {FaArrowsRotate} from "react-icons/fa6";
 import ExportReportModal from "@/app/components/ExportReportModal";
+import AnomalyReportModal from "@/app/components/AnomalyReportModal";
 import {useSurveyReportInformation} from "@/app/hooks/useSurveyReportInformation";
+import {getSurveyDisplayName} from "@/app/utils/surveyNameUtils";
 
 // Dynamically import MapView only on the client (because using leaflet)
 const MapView =
@@ -37,15 +39,16 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
   const [includeDCVG, setIncludeDCVG] = useState<boolean>(true);
   const [includeMap, setIncludeMap] = useState<boolean>(true);
   const [isExportMode, setIsExportMode] = useState<boolean>(false);
+  const [isReportMode, setIsReportMode] = useState<boolean>(false);
   const [showTitleEditor, setShowTitleEditor] = React.useState<boolean>(false);
   const [titles, setTitles] = React.useState<{primary: string, secondary: string}>({primary: '', secondary: ''});
   const distPerReading = Number(originalSurvey?.surveyInfo[SurveyInfoStationDiffKey]) || DEFAULT_DIST_PER_READING;
   const graphs = useGraphs(editedSurvey?.surveyData || null, splitDistance, distPerReading, titles);
   const maps = useMaps(editedSurvey?.surveyData || null, splitDistance, distPerReading);
+  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
 
   const surveyName = (originalSurvey?.surveyInfo[SurveyInfoNameKey] || originalSurveyFile?.name || '').toString();
-
-  const { reportInfo, updateReportInfo, loaded, projectNameSuggestions, locationSuggestions } = useSurveyReportInformation(originalSurveyFile?.name);
+  const surveyNameForReports = getSurveyDisplayName(reportInfo?.projectName, originalSurveyFile?.name) || surveyName;
 
   const handleTitleInfoChange = useCallback((info: TitleInfo, title: string, subtitle: string) => {
       setTitles({ primary: title, secondary: subtitle });
@@ -67,14 +70,14 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
               className={styles.splitDistanceInput}
             />
           </div>
-          <div style={{display: 'block', alignItems: 'center'}}>
+          <div className={styles.checkboxRow}>
               <input
                   type={"checkbox"}
                   onChange={(e) => setIncludeDCVG(e.target.checked)}
                   checked={includeDCVG}/>
               {" Include DCVG Graph"}
           </div>
-          <div style={{display: 'block', alignItems: 'center'}}>
+          <div className={styles.checkboxRow}>
                 <input
                     type={"checkbox"}
                     onChange={(e) => setIncludeMap(e.target.checked)}
@@ -82,10 +85,16 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
                 {" Include map"}
           </div>
         </div>
-        <button
-            onClick={() => setIsExportMode(true)}
-            className={styles.exportButton}
-        >EXPORT</button>
+        <div className={styles.buttonsColumn}>
+          <button
+              onClick={() => setIsExportMode(true)}
+              className={styles.exportButton}
+          >EXPORT</button>
+          <button
+              onClick={() => setIsReportMode(true)}
+              className={styles.reportButton}
+          >ANOMALY REPORT</button>
+        </div>
       </div>
       {originalSurvey && editedSurvey &&
         <div className={styles.titleEditor}>
@@ -128,11 +137,19 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ originalSurveyFile, shouldF
       <ExportReportModal
           isOpen={isExportMode}
           onClose={() => setIsExportMode(false)}
-          surveyName={surveyName}
+          surveyName={surveyNameForReports}
           graphs={graphs}
           maps={maps}
           includeDCVG={includeDCVG}
           includeMap={includeMap}
+      />
+      <AnomalyReportModal
+        isOpen={isReportMode}
+        onClose={() => setIsReportMode(false)}
+        surveyName={surveyNameForReports}
+        originalSurveyFile={originalSurveyFile}
+        editedSurvey={editedSurvey}
+        stationDiff={distPerReading}
       />
     </div>
   );

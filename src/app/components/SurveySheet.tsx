@@ -205,7 +205,7 @@ const SurveySheet: React.FC<SurveySheetProps> = ({
       const currentRow = editedSurvey.surveyData[i];
 
       for (const key of SurveyStationKeys) {
-        const stationGap = Math.abs((currentRow[key] || 0) - (prevRow[key] || 0));
+        const stationGap = Math.abs((Number(currentRow[key]) || 0) - (Number(prevRow[key]) || 0));
 
         if (stationGap > stationDiff) { // Convert mV to V for comparison
           errors.push({rowIndex: i - 1, columnName: key});
