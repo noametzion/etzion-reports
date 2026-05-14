@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AnomalyTable.module.css';
-import { Anomaly, DCVGValue, Landmark, Section, StrengthPoint } from '@/app/types/report';
+import { Anomaly, DCVGValue, Landmark, StrengthPoint } from '@/app/types/report';
 import { DCVGCandidate, StrengthPointCandidate } from '@/app/hooks/useAnomalyReportCreator';
 import { FaPencilAlt } from 'react-icons/fa';
 import DCVGCellEditor from './DCVGCellEditor';
@@ -223,14 +223,15 @@ interface AnomalyTableProps {
   onEditStrengthPoint1?: (station: number, sp: StrengthPoint) => void;
   onEditStrengthPoint2?: (station: number, sp: StrengthPoint) => void;
   onRemoveAnomaly?: (station: number) => void;
-  onEditSection?: (station: number, section: Section) => void;
+  onEditSectionFrom?: (station: number, landmark: Landmark) => void;
+  onEditSectionTo?: (station: number, landmark: Landmark) => void;
 }
 
 type EditState = { rowIdx: number; field: 'dcvg' | 'strengthPoint1' | 'strengthPoint2' | 'sectionFrom' | 'sectionTo' };
 
 const AnomalyTable: React.FC<AnomalyTableProps> = ({
   anomalies, irThreshold, strengthPointsCandidates, allMeasuredStations, stationDiff, dcvgCandidates,
-  userAddedStations, suggestedLandmarks, onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2, onRemoveAnomaly, onEditSection,
+  userAddedStations, suggestedLandmarks, onEditDcvg, onEditStrengthPoint1, onEditStrengthPoint2, onRemoveAnomaly, onEditSectionFrom, onEditSectionTo,
 }) => {
   const [editState, setEditState] = useState<EditState | null>(null);
   const editCellRef = useRef<HTMLTableCellElement | null>(null);
@@ -245,6 +246,11 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
     return () => document.removeEventListener('mousedown', close);
   }, [editState]);
 
+  useEffect(() => {
+    if (editState?.field !== 'sectionFrom' && editState?.field !== 'sectionTo') return;
+    editCellRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [editState]);
+
   if (anomalies.length === 0) {
     return <p className={styles.emptyState}>No anomalies found.</p>;
   }
@@ -256,15 +262,12 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
   const handleLandmarkSelect = (
     selectedStation: number,
     anomalyStation: number,
-    currentSection: Section | undefined,
     isEditingFrom: boolean,
   ) => {
     const landmark = suggestedLandmarks?.find(lm => lm.station === selectedStation);
     if (!landmark) return;
-    onEditSection!(anomalyStation, {
-      from: isEditingFrom ? landmark : (currentSection?.from ?? landmark),
-      to: !isEditingFrom ? landmark : (currentSection?.to ?? landmark),
-    });
+    if (isEditingFrom) onEditSectionFrom!(anomalyStation, landmark);
+    else onEditSectionTo!(anomalyStation, landmark);
     setEditState(null);
   };
 
@@ -360,7 +363,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                   const isEditingFrom = editState?.rowIdx === rowIdx && editState.field === 'sectionFrom';
                   const isEditingTo = editState?.rowIdx === rowIdx && editState.field === 'sectionTo';
                   const isEditing = isEditingFrom || isEditingTo;
-                  const isEditable = !!onEditSection && !!suggestedLandmarks?.length;
+                  const isEditable = !!(onEditSectionFrom && onEditSectionTo) && !!suggestedLandmarks?.length;
                   return [(
                     <td
                       key="__section__"
@@ -372,7 +375,7 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                           className={`${styles.sectionPart}${isEditable ? ` ${styles.sectionPartEditable}` : ''}${isEditingFrom ? ` ${styles.sectionPartActive}` : ''}`}
                           onClick={isEditable ? () => openEdit(rowIdx, 'sectionFrom') : undefined}
                         >
-                          {section?.from.label ?? '—'}
+                          {section?.from?.label ?? '—'}
                           {isEditable && <FaPencilAlt className={styles.editIcon} />}
                         </span>
                         {' → '}
@@ -380,14 +383,14 @@ const AnomalyTable: React.FC<AnomalyTableProps> = ({
                           className={`${styles.sectionPart}${isEditable ? ` ${styles.sectionPartEditable}` : ''}${isEditingTo ? ` ${styles.sectionPartActive}` : ''}`}
                           onClick={isEditable ? () => openEdit(rowIdx, 'sectionTo') : undefined}
                         >
-                          {section?.to.label ?? '—'}
+                          {section?.to?.label ?? '—'}
                           {isEditable && <FaPencilAlt className={styles.editIcon} />}
                         </span>
                         {isEditing && suggestedLandmarks && (
                           <div className={styles.sectionDropdown}>
                             <StationSelectorEditor
                               options={suggestedLandmarks.map(lm => ({ station: lm.station, label: `${lm.label} (${lm.station})` }))}
-                              onSelect={selectedStation => handleLandmarkSelect(selectedStation, anomaly.station, section, isEditingFrom)}
+                              onSelect={selectedStation => handleLandmarkSelect(selectedStation, anomaly.station, isEditingFrom)}
                               onCancel={() => setEditState(null)}
                             />
                           </div>

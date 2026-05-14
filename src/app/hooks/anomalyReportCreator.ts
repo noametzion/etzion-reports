@@ -541,7 +541,8 @@ export function buildAnomalies(
     // Default section: closest landmarks on each side
     const fromLandmark = [...landmarksByStation].reverse().find(lm => lm.station <= station);
     const toLandmark = landmarksByStation.find(lm => lm.station > station);
-    const section: Section | undefined = fromLandmark && toLandmark ? { from: fromLandmark, to: toLandmark } : undefined;
+    // section may be undefined when no flanking landmarks exist; validation in the modal blocks approval
+    const section = (fromLandmark && toLandmark ? { from: fromLandmark, to: toLandmark } : undefined) as Section;
 
     anomalies.push({
       station,

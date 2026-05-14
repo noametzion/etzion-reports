@@ -211,16 +211,16 @@
 }
 
 .approveBtn {
-  padding: 10px 48px;
+  padding: 6px 24px;
   background: #c62828;
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.5px;
-  min-width: 220px;
+  min-width: 160px;
 }
 
 .approveBtn:hover {

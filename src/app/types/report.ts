@@ -33,7 +33,7 @@ export interface Anomaly {
   coordinate?: Coordinate;
   strengthPoint1?: StrengthPoint;
   strengthPoint2?: StrengthPoint;
-  section?: Section;
+  section: Section;
 }
 
 export interface AnomalyReport {

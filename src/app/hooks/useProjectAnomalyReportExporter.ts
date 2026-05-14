@@ -115,7 +115,7 @@ type SortedFile = { displayName: string; report: DBAnomalyReport };
 // 7  %IR         (rowspan 2)
 
 const SUMMARY_COLS = 8;
-const SUMMARY_WIDTHS = [10, 32, 10, 12, 16, 12, 12, 10];
+const SUMMARY_WIDTHS = [10, 24, 28, 12, 16, 12, 12, 10];
 
 function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkSheet {
   const ws: XLSX.WorkSheet = {};
@@ -140,9 +140,10 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
     for (const a of [...report.anomalyReport.anomalies].sort((x, y) => x.station - y.station)) {
       const ir = getIRRatio(a);
       const hi = ir !== undefined && ir * 100 >= irThreshold;
+      const section = a.section ? `${a.section.from.label} --> ${a.section.to.label}` : '';
       set(ws, 0, row, serial++,                    mkData(B));
       set(ws, 1, row, displayName,       mkFile(fc, B));
-      set(ws, 2, row, '',                          mkData(B));
+      set(ws, 2, row, section,                     mkData(B));
       set(ws, 3, row, a.station,                   mkData(B));
       set(ws, 4, row, r4(a.dcvgValue.value),       mkData(B));
       set(ws, 5, row, a.coordinate?.latitude,      mkData(BGL));
@@ -181,7 +182,7 @@ function buildSummarySheet(files: SortedFile[], irThreshold: number): XLSX.WorkS
 // 19 %IR          (rowspan 2)
 
 const DETAILED_COLS = 20;
-const DETAILED_WIDTHS = [10, 32, 10, 12, 16, 12, 12, 12, 10, 10, 12, 10, 10, 10, 10, 10, 10, 10, 10, 10];
+const DETAILED_WIDTHS = [10, 24, 28, 12, 16, 12, 12, 12, 10, 10, 12, 10, 10, 10, 10, 10, 10, 10, 10, 10];
 
 // First col of each group: 5 (coord), 7 (SP1), 10 (SP2) → left medium border
 // Last col of each group:  6 (coord), 9 (SP1), 12 (SP2) → right medium border
@@ -223,9 +224,10 @@ function buildDetailedSheet(files: SortedFile[], irThreshold: number): XLSX.Work
     for (const a of [...report.anomalyReport.anomalies].sort((x, y) => x.station - y.station)) {
       const ir = getIRRatio(a);
       const hi = ir !== undefined && ir * 100 >= irThreshold;
+      const section = a.section ? `${a.section.from.label} --> ${a.section.to.label}` : '';
       set(ws, 0,  row, serial++,                       mkData(B));
       set(ws, 1,  row, displayName,          mkFile(fc, B));
-      set(ws, 2,  row, '',                             mkData(B));
+      set(ws, 2,  row, section,                        mkData(B));
       set(ws, 3,  row, a.station,                      mkData(B));
       set(ws, 4,  row, r4(a.dcvgValue.value),          mkData(B));
       set(ws, 5,  row, a.coordinate?.latitude,         mkData(BGL));

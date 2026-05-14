@@ -4,7 +4,7 @@ import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { FaTrash } from 'react-icons/fa';
 import styles from './AnomalyReportModal.module.css';
 import { EditedSurvey, SurveyFile, SurveyStationKey } from '@/app/types/survey';
-import { DCVGValue, Section, StrengthPoint } from '@/app/types/report';
+import { DCVGValue, Landmark, Section, StrengthPoint } from '@/app/types/report';
 import { useAnomalyReportCreator, SuggestedAnomaly } from '@/app/hooks/useAnomalyReportCreator';
 import { useAnomalyReport } from '@/app/hooks/useAnomalyReport';
 import AnomalyTable from './AnomalyTable';
@@ -19,7 +19,7 @@ interface AnomalyReportModalProps {
   stationDiff: number;
 }
 
-type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint; section?: Section };
+type AnomalyOverride = { dcvgValue?: DCVGValue; strengthPoint1?: StrengthPoint; strengthPoint2?: StrengthPoint; sectionFrom?: Landmark; sectionTo?: Landmark };
 
 const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose, surveyName, originalSurveyFile, editedSurvey, stationDiff }) => {
   const [irThreshold, setIrThreshold] = useState(35);
@@ -75,7 +75,12 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
         dcvgValue: override.dcvgValue ?? a.dcvgValue,
         strengthPoint1: override.strengthPoint1 ?? a.strengthPoint1,
         strengthPoint2: override.strengthPoint2 ?? a.strengthPoint2,
-        section: override.section ?? a.section,
+        section: (() => {
+          const from = override.sectionFrom ?? a.section?.from;
+          const to = override.sectionTo ?? a.section?.to;
+          if (from || to) return { from, to } as Section;
+          return a.section;
+        })(),
       };
     });
   }, [baseAnomalies, overrides]);
@@ -90,7 +95,12 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
   }, [anomalyReport, report.anomalies, suggestedAnomalies]);
 
   const isValid = useMemo(
-    () => editedAnomalies.every(a => a.strengthPoint1 != null && a.strengthPoint2 != null),
+    () => editedAnomalies.every(a =>
+      a.strengthPoint1 != null &&
+      a.strengthPoint2 != null &&
+      a.section?.from != null &&
+      a.section?.to != null
+    ),
     [editedAnomalies]
   );
 
@@ -118,10 +128,18 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
     });
   }, []);
 
-  const handleEditSection = useCallback((station: number, section: Section) => {
+  const handleEditSectionFrom = useCallback((station: number, landmark: Landmark) => {
     setOverrides(prev => {
       const next = new Map(prev);
-      next.set(station, { ...prev.get(station), section });
+      next.set(station, { ...prev.get(station), sectionFrom: landmark });
+      return next;
+    });
+  }, []);
+
+  const handleEditSectionTo = useCallback((station: number, landmark: Landmark) => {
+    setOverrides(prev => {
+      const next = new Map(prev);
+      next.set(station, { ...prev.get(station), sectionTo: landmark });
       return next;
     });
   }, []);
@@ -241,7 +259,8 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
             onEditStrengthPoint1={handleEditStrengthPoint1}
             onEditStrengthPoint2={handleEditStrengthPoint2}
             onRemoveAnomaly={handleRemoveAnomaly}
-            onEditSection={handleEditSection}
+            onEditSectionFrom={handleEditSectionFrom}
+            onEditSectionTo={handleEditSectionTo}
           />
         </div>
         <div className={styles.footer}>
