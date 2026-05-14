@@ -1,0 +1,51 @@
+.cellEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.cellEditorSelect {
+  width: 100%;
+  min-width: 200px;
+  padding: 2px 4px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  font-size: 11px;
+  background: white;
+}
+
+.cellEditorInput {
+  width: 100%;
+  padding: 3px 5px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  font-size: 11px;
+  box-sizing: border-box;
+}
+
+.cellEditorInputError {
+  border-color: #d12d2d !important;
+}
+
+.cellEditorRow {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.cellEditorSaveBtn {
+  padding: 2px 6px;
+  border: 1px solid #4caf50;
+  background: #4caf50;
+  color: white;
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cellEditorSaveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

@@ -164,6 +164,7 @@ const GraphDisplay: React.FC<GraphDisplayProps> = ({ graphInfo, shouldFocus , mo
         />
         <Tooltip />
         <Legend />
+        <Line type="linear" dataKey="constantDCVGDiff" stroke="#4B21424D" name="0mV Ref" dot={false}/>
         <Line type="linear" dataKey="dcvg" stroke="#878788" name="DCVG Diff" dot={false}/>
         <ReferenceDot
             x={focusGraphPoint?.distance}

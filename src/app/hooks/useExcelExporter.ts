@@ -74,7 +74,7 @@ const formatDateTimeRows = (workSheet: WorkSheet, entries: (never[] | [string, a
 export const useExcelExporter = () => {
     const [isExporting, setIsExporting] = useState<boolean>(false);
 
-    const exportToExcel = (editedSurvey: EditedSurvey, surveyInfo: SurveyInfo, surveyDataHeaders: string[], dcpDataHeaders: string[]) => {
+    const exportToExcel = (editedSurvey: EditedSurvey, surveyInfo: SurveyInfo, surveyDataHeaders: string[], dcpDataHeaders: string[], surveyName: string) => {
         setIsExporting(true);
 
         try {
@@ -104,7 +104,7 @@ export const useExcelExporter = () => {
             XLSX.utils.book_append_sheet(workbook, dcpDataWorksheet, 'DCP Data');
             XLSX.utils.book_append_sheet(workbook, surveyInfoWorksheet, 'Survey Info');
 
-            XLSX.writeFile(workbook, "edited_survey.xlsx");
+            XLSX.writeFile(workbook, `${surveyName}_edited_survey.xlsx`);
         } catch (error) {
             console.error('Error exporting to Excel:', error);
             throw error;
