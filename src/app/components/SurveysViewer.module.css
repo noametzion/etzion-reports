@@ -246,3 +246,25 @@
 .summaryIcon {
   font-size: 0.85em;
 }
+
+.commentsListBtn {
+  padding: 3px 10px;
+  font-size: 0.8rem;
+  background-color: #5c9bc7;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.commentsListBtn:hover {
+  background-color: #4a83b0;
+}
+
+.commentsButtonContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding-right: 20px;
+}

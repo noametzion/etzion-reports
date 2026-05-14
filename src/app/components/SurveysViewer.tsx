@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useRef, useState} from 'react';
 import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
@@ -22,6 +22,7 @@ import {DBProject} from "@/app/types/dbTypes";
 import LinkToProjectPopover from "@/app/components/LinkToProjectPopover";
 import ProjectSummaryPopover from "@/app/components/ProjectSummaryPopover";
 import ProjectReportPopover from "@/app/components/ProjectReportPopover";
+import CommentsListPopover from "@/app/components/CommentsListPopover";
 
 interface SurveysViewerProps {
     onSurveySelected: (surveyFile: SurveyFile | null) => void;
@@ -67,6 +68,8 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const { reportInfo: selectedFileReportInfo } = useSurveyReportInformation(selectedOriginalFile?.name);
   const { anomalyReport } = useAnomalyReport(selectedOriginalFile);
   const [rescanTrigger, setRescanTrigger] = useState(0);
+  const [commentsPopover, setCommentsPopover] = useState<{ top: number; right: number } | null>(null);
+  const commentsBtnRef = useRef<HTMLButtonElement>(null);
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
   const [projectReportPopover, setProjectReportPopover] = useState<ProjectReportPopoverState | null>(null);
@@ -187,6 +190,28 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
             rescanTrigger={rescanTrigger}
             onEdit={editLocally}
         />
+        <div className={styles.commentsButtonContainer}>
+          <button
+            ref={commentsBtnRef}
+            className={styles.commentsListBtn}
+            onClick={() => {
+              if (commentsPopover) { setCommentsPopover(null); return; }
+              const rect = commentsBtnRef.current?.getBoundingClientRect();
+              if (!rect) return;
+              setCommentsPopover({ top: rect.top - 60 , right: window.innerWidth - rect.left});
+            }}
+          >
+            Comments
+          </button>
+        </div>
+        {commentsPopover && (
+          <CommentsListPopover
+            surveyData={editedSurvey.surveyData}
+            anchorTop={commentsPopover.top}
+            anchorRight={commentsPopover.right}
+            onClose={() => setCommentsPopover(null)}
+          />
+        )}
       </div>
     );
   }
