@@ -227,21 +227,23 @@ const AnomalyReportModal: React.FC<AnomalyReportModalProps> = ({ isOpen, onClose
             </button>
           </div>
         )}
-        <AnomalyTable
-          anomalies={editedAnomalies}
-          stationDiff={stationDiff}
-          irThreshold={irThreshold}
-          strengthPointsCandidates={strengthPointsCandidates}
-          allMeasuredStations={allMeasuredStations}
-          dcvgCandidates={dcvgCandidates}
-          userAddedStations={userAddedAnomalyStations}
-          suggestedLandmarks={suggestedLandmarks}
-          onEditDcvg={handleEditDcvg}
-          onEditStrengthPoint1={handleEditStrengthPoint1}
-          onEditStrengthPoint2={handleEditStrengthPoint2}
-          onRemoveAnomaly={handleRemoveAnomaly}
-          onEditSection={handleEditSection}
-        />
+        <div className={styles.tableWrapper}>
+          <AnomalyTable
+            anomalies={editedAnomalies}
+            stationDiff={stationDiff}
+            irThreshold={irThreshold}
+            strengthPointsCandidates={strengthPointsCandidates}
+            allMeasuredStations={allMeasuredStations}
+            dcvgCandidates={dcvgCandidates}
+            userAddedStations={userAddedAnomalyStations}
+            suggestedLandmarks={suggestedLandmarks}
+            onEditDcvg={handleEditDcvg}
+            onEditStrengthPoint1={handleEditStrengthPoint1}
+            onEditStrengthPoint2={handleEditStrengthPoint2}
+            onRemoveAnomaly={handleRemoveAnomaly}
+            onEditSection={handleEditSection}
+          />
+        </div>
         <div className={styles.footer}>
           {isSaving && <span className={styles.savingIndicator}>Saving…</span>}
           <button className={styles.approveBtn} onClick={handleApprove} disabled={!isValid || isSaving}>

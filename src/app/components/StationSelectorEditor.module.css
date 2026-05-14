@@ -18,6 +18,7 @@
 }
 
 .listItem {
+  flex-shrink: 0;
   padding: 4px 8px;
   font-size: 11px;
   text-align: left;
