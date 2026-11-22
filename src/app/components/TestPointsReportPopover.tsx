@@ -32,7 +32,7 @@ const TestPointsReportPopover: React.FC<TestPointsReportPopoverProps> = ({ onClo
   const toggleExpand = (fileName: string) => {
     setExpandedFiles(prev => {
       const next = new Set(prev);
-      next.has(fileName) ? next.delete(fileName) : next.add(fileName);
+      if (next.has(fileName)) next.delete(fileName); else next.add(fileName);
       return next;
     });
   };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useMemo, useRef, useState} from 'react';
-import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList, FaRuler} from 'react-icons/fa';
+import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList, FaBolt} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
@@ -330,7 +330,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                             className={styles.projectSummaryButton}
                             title={`View test points report for ${projectWithFiles.project.projectName}`}
                           >
-                            <FaRuler className={styles.summaryIcon} />
+                            <FaBolt className={styles.summaryIcon} />
                             <span>Test Points</span>
                           </button>
                         </div>
