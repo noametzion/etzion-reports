@@ -5,6 +5,11 @@ import { useState } from "react";
 import { DBProject, DBAnomalyReport, DBReportInformation } from "@/app/types/dbTypes";
 import { Anomaly } from "@/app/types/report";
 import { getSurveyDisplayName } from "@/app/utils/surveyNameUtils";
+import {
+  fileColor, B, BGL, BGR, BGLR,
+  mkHeader, mkData, mkFile, set, merge,
+  XlsxStyle, XlsxBorder,
+} from "@/app/utils/excelStyleUtils";
 
 // ── Calculation helpers ───────────────────────────────────────────────────────
 
@@ -27,80 +32,14 @@ const getIRRatio = (a: Anomaly): number | undefined => {
   return Math.abs(a.dcvgValue.value / pre / 1000);
 };
 
-// ── File colors ───────────────────────────────────────────────────────────────
-// 30 soft Material-Design-100-level pastels.
-// When files exceed 30, the palette cycles and each subsequent round is lightened
-// 25% toward white so colors stay distinct across rounds.
+// ── Local style helpers ───────────────────────────────────────────────────────
 
-const FILE_COLORS = [
-  'FFCCFF', 'CCFF33', 'CCCCFF', 'CCFFFF', '66FFCC',
-  'CCFF99', 'D4D4D4', '9AF927', 'CCFFCC', 'C5D3FF',
-  '000000',
-  'FFCDD2', 'F8BBD0', 'FFCCBC', 'FFE0B2', 'FFECB3',
-  'FFF9C4', 'F0F4C3', 'DCEDC8', 'C8E6C9', 'B2DFDB',
-  'B2EBF2', 'B3E5FC', 'BBDEFB', 'C5CAE9', 'D1C4E9',
-  'E1BEE7', 'D7CCC8', 'CFD8DC', 'E8F5E9', 'E3F2FD',
-  'EDE7F6', 'FCE4EC', 'FFF3E0', 'F9FBE7', 'E0F7FA',
-  'E8EAF6', 'F3E5F5', 'FBE9E7', 'E0F2F1', 'FFF8E1',
-];
-
-function lightenHex(hex: string, t: number): string {
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  return [r, g, b]
-    .map(c => Math.round(c + (255 - c) * t).toString(16).padStart(2, '0').toUpperCase())
-    .join('');
-}
-
-function fileColor(fileIdx: number): string {
-  const cycle = Math.floor(fileIdx / FILE_COLORS.length);
-  const base  = FILE_COLORS[fileIdx % FILE_COLORS.length];
-  return cycle === 0 ? base : lightenHex(base, Math.min(cycle * 0.25, 0.8));
-}
-
-// ── Border definitions ────────────────────────────────────────────────────────
-
-const THIN = { style: 'thin', color: { rgb: 'CCCCCC' } };
-const MEDIUM = { style: 'medium', color: { rgb: '888888' } };
-
-const B    = { top: THIN, bottom: THIN, left: THIN,   right: THIN   };
-const BGL  = { top: THIN, bottom: THIN, left: MEDIUM, right: THIN   };  // group left edge
-const BGR  = { top: THIN, bottom: THIN, left: THIN,   right: MEDIUM };  // group right edge
-const BGLR = { top: THIN, bottom: THIN, left: MEDIUM, right: MEDIUM };  // merged group header
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Style = Record<string, any>;
-type Border = typeof B;
-
-const mkHeader = (border: Border): Style => ({
-  font: { bold: true, underline: true },
-  border,
-  alignment: { horizontal: 'center', wrapText: true },
-});
-const CENTER = { horizontal: 'center' };
-const mkData   = (border: Border): Style => ({ border, alignment: CENTER });
-const mkCalc   = (border: Border): Style => ({ fill: { fgColor: { rgb: 'FFFDE7' } }, border, alignment: CENTER });
-const mkIr     = (border: Border, hi: boolean): Style =>
-  hi ? { fill: { fgColor: { rgb: 'FFFF00' } }, border, alignment: CENTER } : { border, alignment: CENTER };
-const mkFile   = (rgb: string, border: Border): Style => ({ fill: { fgColor: { rgb } }, border, alignment: CENTER });
+const mkCalc = (border: XlsxBorder): XlsxStyle => ({ fill: { fgColor: { rgb: 'FFFDE7' } }, border, alignment: { horizontal: 'center' } });
+const mkIr   = (border: XlsxBorder, hi: boolean): XlsxStyle =>
+  hi ? { fill: { fgColor: { rgb: 'FFFF00' } }, border, alignment: { horizontal: 'center' } } : { border, alignment: { horizontal: 'center' } };
 
 const r4 = (v: number | undefined): number | undefined =>
   v !== undefined ? Math.round(v * 10000) / 10000 : undefined;
-
-function makeCell(v: string | number | undefined | null, style: Style, numFmt?: string): XLSX.CellObject {
-  const val = v ?? '';
-  const t = typeof val === 'number' ? 'n' : 's';
-  return { v: val, t, s: numFmt ? { ...style, numFmt } : style } as XLSX.CellObject;
-}
-
-function set(ws: XLSX.WorkSheet, col: number, row: number, v: string | number | undefined | null, style: Style, numFmt?: string) {
-  ws[XLSX.utils.encode_cell({ c: col, r: row })] = makeCell(v, style, numFmt);
-}
-
-function merge(list: XLSX.Range[], r1: number, c1: number, r2: number, c2: number) {
-  list.push({ s: { r: r1, c: c1 }, e: { r: r2, c: c2 } });
-}
 
 type SortedFile = { displayName: string; report: DBAnomalyReport };
 
@@ -186,7 +125,7 @@ const DETAILED_WIDTHS = [10, 24, 28, 12, 16, 12, 12, 12, 10, 10, 12, 10, 10, 10,
 
 // First col of each group: 5 (coord), 7 (SP1), 10 (SP2) → left medium border
 // Last col of each group:  6 (coord), 9 (SP1), 12 (SP2) → right medium border
-function db(col: number): Border {
+function db(col: number): XlsxBorder {
   if (col === 5 || col === 7 || col === 10) return BGL;
   if (col === 6 || col === 9 || col === 12) return BGR;
   return B;
