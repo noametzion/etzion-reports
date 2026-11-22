@@ -2,19 +2,9 @@
 
 import { useState, useCallback } from 'react';
 import { Project } from '@/app/types/project';
-import { SurveyDistanceKey, SurveyDataRow, SurveyInfo, EditedSurveyFile } from '@/app/types/survey';
-import { fetchFileByQueryParam } from '@/app/utils/readFileUtils';
-import { readEditedSurveyData, readOriginalSurveyFile } from '@/app/utils/fileDataUtils';
+import { SurveyDistanceKey, SurveyDataRow } from '@/app/types/survey';
 import { calculatePathLengthKm, splitSurveyDataByBreaks } from '@/app/utils/gpsUtils';
-
-interface ResponseEditedSurveyFileData {
-  fileName: string;
-  filePath: string;
-  isLocal: boolean;
-  originalFileName: string;
-}
-
-const EDITED_SURVEYS_API = '/api/editedSurveys';
+import { loadProjectFileData } from '@/app/utils/projectFileLoader';
 
 interface ProjectSummary {
   totalGpsDist: number;
@@ -71,36 +61,7 @@ export const useProjectSummary = () => {
       const file = project.projectFiles[i];
 
       try {
-        // Read original survey file to get surveyInfo
-        const originalSurvey = await readOriginalSurveyFile(file);
-
-        // Fetch edited survey file metadata
-        let editedFile: EditedSurveyFile | null = null;
-        try {
-          const responseData = await fetchFileByQueryParam(EDITED_SURVEYS_API, 'originalFileName', file.name);
-          const resFile = responseData.file as ResponseEditedSurveyFileData | null;
-
-          if (resFile) {
-            editedFile = {
-              name: resFile.fileName,
-              path: resFile.filePath,
-              isLocal: resFile.isLocal,
-              originalFileName: resFile.originalFileName,
-              updatedAt: new Date().toISOString(),
-            };
-          }
-        } catch {
-          // No edited file exists, continue with original
-        }
-
-        let surveyData: SurveyDataRow[] = originalSurvey.surveyData;
-        const surveyInfo: SurveyInfo = originalSurvey.surveyInfo;
-
-        // If edited file exists, use edited surveyData instead
-        if (editedFile) {
-          const editedSurvey = await readEditedSurveyData(editedFile);
-          surveyData = editedSurvey.surveyData;
-        }
+        const { surveyData, surveyInfo } = await loadProjectFileData(file);
 
         if (surveyData.length === 0) {
           continue;

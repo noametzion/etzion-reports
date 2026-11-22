@@ -1,0 +1,106 @@
+.countCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.eyeIcon {
+  cursor: pointer;
+  color: #888;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.eyeIcon:hover {
+  color: #444;
+}
+
+.expandedCell {
+  padding: 0 !important;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.expandedList {
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fafafa;
+  padding: 4px 12px 8px;
+}
+
+.expandedTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.expandedTable th {
+  padding: 5px 8px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.expandedTable tbody tr {
+  cursor: pointer;
+}
+
+.expandedTable tbody tr:hover td {
+  background: #f0f0f0;
+}
+
+.expandedTable td {
+  padding: 4px 8px;
+}
+
+.mpRowSelected td {
+  color: #1a5c2a;
+  font-weight: 600;
+}
+
+.mpRowUnselected td {
+  color: #bbb;
+}
+
+.mpRowSuggested td {
+  color: #b8824a;
+}
+
+.suggestedMark {
+  font-size: 0.6rem;
+  vertical-align: super;
+  margin-left: 2px;
+}
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.editIcon {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.expandedTable tbody tr:hover .editIcon {
+  opacity: 1;
+}
+
+.nameInput {
+  width: 100%;
+  font-size: 0.75rem;
+  font-family: inherit;
+  padding: 1px 4px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  outline: none;
+  background: white;
+}
