@@ -8,6 +8,7 @@ import { DBProject } from '@/app/types/dbTypes';
 import { useReportsInformation } from '@/app/hooks/useReportsInformation';
 import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
 import { useMeasurementPointsReport } from '@/app/hooks/useMeasurementPointsReport';
+import { useMeasurementPointsReportExporter } from '@/app/hooks/useMeasurementPointsReportExporter';
 
 interface MeasurementPointsReportPopoverProps {
   onClose: () => void;
@@ -18,7 +19,8 @@ interface MeasurementPointsReportPopoverProps {
 
 const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverProps> = ({ onClose, top, left, project }) => {
   const { reportsInformation } = useReportsInformation();
-  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName } = useMeasurementPointsReport();
+  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName, buildFinalReport } = useMeasurementPointsReport();
+  const { exportMeasurementPointsReport, isExporting } = useMeasurementPointsReportExporter();
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [editingKey, setEditingKey] = useState<{ fileName: string; idx: number } | null>(null);
   const [editingValue, setEditingValue] = useState('');
@@ -161,9 +163,13 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
       </table>
       <div className={popoverStyles.toolbar}>
         <span />
-        <button className={popoverStyles.exportBtn} disabled>
+        <button
+          className={popoverStyles.exportBtn}
+          disabled={isExporting || isCalculating || !report || !!report.error}
+          onClick={() => exportMeasurementPointsReport(buildFinalReport(project, reportsInformation))}
+        >
           <FaFileExcel />
-          Export Report
+          {isExporting ? 'Exporting…' : 'Export Report'}
         </button>
       </div>
     </div>

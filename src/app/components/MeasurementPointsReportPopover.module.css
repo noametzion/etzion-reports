@@ -56,16 +56,16 @@
   padding: 4px 8px;
 }
 
-.mpRowSelected {
+.mpRowSelected td {
   color: #1a5c2a;
   font-weight: 600;
 }
 
-.mpRowUnselected {
+.mpRowUnselected td {
   color: #bbb;
 }
 
-.mpRowSuggested {
+.mpRowSuggested td {
   color: #b8824a;
 }
 

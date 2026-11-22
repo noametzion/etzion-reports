@@ -4,9 +4,14 @@ import { useState, useCallback } from 'react';
 import { Project } from '@/app/types/project';
 import {
   DCPDataAnomalyKey, DCPDataStationKey, isDcpMeasurementPoint,
-  SurveyCommentKey, SurveyAnomalyKey, SurveyStationKey, normalizeMeasurementPointName,
+  SurveyCommentKey, SurveyAnomalyKey, SurveyStationKey, SurveyOnVoltageKey, SurveyOffVoltageKey,
+  normalizeMeasurementPointName,
 } from '@/app/types/survey';
+import { ReportInformation } from '@/app/types/reportInformation';
 import { loadProjectFileData } from '@/app/utils/projectFileLoader';
+import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
+import { fileColor } from '@/app/utils/excelStyleUtils';
+import { FinalReportMeasurementPoint, MeasurementPointsFinalReportData } from '@/app/types/measurementPointsReport';
 
 // Matches tp / lp / tb anywhere in a string, capturing text until the next comma
 const TP_ANYWHERE = /(tp|lp|tb)([^,]*)/i;
@@ -28,16 +33,18 @@ export interface MeasurementPoint {
   editedName?: string;
   isSelected: boolean;
   isSuggested: boolean;
+  vOn?: number;
+  vOff?: number;
 }
 
 export interface MeasurementPointsFileReport {
   fileName: string;
   measurementPointCount: number;
   points: MeasurementPoint[];
-  reportPoints: MeasurementPoint[]; // selected + all suggested
+  selectedPoints: MeasurementPoint[];
 }
 
-interface MeasurementPointsReport {
+export interface MeasurementPointsReport {
   totalMeasurementPoints: number;
   fileCount: number;
   filesProcessed: number;
@@ -45,6 +52,7 @@ interface MeasurementPointsReport {
   error: string | null;
   fileReport: MeasurementPointsFileReport[];
 }
+
 
 export const useMeasurementPointsReport = () => {
   const [report, setReport] = useState<MeasurementPointsReport | null>(null);
@@ -69,12 +77,18 @@ export const useMeasurementPointsReport = () => {
         const { dcpData, surveyData } = await loadProjectFileData(file);
 
         const surveyCommentByStation = new Map<number, string>();
+        const voltageByStation = new Map<number, { vOn?: number; vOff?: number }>();
         for (const row of surveyData) {
           const station = Number(row[SurveyStationKey]);
           if (!surveyCommentByStation.has(station)) {
             const raw = (row[SurveyCommentKey]?.toString() ?? '').trim()
               || (row[SurveyAnomalyKey]?.toString() ?? '').trim();
             if (raw) surveyCommentByStation.set(station, raw);
+          }
+          if (!voltageByStation.has(station)) {
+            const vOn = row[SurveyOnVoltageKey] != null ? Number(row[SurveyOnVoltageKey]) : undefined;
+            const vOff = row[SurveyOffVoltageKey] != null ? Number(row[SurveyOffVoltageKey]) : undefined;
+            if (vOn !== undefined || vOff !== undefined) voltageByStation.set(station, { vOn, vOff });
           }
         }
 
@@ -86,12 +100,13 @@ export const useMeasurementPointsReport = () => {
           dcpStations.add(stationNo);
           const surveyText = surveyCommentByStation.get(stationNo) ?? '';
           const comment = extractComment(surveyText, anomalyText);
+          const { vOn, vOff } = voltageByStation.get(stationNo) ?? {};
           let isSelected = false;
           if (isDcpMeasurementPoint(anomalyText) && !selectedByStation.has(stationNo)) {
             isSelected = true;
             selectedByStation.set(stationNo, idx);
           }
-          return { stationNo, anomalyText, comment, isSelected, isSuggested: false };
+          return { stationNo, anomalyText, comment, isSelected, isSuggested: false, vOn, vOff };
         });
 
         const suggestedStations = new Set<number>();
@@ -100,21 +115,23 @@ export const useMeasurementPointsReport = () => {
           if (dcpStations.has(station) || suggestedStations.has(station)) continue;
           if (!TP_ANYWHERE.test(raw)) continue;
           suggestedStations.add(station);
+          const { vOn, vOff } = voltageByStation.get(station) ?? {};
           suggestedPoints.push({
             stationNo: station,
             anomalyText: '',
             comment: extractComment(raw, ''),
             isSelected: false,
             isSuggested: true,
+            vOn,
+            vOff,
           });
         }
 
         const points = [...dcpPoints, ...suggestedPoints].sort((a, b) => a.stationNo - b.stationNo);
-
         const measurementPointCount = points.filter(p => p.isSelected).length;
-        const reportPoints = points.filter(p => p.isSelected || p.isSuggested);
+        const selectedPoints = points.filter(p => p.isSelected);
         totalMeasurementPoints += measurementPointCount;
-        fileReport.push({ fileName: file.name, measurementPointCount, points, reportPoints });
+        fileReport.push({ fileName: file.name, measurementPointCount, points, selectedPoints });
 
         setReport((prev) => prev ? {
           ...prev,
@@ -164,7 +181,7 @@ export const useMeasurementPointsReport = () => {
         ...file,
         points: newPoints,
         measurementPointCount: newPoints.filter(p => p.isSelected).length,
-        reportPoints: newPoints.filter(p => p.isSelected || p.isSuggested),
+        selectedPoints: newPoints.filter(p => p.isSelected),
       };
 
       return {
@@ -188,11 +205,67 @@ export const useMeasurementPointsReport = () => {
       newFileReport[fileIdx] = {
         ...file,
         points: newPoints,
-        reportPoints: newPoints.filter(p => p.isSelected || p.isSuggested),
+        selectedPoints: newPoints.filter(p => p.isSelected),
       };
       return { ...prev, fileReport: newFileReport };
     });
   }, []);
 
-  return { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName };
+  const buildFinalReport = useCallback((
+    project: Project,
+    reportsInformation: ReportInformation[],
+  ): MeasurementPointsFinalReportData => {
+    const projectFileNames = project.projectFiles.map(f => f.name);
+    const relevant = reportsInformation.filter(r => projectFileNames.includes(r.survey?.name ?? ''));
+
+    // Latest date from report information (ISO format YYYY-MM-DD)
+    let latest: Date | null = null;
+    for (const info of relevant) {
+      if (!info.date) continue;
+      const match = info.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) {
+        const d = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+        if (!latest || d > latest) latest = d;
+      }
+    }
+    const monthYear = latest
+      ? `${String(latest.getMonth() + 1).padStart(2, '0')}/${latest.getFullYear()}`
+      : '';
+    const hasDate = !!monthYear;
+    const title = `Test Point Measurements ${hasDate ? monthYear : '[MM/YYYY]'}`;
+
+    const rows: FinalReportMeasurementPoint[] = [];
+
+    if (report) {
+      const sortedFiles = [...project.projectFiles]
+        .map(file => {
+          const reportInfo = reportsInformation.find(r => r.survey?.name === file.name);
+          const displayName = getSurveyDisplayName(reportInfo?.projectName, file.name) ?? file.name;
+          const fileReport = report.fileReport.find(f => f.fileName === file.name);
+          return fileReport && fileReport.selectedPoints.length > 0 ? { displayName, fileReport } : null;
+        })
+        .filter((x): x is { displayName: string; fileReport: MeasurementPointsFileReport } => x !== null)
+        .sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+      sortedFiles.forEach(({ displayName, fileReport }, fi) => {
+        const color = fileColor(fi);
+        const reportInfo = reportsInformation.find(r => r.survey?.name === fileReport.fileName);
+        const pipelineSize = reportInfo?.pipelineSize ? `${reportInfo.pipelineSize}"` : '';
+        for (const point of fileReport.selectedPoints) {
+          rows.push({
+            displayName,
+            fileColor: color,
+            pipelineSize,
+            testPoint: point.editedName ?? point.comment,
+            vOn: point.vOn,
+            vOff: point.vOff,
+          });
+        }
+      });
+    }
+
+    return { title, hasDate, projectName: project.projectName, rows };
+  }, [report]);
+
+  return { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName, buildFinalReport };
 };
