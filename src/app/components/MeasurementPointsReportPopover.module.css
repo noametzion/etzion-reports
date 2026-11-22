@@ -74,3 +74,33 @@
   vertical-align: super;
   margin-left: 2px;
 }
+
+.nameCell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.editIcon {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 0.7rem;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.expandedTable tbody tr:hover .editIcon {
+  opacity: 1;
+}
+
+.nameInput {
+  width: 100%;
+  font-size: 0.75rem;
+  font-family: inherit;
+  padding: 1px 4px;
+  border: 1px solid #90b8f8;
+  border-radius: 3px;
+  outline: none;
+  background: white;
+}

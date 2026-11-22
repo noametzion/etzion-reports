@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import popoverStyles from './ProjectReportPopover.module.css';
 import styles from './MeasurementPointsReportPopover.module.css';
-import { FaTimes, FaFileExcel, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaTimes, FaFileExcel, FaEye, FaEyeSlash, FaPencilAlt } from 'react-icons/fa';
 import { DBProject } from '@/app/types/dbTypes';
 import { useReportsInformation } from '@/app/hooks/useReportsInformation';
 import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
@@ -18,8 +18,10 @@ interface MeasurementPointsReportPopoverProps {
 
 const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverProps> = ({ onClose, top, left, project }) => {
   const { reportsInformation } = useReportsInformation();
-  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint } = useMeasurementPointsReport();
+  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName } = useMeasurementPointsReport();
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  const [editingKey, setEditingKey] = useState<{ fileName: string; idx: number } | null>(null);
+  const [editingValue, setEditingValue] = useState('');
 
   useEffect(() => {
     void calculateMeasurementPointsReport(project);
@@ -114,7 +116,37 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                                 {point.isSuggested && <span className={styles.suggestedMark}>*</span>}
                               </td>
                               <td>{point.anomalyText}</td>
-                              <td>{point.comment}</td>
+                              <td>
+                                {editingKey?.fileName === file.name && editingKey.idx === idx ? (
+                                  <input
+                                    autoFocus
+                                    className={styles.nameInput}
+                                    value={editingValue}
+                                    onChange={e => setEditingValue(e.target.value)}
+                                    onBlur={() => {
+                                      editMeasurementPointName(file.name, idx, editingValue);
+                                      setEditingKey(null);
+                                    }}
+                                    onKeyDown={e => {
+                                      if (e.key === 'Enter') { editMeasurementPointName(file.name, idx, editingValue); setEditingKey(null); }
+                                      if (e.key === 'Escape') setEditingKey(null);
+                                    }}
+                                    onClick={e => e.stopPropagation()}
+                                  />
+                                ) : (
+                                  <span className={styles.nameCell}>
+                                    <span>{point.editedName ?? point.comment}</span>
+                                    <FaPencilAlt
+                                      className={styles.editIcon}
+                                      onClick={e => {
+                                        e.stopPropagation();
+                                        setEditingKey({ fileName: file.name, idx });
+                                        setEditingValue(point.editedName ?? point.comment);
+                                      }}
+                                    />
+                                  </span>
+                                )}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

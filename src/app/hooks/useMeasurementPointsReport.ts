@@ -25,6 +25,7 @@ export interface MeasurementPoint {
   stationNo: number;
   anomalyText: string;
   comment: string;
+  editedName?: string;
   isSelected: boolean;
   isSuggested: boolean;
 }
@@ -33,6 +34,7 @@ export interface MeasurementPointsFileReport {
   fileName: string;
   measurementPointCount: number;
   points: MeasurementPoint[];
+  reportPoints: MeasurementPoint[]; // selected + all suggested
 }
 
 interface MeasurementPointsReport {
@@ -110,8 +112,9 @@ export const useMeasurementPointsReport = () => {
         const points = [...dcpPoints, ...suggestedPoints].sort((a, b) => a.stationNo - b.stationNo);
 
         const measurementPointCount = points.filter(p => p.isSelected).length;
+        const reportPoints = points.filter(p => p.isSelected || p.isSuggested);
         totalMeasurementPoints += measurementPointCount;
-        fileReport.push({ fileName: file.name, measurementPointCount, points });
+        fileReport.push({ fileName: file.name, measurementPointCount, points, reportPoints });
 
         setReport((prev) => prev ? {
           ...prev,
@@ -161,6 +164,7 @@ export const useMeasurementPointsReport = () => {
         ...file,
         points: newPoints,
         measurementPointCount: newPoints.filter(p => p.isSelected).length,
+        reportPoints: newPoints.filter(p => p.isSelected || p.isSuggested),
       };
 
       return {
@@ -171,5 +175,24 @@ export const useMeasurementPointsReport = () => {
     });
   }, []);
 
-  return { report, calculateMeasurementPointsReport, toggleMeasurementPoint };
+  const editMeasurementPointName = useCallback((fileName: string, pointIndex: number, name: string) => {
+    setReport(prev => {
+      if (!prev) return prev;
+      const fileIdx = prev.fileReport.findIndex(f => f.fileName === fileName);
+      if (fileIdx === -1) return prev;
+      const file = prev.fileReport[fileIdx];
+      const newPoints = file.points.map((p, i) =>
+        i === pointIndex ? { ...p, editedName: name } : p
+      );
+      const newFileReport = [...prev.fileReport];
+      newFileReport[fileIdx] = {
+        ...file,
+        points: newPoints,
+        reportPoints: newPoints.filter(p => p.isSelected || p.isSuggested),
+      };
+      return { ...prev, fileReport: newFileReport };
+    });
+  }, []);
+
+  return { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName };
 };
