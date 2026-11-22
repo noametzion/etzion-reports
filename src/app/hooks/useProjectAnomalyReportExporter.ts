@@ -7,7 +7,7 @@ import { Anomaly } from "@/app/types/report";
 import { getSurveyDisplayName } from "@/app/utils/surveyNameUtils";
 import {
   fileColor, B, BGL, BGR, BGLR,
-  mkHeader, mkData, mkFile, makeCell, set, merge,
+  mkHeader, mkData, mkFile, set, merge,
   XlsxStyle, XlsxBorder,
 } from "@/app/utils/excelStyleUtils";
 
