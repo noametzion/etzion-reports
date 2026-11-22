@@ -169,6 +169,11 @@ export const DCPDataAnomalyKey = "DCP/Feature/Anomaly" as keyof DCPDataRow;
 export const DCPDataAnomaly_MARK_DCVG_SIDE_DRAIN = 'Mark DCVG: DCVG Side Drain';
 export const DCPDataAnomaly_DCVG_ANOMALY_TOTAL = 'DCVG Anomaly: DCVG Max/Total';
 
+// Matches pipe-to-soil readings: "…: Pipe To Soil" or anything containing "tp"
+const MEASUREMENT_POINT_REGEX = /pipe\s+to\s+soil|tp/i;
+export const isDcpMeasurementPoint = (anomalyValue: string): boolean =>
+  MEASUREMENT_POINT_REGEX.test(anomalyValue);
+
 // ------ Survey Data Keys & Constant Values
 export const SurveyCommentKey = 'Comment' as keyof SurveyDataRow;
 export const SurveyAnomalyKey = 'DCP/Feature/DCVG Anomaly' as keyof SurveyDataRow;

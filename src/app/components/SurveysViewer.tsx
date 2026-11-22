@@ -1,7 +1,7 @@
 "use client";
 
 import React, {useMemo, useRef, useState} from 'react';
-import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList} from 'react-icons/fa';
+import {FaTrash, FaFolderOpen, FaFileAlt, FaClipboardList, FaRuler} from 'react-icons/fa';
 import styles from './SurveysViewer.module.css';
 import SurveyUploader from './SurveyUploader';
 import { formatDate } from '@/app/utils/dateTimeUtils';
@@ -22,6 +22,7 @@ import {DBProject} from "@/app/types/dbTypes";
 import LinkToProjectPopover from "@/app/components/LinkToProjectPopover";
 import ProjectSummaryPopover from "@/app/components/ProjectSummaryPopover";
 import ProjectReportPopover from "@/app/components/ProjectReportPopover";
+import MeasurementPointsReportPopover from "@/app/components/MeasurementPointsReportPopover";
 import CommentsListPopover from "@/app/components/CommentsListPopover";
 
 interface SurveysViewerProps {
@@ -73,6 +74,7 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const [linkToProjectPopover, setLinkToProjectPopover] = useState<LinkToProjectPopoverState | null>(null);
   const [projectSummaryPopover, setProjectSummaryPopover] = useState<ProjectSummaryPopoverState | null>(null);
   const [projectReportPopover, setProjectReportPopover] = useState<ProjectReportPopoverState | null>(null);
+  const [measurementPointsReportPopover, setMeasurementPointsReportPopover] = useState<ProjectReportPopoverState | null>(null);
 
   const filesByProjects = useMemo(() => {
       return projects.map((project) => ({
@@ -138,6 +140,15 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
   const handleProjectReport = (e: React.MouseEvent<HTMLButtonElement>, project: DBProject) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setProjectReportPopover({
+      project,
+      top: rect.top + window.scrollY,
+      left: rect.left + window.scrollX + rect.width,
+    });
+  };
+
+  const handleMeasurementPointsReport = (e: React.MouseEvent<HTMLButtonElement>, project: DBProject) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMeasurementPointsReportPopover({
       project,
       top: rect.top + window.scrollY,
       left: rect.left + window.scrollX + rect.width,
@@ -295,22 +306,34 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
                     <td/>
                     <td className={styles.actionsCell}>
                       <div className={styles.projectActionsContainer}>
-                        <button
-                          onClick={(e) => handleProjectSummary(e, projectWithFiles.project, projectWithFiles.projectFiles.length)}
-                          className={styles.projectSummaryButton}
-                          title={`View summary for ${projectWithFiles.project.projectName}`}
-                        >
-                          <FaFileAlt className={styles.summaryIcon} />
-                          <span>Summary</span>
-                        </button>
-                        <button
-                          onClick={(e) => handleProjectReport(e, projectWithFiles.project)}
-                          className={styles.projectSummaryButton}
-                          title={`View report for ${projectWithFiles.project.projectName}`}
-                        >
-                          <FaClipboardList className={styles.summaryIcon} />
-                          <span>Anomaly Report</span>
-                        </button>
+                        <div className={styles.projectActionsRow}>
+                          <button
+                            onClick={(e) => handleProjectSummary(e, projectWithFiles.project, projectWithFiles.projectFiles.length)}
+                            className={styles.projectSummaryButton}
+                            title={`View summary for ${projectWithFiles.project.projectName}`}
+                          >
+                            <FaFileAlt className={styles.summaryIcon} />
+                            <span>Summary</span>
+                          </button>
+                          <button
+                            onClick={(e) => handleProjectReport(e, projectWithFiles.project)}
+                            className={styles.projectSummaryButton}
+                            title={`View report for ${projectWithFiles.project.projectName}`}
+                          >
+                            <FaClipboardList className={styles.summaryIcon} />
+                            <span>Anomaly Report</span>
+                          </button>
+                        </div>
+                        <div className={styles.projectActionsRow}>
+                          <button
+                            onClick={(e) => handleMeasurementPointsReport(e, projectWithFiles.project)}
+                            className={styles.projectSummaryButton}
+                            title={`View measurement points report for ${projectWithFiles.project.projectName}`}
+                          >
+                            <FaRuler className={styles.summaryIcon} />
+                            <span>Measurement Points</span>
+                          </button>
+                        </div>
                       </div>
                     </td>
                   </tr>
@@ -347,6 +370,12 @@ const SurveysViewer: React.FC<SurveysViewerProps> = ({
         top={projectReportPopover.top}
         left={projectReportPopover.left}
         project={projectReportPopover.project}
+    />}
+    {measurementPointsReportPopover && <MeasurementPointsReportPopover
+        onClose={() => setMeasurementPointsReportPopover(null)}
+        top={measurementPointsReportPopover.top}
+        left={measurementPointsReportPopover.left}
+        project={measurementPointsReportPopover.project}
     />}
   </>);
 };
