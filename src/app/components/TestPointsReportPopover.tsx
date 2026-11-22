@@ -2,32 +2,32 @@
 
 import React, { useEffect, useState } from 'react';
 import popoverStyles from './ProjectReportPopover.module.css';
-import styles from './MeasurementPointsReportPopover.module.css';
+import styles from './TestPointsReportPopover.module.css';
 import { FaTimes, FaFileExcel, FaEye, FaEyeSlash, FaPencilAlt } from 'react-icons/fa';
 import { DBProject } from '@/app/types/dbTypes';
 import { useReportsInformation } from '@/app/hooks/useReportsInformation';
 import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
-import { useMeasurementPointsReport } from '@/app/hooks/useMeasurementPointsReport';
-import { useMeasurementPointsReportExporter } from '@/app/hooks/useMeasurementPointsReportExporter';
+import { useTestPointsReport } from '@/app/hooks/useTestPointsReport';
+import { useTestPointsReportExporter } from '@/app/hooks/useTestPointsReportExporter';
 
-interface MeasurementPointsReportPopoverProps {
+interface TestPointsReportPopoverProps {
   onClose: () => void;
   top: number;
   left: number;
   project: DBProject;
 }
 
-const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverProps> = ({ onClose, top, left, project }) => {
+const TestPointsReportPopover: React.FC<TestPointsReportPopoverProps> = ({ onClose, top, left, project }) => {
   const { reportsInformation } = useReportsInformation();
-  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName, buildFinalReport } = useMeasurementPointsReport();
-  const { exportMeasurementPointsReport, isExporting } = useMeasurementPointsReportExporter();
+  const { report, calculateTestPointsReport, toggleTestPoint, editTestPointName, buildFinalReport } = useTestPointsReport();
+  const { exportTestPointsReport, isExporting } = useTestPointsReportExporter();
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
   const [editingKey, setEditingKey] = useState<{ fileName: string; idx: number } | null>(null);
   const [editingValue, setEditingValue] = useState('');
 
   useEffect(() => {
-    void calculateMeasurementPointsReport(project);
-  }, [project, calculateMeasurementPointsReport]);
+    void calculateTestPointsReport(project);
+  }, [project, calculateTestPointsReport]);
 
   const toggleExpand = (fileName: string) => {
     setExpandedFiles(prev => {
@@ -53,7 +53,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
   return (
     <div className={popoverStyles.popover} style={{ top: `${top}px`, left: `${left + 8}px` }}>
       <div className={popoverStyles.header}>
-        <h4>Measurement Points Report — {project.projectName}</h4>
+        <h4>Test Points Report — {project.projectName}</h4>
         <button onClick={onClose} className={popoverStyles.closeButton}><FaTimes /></button>
       </div>
       <table className={popoverStyles.table}>
@@ -61,7 +61,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
           <tr>
             <th>Original File</th>
             <th>Edited File Name</th>
-            <th>Measurement Points</th>
+            <th>Test Points</th>
           </tr>
         </thead>
         <tbody>
@@ -78,7 +78,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                     : fileReport !== undefined
                     ? (
                       <span className={styles.countCell}>
-                        {fileReport.measurementPointCount}
+                        {fileReport.testPointCount}
                         {expanded
                           ? <FaEyeSlash className={styles.eyeIcon} onClick={() => toggleExpand(file.name)} />
                           : <FaEye className={styles.eyeIcon} onClick={() => toggleExpand(file.name)} />
@@ -97,7 +97,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                           <tr>
                             <th>Station</th>
                             <th>DCP/Feature/Anomaly</th>
-                            <th>Measurement Point Name</th>
+                            <th>Test Point Name</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -111,7 +111,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                                   ? styles.mpRowSuggested
                                   : styles.mpRowUnselected
                               }
-                              onClick={() => toggleMeasurementPoint(file.name, idx)}
+                              onClick={() => toggleTestPoint(file.name, idx)}
                             >
                               <td>
                                 {point.stationNo}
@@ -126,11 +126,11 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                                     value={editingValue}
                                     onChange={e => setEditingValue(e.target.value)}
                                     onBlur={() => {
-                                      editMeasurementPointName(file.name, idx, editingValue);
+                                      editTestPointName(file.name, idx, editingValue);
                                       setEditingKey(null);
                                     }}
                                     onKeyDown={e => {
-                                      if (e.key === 'Enter') { editMeasurementPointName(file.name, idx, editingValue); setEditingKey(null); }
+                                      if (e.key === 'Enter') { editTestPointName(file.name, idx, editingValue); setEditingKey(null); }
                                       if (e.key === 'Escape') setEditingKey(null);
                                     }}
                                     onClick={e => e.stopPropagation()}
@@ -166,7 +166,7 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
         <button
           className={popoverStyles.exportBtn}
           disabled={isExporting || isCalculating || !report || !!report.error}
-          onClick={() => exportMeasurementPointsReport(buildFinalReport(project, reportsInformation))}
+          onClick={() => exportTestPointsReport(buildFinalReport(project, reportsInformation))}
         >
           <FaFileExcel />
           {isExporting ? 'Exporting…' : 'Export Report'}
@@ -176,4 +176,4 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
   );
 };
 
-export default MeasurementPointsReportPopover;
+export default TestPointsReportPopover;

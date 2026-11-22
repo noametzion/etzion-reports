@@ -2,7 +2,7 @@
 
 import XLSX from 'xlsx-js-style';
 import { useState } from 'react';
-import { MeasurementPointsFinalReportData } from '@/app/types/measurementPointsReport';
+import { TestPointsFinalReportData } from '@/app/types/testPointsReport';
 import {
   B, BGL, BGR, BGLR,
   mkHeader, mkData, mkFile, set, merge,
@@ -12,7 +12,7 @@ import {
 const COLS = 8;
 const WIDTHS = [10, 28, 12, 22, 12, 12, 14, 24];
 
-function buildSheet(data: MeasurementPointsFinalReportData): XLSX.WorkSheet {
+function buildSheet(data: TestPointsFinalReportData): XLSX.WorkSheet {
   const ws: XLSX.WorkSheet = {};
   const merges: XLSX.Range[] = [];
 
@@ -59,15 +59,15 @@ function buildSheet(data: MeasurementPointsFinalReportData): XLSX.WorkSheet {
   return ws;
 }
 
-export function useMeasurementPointsReportExporter() {
+export function useTestPointsReportExporter() {
   const [isExporting, setIsExporting] = useState(false);
 
-  const exportMeasurementPointsReport = (data: MeasurementPointsFinalReportData) => {
+  const exportTestPointsReport = (data: TestPointsFinalReportData) => {
     setIsExporting(true);
     try {
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, buildSheet(data), 'Measurement Points');
-      XLSX.writeFile(wb, `${data.projectName}_measurement_points.xlsx`);
+      XLSX.utils.book_append_sheet(wb, buildSheet(data), 'Test Points');
+      XLSX.writeFile(wb, `${data.projectName}_test_points.xlsx`);
     } catch (error) {
       console.error('Error exporting measurement points report:', error);
       throw error;
@@ -76,5 +76,5 @@ export function useMeasurementPointsReportExporter() {
     }
   };
 
-  return { exportMeasurementPointsReport, isExporting };
+  return { exportTestPointsReport, isExporting };
 }

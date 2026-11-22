@@ -170,13 +170,13 @@ export const DCPDataAnomaly_MARK_DCVG_SIDE_DRAIN = 'Mark DCVG: DCVG Side Drain';
 export const DCPDataAnomaly_DCVG_ANOMALY_TOTAL = 'DCVG Anomaly: DCVG Max/Total';
 
 // Matches pipe-to-soil readings: "…: Pipe To Soil" or anything containing tp / lp / tb
-const MEASUREMENT_POINT_REGEX = /pipe\s+to\s+soil|tp|lp|tb/i;
-export const isDcpMeasurementPoint = (anomalyValue: string): boolean =>
-  MEASUREMENT_POINT_REGEX.test(anomalyValue);
+const TEST_POINT_REGEX = /pipe\s+to\s+soil|tp|lp|tb/i;
+export const isDcpTestPoint = (anomalyValue: string): boolean =>
+  TEST_POINT_REGEX.test(anomalyValue);
 
 // Normalizes tp/lp/tb names: "tp10"→"tp 10", "TP 5"→"tp 5", "tp"→"tp". Returns "" if no prefix.
 const MEASUREMENT_NAME_PREFIX_REGEX = /^(tp|lp|tb)\s*(.*)/i;
-export const normalizeMeasurementPointName = (value: string): string => {
+export const normalizeTestPointName = (value: string): string => {
   const match = value.trim().match(MEASUREMENT_NAME_PREFIX_REGEX);
   if (!match) return '';
   const suffix = match[2].trim();

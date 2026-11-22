@@ -3,15 +3,15 @@
 import { useState, useCallback } from 'react';
 import { Project } from '@/app/types/project';
 import {
-  DCPDataAnomalyKey, DCPDataStationKey, isDcpMeasurementPoint,
+  DCPDataAnomalyKey, DCPDataStationKey, isDcpTestPoint,
   SurveyCommentKey, SurveyAnomalyKey, SurveyStationKey, SurveyOnVoltageKey, SurveyOffVoltageKey,
-  normalizeMeasurementPointName,
+  normalizeTestPointName,
 } from '@/app/types/survey';
 import { ReportInformation } from '@/app/types/reportInformation';
 import { loadProjectFileData } from '@/app/utils/projectFileLoader';
 import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
 import { fileColor } from '@/app/utils/excelStyleUtils';
-import { FinalReportMeasurementPoint, MeasurementPointsFinalReportData } from '@/app/types/measurementPointsReport';
+import { FinalReportTestPoint, TestPointsFinalReportData } from '@/app/types/testPointsReport';
 
 // Matches tp / lp / tb anywhere in a string, capturing text until the next comma
 const TP_ANYWHERE = /(tp|lp|tb)([^,]*)/i;
@@ -19,14 +19,14 @@ const TP_ANYWHERE = /(tp|lp|tb)([^,]*)/i;
 function extractComment(surveyText: string, dcpAnomalyText: string): string {
   if (surveyText) {
     const match = surveyText.match(TP_ANYWHERE);
-    if (match) return normalizeMeasurementPointName(match[0].trim()) || match[0].trim();
+    if (match) return normalizeTestPointName(match[0].trim()) || match[0].trim();
     return surveyText;
   }
   const colonIdx = dcpAnomalyText.indexOf(':');
   return colonIdx >= 0 ? dcpAnomalyText.slice(0, colonIdx).trim() : dcpAnomalyText.trim();
 }
 
-export interface MeasurementPoint {
+export interface TestPoint {
   stationNo: number;
   anomalyText: string;
   comment: string;
@@ -37,29 +37,29 @@ export interface MeasurementPoint {
   vOff?: number;
 }
 
-export interface MeasurementPointsFileReport {
+export interface TestPointsFileReport {
   fileName: string;
-  measurementPointCount: number;
-  points: MeasurementPoint[];
-  selectedPoints: MeasurementPoint[];
+  testPointCount: number;
+  points: TestPoint[];
+  selectedPoints: TestPoint[];
 }
 
-export interface MeasurementPointsReport {
-  totalMeasurementPoints: number;
+export interface TestPointsReport {
+  totalTestPoints: number;
   fileCount: number;
   filesProcessed: number;
   isCalculating: boolean;
   error: string | null;
-  fileReport: MeasurementPointsFileReport[];
+  fileReport: TestPointsFileReport[];
 }
 
 
-export const useMeasurementPointsReport = () => {
-  const [report, setReport] = useState<MeasurementPointsReport | null>(null);
+export const useTestPointsReport = () => {
+  const [report, setReport] = useState<TestPointsReport | null>(null);
 
-  const calculateMeasurementPointsReport = useCallback(async (project: Project) => {
+  const calculateTestPointsReport = useCallback(async (project: Project) => {
     setReport({
-      totalMeasurementPoints: 0,
+      totalTestPoints: 0,
       fileCount: project.projectFiles.length,
       filesProcessed: 0,
       isCalculating: true,
@@ -67,8 +67,8 @@ export const useMeasurementPointsReport = () => {
       fileReport: [],
     });
 
-    let totalMeasurementPoints = 0;
-    const fileReport: MeasurementPointsFileReport[] = [];
+    let totalTestPoints = 0;
+    const fileReport: TestPointsFileReport[] = [];
 
     for (let i = 0; i < project.projectFiles.length; i++) {
       const file = project.projectFiles[i];
@@ -94,7 +94,7 @@ export const useMeasurementPointsReport = () => {
 
         const selectedByStation = new Map<number, number>();
         const dcpStations = new Set<number>();
-        const dcpPoints: MeasurementPoint[] = dcpData.map((row, idx) => {
+        const dcpPoints: TestPoint[] = dcpData.map((row, idx) => {
           const anomalyText = row[DCPDataAnomalyKey]?.toString() ?? '';
           const stationNo = Number(row[DCPDataStationKey]);
           dcpStations.add(stationNo);
@@ -102,7 +102,7 @@ export const useMeasurementPointsReport = () => {
           const comment = extractComment(surveyText, anomalyText);
           const { vOn, vOff } = voltageByStation.get(stationNo) ?? {};
           let isSelected = false;
-          if (isDcpMeasurementPoint(anomalyText) && !selectedByStation.has(stationNo)) {
+          if (isDcpTestPoint(anomalyText) && !selectedByStation.has(stationNo)) {
             isSelected = true;
             selectedByStation.set(stationNo, idx);
           }
@@ -110,7 +110,7 @@ export const useMeasurementPointsReport = () => {
         });
 
         const suggestedStations = new Set<number>();
-        const suggestedPoints: MeasurementPoint[] = [];
+        const suggestedPoints: TestPoint[] = [];
         for (const [station, raw] of surveyCommentByStation) {
           if (dcpStations.has(station) || suggestedStations.has(station)) continue;
           if (!TP_ANYWHERE.test(raw)) continue;
@@ -128,14 +128,14 @@ export const useMeasurementPointsReport = () => {
         }
 
         const points = [...dcpPoints, ...suggestedPoints].sort((a, b) => a.stationNo - b.stationNo);
-        const measurementPointCount = points.filter(p => p.isSelected).length;
+        const testPointCount = points.filter(p => p.isSelected).length;
         const selectedPoints = points.filter(p => p.isSelected);
-        totalMeasurementPoints += measurementPointCount;
-        fileReport.push({ fileName: file.name, measurementPointCount, points, selectedPoints });
+        totalTestPoints += testPointCount;
+        fileReport.push({ fileName: file.name, testPointCount, points, selectedPoints });
 
         setReport((prev) => prev ? {
           ...prev,
-          totalMeasurementPoints,
+          totalTestPoints,
           filesProcessed: i + 1,
           fileReport: [...fileReport],
         } : null);
@@ -150,7 +150,7 @@ export const useMeasurementPointsReport = () => {
     }
 
     setReport({
-      totalMeasurementPoints,
+      totalTestPoints,
       fileCount: project.projectFiles.length,
       filesProcessed: project.projectFiles.length,
       isCalculating: false,
@@ -159,7 +159,7 @@ export const useMeasurementPointsReport = () => {
     });
   }, []);
 
-  const toggleMeasurementPoint = useCallback((fileName: string, pointIndex: number) => {
+  const toggleTestPoint = useCallback((fileName: string, pointIndex: number) => {
     setReport(prev => {
       if (!prev) return prev;
       const fileIdx = prev.fileReport.findIndex(f => f.fileName === fileName);
@@ -180,19 +180,19 @@ export const useMeasurementPointsReport = () => {
       newFileReport[fileIdx] = {
         ...file,
         points: newPoints,
-        measurementPointCount: newPoints.filter(p => p.isSelected).length,
+        testPointCount: newPoints.filter(p => p.isSelected).length,
         selectedPoints: newPoints.filter(p => p.isSelected),
       };
 
       return {
         ...prev,
-        totalMeasurementPoints: newFileReport.reduce((sum, f) => sum + f.measurementPointCount, 0),
+        totalTestPoints: newFileReport.reduce((sum, f) => sum + f.testPointCount, 0),
         fileReport: newFileReport,
       };
     });
   }, []);
 
-  const editMeasurementPointName = useCallback((fileName: string, pointIndex: number, name: string) => {
+  const editTestPointName = useCallback((fileName: string, pointIndex: number, name: string) => {
     setReport(prev => {
       if (!prev) return prev;
       const fileIdx = prev.fileReport.findIndex(f => f.fileName === fileName);
@@ -214,7 +214,7 @@ export const useMeasurementPointsReport = () => {
   const buildFinalReport = useCallback((
     project: Project,
     reportsInformation: ReportInformation[],
-  ): MeasurementPointsFinalReportData => {
+  ): TestPointsFinalReportData => {
     const projectFileNames = project.projectFiles.map(f => f.name);
     const relevant = reportsInformation.filter(r => projectFileNames.includes(r.survey?.name ?? ''));
 
@@ -232,9 +232,9 @@ export const useMeasurementPointsReport = () => {
       ? `${String(latest.getMonth() + 1).padStart(2, '0')}/${latest.getFullYear()}`
       : '';
     const hasDate = !!monthYear;
-    const title = `Test Point Measurements ${hasDate ? monthYear : '[MM/YYYY]'}`;
+    const title = `Test Points Measurements ${hasDate ? monthYear : '[MM/YYYY]'}`;
 
-    const rows: FinalReportMeasurementPoint[] = [];
+    const rows: FinalReportTestPoint[] = [];
 
     if (report) {
       const sortedFiles = [...project.projectFiles]
@@ -244,7 +244,7 @@ export const useMeasurementPointsReport = () => {
           const fileReport = report.fileReport.find(f => f.fileName === file.name);
           return fileReport && fileReport.selectedPoints.length > 0 ? { displayName, fileReport } : null;
         })
-        .filter((x): x is { displayName: string; fileReport: MeasurementPointsFileReport } => x !== null)
+        .filter((x): x is { displayName: string; fileReport: TestPointsFileReport } => x !== null)
         .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
       sortedFiles.forEach(({ displayName, fileReport }, fi) => {
@@ -267,5 +267,5 @@ export const useMeasurementPointsReport = () => {
     return { title, hasDate, projectName: project.projectName, rows };
   }, [report]);
 
-  return { report, calculateMeasurementPointsReport, toggleMeasurementPoint, editMeasurementPointName, buildFinalReport };
+  return { report, calculateTestPointsReport, toggleTestPoint, editTestPointName, buildFinalReport };
 };

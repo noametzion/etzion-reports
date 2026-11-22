@@ -1,4 +1,4 @@
-export interface FinalReportMeasurementPoint {
+export interface FinalReportTestPoint {
   displayName: string;
   fileColor: string;
   pipelineSize: string;
@@ -7,9 +7,9 @@ export interface FinalReportMeasurementPoint {
   vOff?: number;
 }
 
-export interface MeasurementPointsFinalReportData {
+export interface TestPointsFinalReportData {
   title: string;
   hasDate: boolean;
   projectName: string;
-  rows: FinalReportMeasurementPoint[];
+  rows: FinalReportTestPoint[];
 }
