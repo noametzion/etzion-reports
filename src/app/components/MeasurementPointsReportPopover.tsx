@@ -7,7 +7,7 @@ import { FaTimes, FaFileExcel, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { DBProject } from '@/app/types/dbTypes';
 import { useReportsInformation } from '@/app/hooks/useReportsInformation';
 import { getSurveyDisplayName } from '@/app/utils/surveyNameUtils';
-import { useMeasurementPointsSummary } from '@/app/hooks/useMeasurementPointsSummary';
+import { useMeasurementPointsReport } from '@/app/hooks/useMeasurementPointsReport';
 
 interface MeasurementPointsReportPopoverProps {
   onClose: () => void;
@@ -18,12 +18,12 @@ interface MeasurementPointsReportPopoverProps {
 
 const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverProps> = ({ onClose, top, left, project }) => {
   const { reportsInformation } = useReportsInformation();
-  const { summary, calculateMeasurementPointsSummary, toggleMeasurementPoint } = useMeasurementPointsSummary();
+  const { report, calculateMeasurementPointsReport, toggleMeasurementPoint } = useMeasurementPointsReport();
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    void calculateMeasurementPointsSummary(project);
-  }, [project, calculateMeasurementPointsSummary]);
+    void calculateMeasurementPointsReport(project);
+  }, [project, calculateMeasurementPointsReport]);
 
   const toggleExpand = (fileName: string) => {
     setExpandedFiles(prev => {
@@ -37,14 +37,14 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
     .map(file => {
       const reportInfo = reportsInformation.find(r => r.survey?.name === file.name);
       const displayName = getSurveyDisplayName(reportInfo?.projectName, file.name) ?? file.name;
-      const fileSummary = summary?.fileSummary.find(f => f.fileName === file.name);
+      const fileReport = report?.fileReport.find(f => f.fileName === file.name);
       const expanded = expandedFiles.has(file.name);
-      return { file, displayName, fileSummary, expanded };
+      return { file, displayName, fileReport, expanded };
     })
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
 
-  const isCalculating = summary?.isCalculating ?? true;
-  const loadingText = `Calculating… (${summary?.filesProcessed ?? 0}/${summary?.fileCount ?? project.projectFiles.length})`;
+  const isCalculating = report?.isCalculating ?? true;
+  const loadingText = `Calculating… (${report?.filesProcessed ?? 0}/${report?.fileCount ?? project.projectFiles.length})`;
 
   return (
     <div className={popoverStyles.popover} style={{ top: `${top}px`, left: `${left + 8}px` }}>
@@ -61,20 +61,20 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
           </tr>
         </thead>
         <tbody>
-          {sortedFiles.map(({ file, displayName, fileSummary, expanded }) => (
+          {sortedFiles.map(({ file, displayName, fileReport, expanded }) => (
             <React.Fragment key={file.name}>
               <tr>
                 <td>{file.name}</td>
                 <td>{displayName}</td>
                 <td>
-                  {summary?.error
+                  {report?.error
                     ? '—'
-                    : isCalculating && !fileSummary
+                    : isCalculating && !fileReport
                     ? loadingText
-                    : fileSummary !== undefined
+                    : fileReport !== undefined
                     ? (
                       <span className={styles.countCell}>
-                        {fileSummary.measurementPointCount}
+                        {fileReport.measurementPointCount}
                         {expanded
                           ? <FaEyeSlash className={styles.eyeIcon} onClick={() => toggleExpand(file.name)} />
                           : <FaEye className={styles.eyeIcon} onClick={() => toggleExpand(file.name)} />
@@ -84,21 +84,41 @@ const MeasurementPointsReportPopover: React.FC<MeasurementPointsReportPopoverPro
                     : '—'}
                 </td>
               </tr>
-              {expanded && fileSummary && (
+              {expanded && fileReport && (
                 <tr>
                   <td colSpan={3} className={styles.expandedCell}>
                     <div className={styles.expandedList}>
-                      {fileSummary.rows.map((row, idx) => (
-                        <div
-                          key={idx}
-                          className={`${styles.mpRow} ${row.isSelected ? styles.mpRowSelected : styles.mpRowUnselected}`}
-                          onClick={() => toggleMeasurementPoint(file.name, idx)}
-                        >
-                          <span>{row.stationNo}</span>
-                          <span>-</span>
-                          <span>{row.anomalyText}</span>
-                        </div>
-                      ))}
+                      <table className={styles.expandedTable}>
+                        <thead>
+                          <tr>
+                            <th>Station</th>
+                            <th>DCP/Feature/Anomaly</th>
+                            <th>Measurement Point Name</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {fileReport.points.map((point, idx) => (
+                            <tr
+                              key={idx}
+                              className={
+                                point.isSelected
+                                  ? styles.mpRowSelected
+                                  : point.isSuggested
+                                  ? styles.mpRowSuggested
+                                  : styles.mpRowUnselected
+                              }
+                              onClick={() => toggleMeasurementPoint(file.name, idx)}
+                            >
+                              <td>
+                                {point.stationNo}
+                                {point.isSuggested && <span className={styles.suggestedMark}>*</span>}
+                              </td>
+                              <td>{point.anomalyText}</td>
+                              <td>{point.comment}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </td>
                 </tr>
